@@ -1,0 +1,1 @@
+{"rustc":7690723468687526418,"features":"","target":0,"profile":0,"path":0,"deps":[[8643437697222566068,"build_script_build",false,8914432657923154457]],"local":[{"RerunIfChanged":{"output":"debug/build/maturin-b83be209db39a0f5/output","paths":["build.rs","../fat.img"]}}],"rustflags":[],"metadata":0,"config":0,"compile_kind":0}
