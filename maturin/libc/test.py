@@ -2,46 +2,52 @@ import os
 import shutil
 import os.path
 
+
+src_dir_path = '../../code'        # 源文件夹,need change
+
 def clean():
-    with open('/home/xsp/mylab/maturin/libc/static_testcases.txt','w') as f:
+    with open('./static_testcases.txt','w') as f:
         f.truncate(0)
     new_str = ""
-    with open("/home/xsp/mylab/maturin/kernel/src/testcases.rs","w") as f:
+    with open("../kernel/src/testcases.rs","w") as f:
         f.truncate(0)
-    path = r"/home/xsp/mylab/maturin/libc/build"
+    path = r"./build"
     files = os.listdir(path)
     for i, f in enumerate(files):
         if f.find("test") >= 0:
             path2 = os.path.join(path, f)
             os.remove(path2)
-    path = r"/home/xsp/mylab/maturin/oscomp_testcases/busybox"
+    path = r"../oscomp_testcases/busybox"
     files = os.listdir(path)
     for i, f in enumerate(files):
         if f.find("test") >= 0:
             path2 = os.path.join(path, f)
             os.remove(path2)
 
-src_dir_path = '/home/xsp/syzkaller/syzkaller/code'        # 源文件夹
-to_dir_path = '/home/xsp/mylab/maturin/oscomp_testcases/busybox'         # 存放复制文件的文件夹
-key = '.out'                 # 源文件夹中的文件包含字符key则复制到to_dir_path文件夹中
-tests = os.listdir("/home/xsp/syzkaller/syzkaller/code")
-id = 1
-f = open('/home/xsp/mylab/maturin/libc/static_testcases.txt','a')
-str = []
-fstr = ""
-for test in tests:
-    if not test.endswith("c"):
-        continue
-    str.append("/home/xsp/syzkaller/syzkaller/code/"+test.removesuffix('c')+"out")
-    fstr += "/home/xsp/syzkaller/syzkaller/code/"+test.removesuffix('c')+"out\n"
-    if id%1 == 0:
-        clean()
-        f.write(fstr)
-        fstr = ""
-        os.system("make -i -j8")
-        for sstr in str:
-            if os.path.exists(sstr):
-                shutil.copy(sstr,"/home/xsp/mylab/maturin/oscomp_testcases/busybox/"+os.path.basename(sstr))
-        str=[]
-        os.system("python3 /home/xsp/mylab/maturin/kernel/run_test.py")
-    id = id + 1
+
+def run_test(patch_num):
+    
+    tests = os.listdir(src_dir_path)
+    f = open('./static_testcases.txt','a')
+    str = []
+    id=1
+    fstr = ""
+    for test in tests:
+        if not test.endswith("c"):
+            continue
+        str.append(src_dir_path+"/"+test.removesuffix('c')+"out")
+        fstr += src_dir_path+"/"+test.removesuffix('c')+"out\n"
+        if id%patch_num == 0:
+            clean()
+            f.write(fstr)
+            fstr = ""
+            os.system("make -i -j8")
+            for sstr in str:
+                if os.path.exists(sstr):
+                    shutil.copy(sstr,"../oscomp_testcases/busybox/"+os.path.basename(sstr))
+            str=[]
+            os.system("python3 ../kernel/run_test.py")
+        id = id + 1
+
+if __name__=='__main__':
+    run_test(1)
