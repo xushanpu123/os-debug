@@ -3,7 +3,6 @@ import subprocess
 
 
 tests = os.listdir("/home/xsp/mylab/maturin/oscomp_testcases/busybox")
-#print(tests)
 with open("/home/xsp/mylab/maturin/kernel/src/testcases.rs","w") as f:
 
     s = ''
@@ -12,6 +11,7 @@ with open("/home/xsp/mylab/maturin/kernel/src/testcases.rs","w") as f:
         if test.startswith("test"):
             s += f'"{test}",\n'
     s += "];\n"
+   # print(s)
     f.write(s)
 os.chdir("/home/xsp/mylab/maturin/kernel")
 

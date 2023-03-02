@@ -57,9 +57,9 @@ fn pack_up_user_applications() {
             let mut origin_file = File::open(format!("{}{}", target_path, app)).unwrap();
             let mut all_data: Vec<u8> = Vec::new();
             origin_file.read_to_end(&mut all_data).unwrap();
-            println!("user app: {}", app.as_str());
+            //println!("user app: {}", app.as_str());
             let mut file_in_fs = root.create_file(app.as_str()).unwrap();
-            println!("create succ");
+           // println!("create succ");
             file_in_fs.write_all(all_data.as_slice()).unwrap();
         }
         

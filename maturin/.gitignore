@@ -1,0 +1,11 @@
+.vscode
+target
+/kernel/src/link_app.S
+/kernel/dbg.S
+user/build
+user/target/*
+user/Cargo.lock
+*.img
+os.bin
+oscomp_testcases/busybox/*
+

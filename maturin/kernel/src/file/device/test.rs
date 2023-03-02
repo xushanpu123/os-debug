@@ -74,7 +74,7 @@ impl TestStatus {
 
     /// 输入测试
     pub fn load(&mut self, testcase: &String) {
-        info!(
+        println!(
             " --------------- load testcase: {} --------------- ",
             testcase
         );
@@ -93,12 +93,12 @@ impl TestStatus {
         //cnt += 1;
         match exit_code {
             0 => {
-                info!(" --------------- test passed --------------- ");
+                println!(" --------------- test passed --------------- ");
                 self.passed += 1;
                 self.now.take();
             }
             _ => {
-                info!(
+                println!(
                     " --------------- TEST FAILED, exit code = {} --------------- ",
                     exit_code
                 );
@@ -109,15 +109,15 @@ impl TestStatus {
 
     /// 最终输出测试信息
     pub fn final_info(&self) {
-        info!(
+        println!(
             " --------------- all test ended, passed {} / {} --------------- ",
             self.passed, self.cnt
         );
-        info!(" --------------- failed tests: --------------- ");
+        println!(" --------------- failed tests: --------------- ");
         for test in &self.failed_tests {
-            info!("{}", test);
+            println!("{}", test);
         }
-        info!(" --------------- end --------------- ");
+        println!(" --------------- end --------------- ");
         panic!("");
     }
 }

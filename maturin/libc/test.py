@@ -34,12 +34,10 @@ for test in tests:
         continue
     str.append("/home/xsp/syzkaller/syzkaller/code/"+test.removesuffix('c')+"out")
     fstr += "/home/xsp/syzkaller/syzkaller/code/"+test.removesuffix('c')+"out\n"
-    if id%50 == 0:
-
+    if id%1 == 0:
+        clean()
         f.write(fstr)
         fstr = ""
-
-        clean()
         os.system("make -i -j8")
         for sstr in str:
             if os.path.exists(sstr):

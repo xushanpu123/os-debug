@@ -43,9 +43,9 @@ clean:
 
 # 静态测例
 %.out : %.c
-	$(CC) $^ $(COMMON_SRCS) $(CFLAGS) -static -o $@
-	mkdir -p build
-	cp $@ $(addprefix build/,  $(subst -,_,$(notdir $(basename $@))))
+	@$(CC) $^ $(COMMON_SRCS) $(CFLAGS) -static -o $@
+	@mkdir -p build
+	@cp $@ $(addprefix build/,  $(subst -,_,$(notdir $(basename $@))))
 
 #动态测例
 %.dout : %.c
