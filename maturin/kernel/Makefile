@@ -31,9 +31,6 @@ ifeq ($(MODE), release)
 build_args += --release
 endif
 
-ifndef ($(ONLINE))
-build_args += --offline
-endif
 
 qemu_args := -nographic -smp $(SMP) -m 8G
 ifeq ($(ARCH), riscv64)
