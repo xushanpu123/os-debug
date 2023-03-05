@@ -30,7 +30,8 @@ def clean():
 
 
 def run_test(patch_num):
-    
+    if not os.path.exists("./output"):
+        os.makedirs("./output")
     tests = os.listdir(src_dir_path)
     
     str = []
@@ -53,9 +54,10 @@ def run_test(patch_num):
                 if os.path.exists(sstr):
                     shutil.copy(sstr,"../oscomp_testcases/busybox/"+os.path.basename(sstr))
             str=[]
-            os.system("python3 ../kernel/run_test.py")
+            outputnum=id/patch_num
+            outputfilename="./output/output%d.txt" %outputnum
+            os.system("python3 ../kernel/run_test.py > "+outputfilename)
         id = id + 1
 
 if __name__=='__main__':
-    os.system("export PATH=\"$PATH:../../riscv64-linux-musl-cross/bin\"")
     run_test(1)

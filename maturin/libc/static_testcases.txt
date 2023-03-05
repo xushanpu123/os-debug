@@ -1,1 +1,1 @@
-../../code/test1588.out
+../../code/test1330.out

@@ -1,0 +1,6 @@
+src_path = ../oscomp_testcases/busybox/
+target_path = ../oscomp_testcases/busybox/
+output_path = ../
+img_file = ../fat.img
+41KB  2023-03-05 08:44:38  test1330.out
+Building maturin kernel
