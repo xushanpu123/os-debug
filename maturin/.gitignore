@@ -8,4 +8,5 @@ user/Cargo.lock
 *.img
 os.bin
 oscomp_testcases/busybox/*
+libc/output/*
 

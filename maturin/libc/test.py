@@ -38,6 +38,8 @@ def run_test(proc_id,patch_num,cases_per_proc):
     fstr = ""
     case_start=proc_id*cases_per_proc
     case_end=(proc_id+1)*cases_per_proc-1
+    print("start ",case_start)
+    print("end ",case_end)
     for case_id in range(case_start,case_end):
         test="test%d.c" %case_id
         if not os.path.exists(src_dir_path+"/"+test):
