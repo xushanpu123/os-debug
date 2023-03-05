@@ -1,6 +1,7 @@
 import os
 import shutil
 import os.path
+import sys
 
 
 src_dir_path = '../../code'        # 源文件夹,need change
@@ -29,17 +30,17 @@ def clean():
             os.remove(path2)
 
 
-def run_test(patch_num):
+def run_test(proc_id,patch_num,cases_per_proc):
     if not os.path.exists("./output"):
         os.makedirs("./output")
-    tests = os.listdir(src_dir_path)
-    
     str = []
     id=1
     fstr = ""
-    for test in tests:
-        
-        if not test.endswith("c"):
+    case_start=proc_id*cases_per_proc
+    case_end=(proc_id+1)*cases_per_proc-1
+    for case_id in range(case_start,case_end):
+        test="test%d.c" %case_id
+        if not os.path.exists(src_dir_path+"/"+test):
             continue
         str.append(src_dir_path+"/"+test.removesuffix('c')+"out")
         fstr += src_dir_path+"/"+test.removesuffix('c')+"out\n"
@@ -55,9 +56,15 @@ def run_test(patch_num):
                     shutil.copy(sstr,"../oscomp_testcases/busybox/"+os.path.basename(sstr))
             str=[]
             outputnum=id/patch_num
-            outputfilename="./output/output%d.txt" %outputnum
+            outputfilename="./output/output%d-%d.txt" %(proc_id ,outputnum)
             os.system("python3 ../kernel/run_test.py > "+outputfilename)
         id = id + 1
 
 if __name__=='__main__':
-    run_test(1)
+    proc_id=int(sys.argv[1])
+    patch_num=int(sys.argv[2])
+    cases_per_proc=int(sys.argv[3])
+    print("proc_id",proc_id)
+    print("patch_num",patch_num)
+    print("cases_per_proc",cases_per_proc)
+    run_test(proc_id,patch_num,cases_per_proc)

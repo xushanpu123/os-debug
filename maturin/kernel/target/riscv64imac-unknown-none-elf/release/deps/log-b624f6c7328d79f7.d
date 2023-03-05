@@ -1,9 +1,9 @@
-/home/zhiyuansue/桌面/os-debug/maturin/kernel/target/riscv64imac-unknown-none-elf/release/deps/log-b624f6c7328d79f7.rmeta: /home/zhiyuansue/.cargo/registry/src/mirrors.tuna.tsinghua.edu.cn-df7c3c540f42cdbd/log-0.4.17/src/lib.rs /home/zhiyuansue/.cargo/registry/src/mirrors.tuna.tsinghua.edu.cn-df7c3c540f42cdbd/log-0.4.17/src/macros.rs /home/zhiyuansue/.cargo/registry/src/mirrors.tuna.tsinghua.edu.cn-df7c3c540f42cdbd/log-0.4.17/src/serde.rs
+/home/xsp/os-debug/maturin/kernel/target/riscv64imac-unknown-none-elf/release/deps/log-b624f6c7328d79f7.rmeta: /home/xsp/.cargo/registry/src/github.com-1ecc6299db9ec823/log-0.4.17/src/lib.rs /home/xsp/.cargo/registry/src/github.com-1ecc6299db9ec823/log-0.4.17/src/macros.rs /home/xsp/.cargo/registry/src/github.com-1ecc6299db9ec823/log-0.4.17/src/serde.rs
 
-/home/zhiyuansue/桌面/os-debug/maturin/kernel/target/riscv64imac-unknown-none-elf/release/deps/liblog-b624f6c7328d79f7.rlib: /home/zhiyuansue/.cargo/registry/src/mirrors.tuna.tsinghua.edu.cn-df7c3c540f42cdbd/log-0.4.17/src/lib.rs /home/zhiyuansue/.cargo/registry/src/mirrors.tuna.tsinghua.edu.cn-df7c3c540f42cdbd/log-0.4.17/src/macros.rs /home/zhiyuansue/.cargo/registry/src/mirrors.tuna.tsinghua.edu.cn-df7c3c540f42cdbd/log-0.4.17/src/serde.rs
+/home/xsp/os-debug/maturin/kernel/target/riscv64imac-unknown-none-elf/release/deps/liblog-b624f6c7328d79f7.rlib: /home/xsp/.cargo/registry/src/github.com-1ecc6299db9ec823/log-0.4.17/src/lib.rs /home/xsp/.cargo/registry/src/github.com-1ecc6299db9ec823/log-0.4.17/src/macros.rs /home/xsp/.cargo/registry/src/github.com-1ecc6299db9ec823/log-0.4.17/src/serde.rs
 
-/home/zhiyuansue/桌面/os-debug/maturin/kernel/target/riscv64imac-unknown-none-elf/release/deps/log-b624f6c7328d79f7.d: /home/zhiyuansue/.cargo/registry/src/mirrors.tuna.tsinghua.edu.cn-df7c3c540f42cdbd/log-0.4.17/src/lib.rs /home/zhiyuansue/.cargo/registry/src/mirrors.tuna.tsinghua.edu.cn-df7c3c540f42cdbd/log-0.4.17/src/macros.rs /home/zhiyuansue/.cargo/registry/src/mirrors.tuna.tsinghua.edu.cn-df7c3c540f42cdbd/log-0.4.17/src/serde.rs
+/home/xsp/os-debug/maturin/kernel/target/riscv64imac-unknown-none-elf/release/deps/log-b624f6c7328d79f7.d: /home/xsp/.cargo/registry/src/github.com-1ecc6299db9ec823/log-0.4.17/src/lib.rs /home/xsp/.cargo/registry/src/github.com-1ecc6299db9ec823/log-0.4.17/src/macros.rs /home/xsp/.cargo/registry/src/github.com-1ecc6299db9ec823/log-0.4.17/src/serde.rs
 
-/home/zhiyuansue/.cargo/registry/src/mirrors.tuna.tsinghua.edu.cn-df7c3c540f42cdbd/log-0.4.17/src/lib.rs:
-/home/zhiyuansue/.cargo/registry/src/mirrors.tuna.tsinghua.edu.cn-df7c3c540f42cdbd/log-0.4.17/src/macros.rs:
-/home/zhiyuansue/.cargo/registry/src/mirrors.tuna.tsinghua.edu.cn-df7c3c540f42cdbd/log-0.4.17/src/serde.rs:
+/home/xsp/.cargo/registry/src/github.com-1ecc6299db9ec823/log-0.4.17/src/lib.rs:
+/home/xsp/.cargo/registry/src/github.com-1ecc6299db9ec823/log-0.4.17/src/macros.rs:
+/home/xsp/.cargo/registry/src/github.com-1ecc6299db9ec823/log-0.4.17/src/serde.rs:
