@@ -24,8 +24,10 @@ def clean_data():
 		with open(file_name,"r") as f:
 			data=f.read()
 			data=data.split('\n')
-
-			if(data[53]==" --------------- all test ended, passed 0 / 0 --------------- "):
+			
+			if not data[-2].startswith("[kernel]"):
+				res_str="overtime error"
+			elif(data[53]==" --------------- all test ended, passed 0 / 0 --------------- "):
 				res_str="complier error"
 			elif(data[55]==" --------------- test passed --------------- "):
 				res_str="succ"
