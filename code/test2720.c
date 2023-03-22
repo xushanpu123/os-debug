@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[2] = {0xffffffffffffffff, 0xffffffffffffffff};
+uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
 {
@@ -19,19 +19,10 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 2ul, 2ul, 0);
+	res = syscall(__NR_socket, 2ul, 0xaul, 0);
 	if (res != -1)
 		r[0] = res;
-*(uint16_t*)0x20000040 = 2;
-*(uint16_t*)0x20000042 = htobe16(0x4e20);
-*(uint32_t*)0x20000044 = htobe32(0);
-	syscall(__NR_bind, r[0], 0x20000040ul, 0x10ul);
-	res = syscall(__NR_socket, 2ul, 2ul, 0);
-	if (res != -1)
-		r[1] = res;
-*(uint16_t*)0x20000040 = 2;
-*(uint16_t*)0x20000042 = htobe16(0x4e20);
-*(uint32_t*)0x20000044 = htobe32(0);
-	syscall(__NR_bind, r[1], 0x20000040ul, 0x10ul);
+memcpy((void*)0x20000080, "sit0\000\000\000\000\000\000\000\000\000\000\000\000", 16);
+	syscall(__NR_ioctl, r[0], 0x8933, 0x20000080ul);
 	return 0;
 }

@@ -3,6 +3,7 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
+#include <sched.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,11 +12,28 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#ifndef __NR_fsconfig
-#define __NR_fsconfig 431
-#endif
+#define USLEEP_FORKED_CHILD (3 * 50 *1000)
 
-uint64_t r[1] = {0xffffffffffffffff};
+static long handle_clone_ret(long ret)
+{
+	if (ret != 0) {
+		return ret;
+	}
+	usleep(USLEEP_FORKED_CHILD);
+	syscall(__NR_exit, 0);
+	while (1) {
+	}
+}
+
+static long syz_clone(volatile long flags, volatile long stack, volatile long stack_len,
+		      volatile long ptid, volatile long ctid, volatile long tls)
+{
+	long sp = (stack + stack_len) & ~15;
+	long ret = (long)syscall(__NR_clone, flags & ~CLONE_VM, sp, ptid, ctid, tls);
+	return handle_clone_ret(ret);
+}
+
+uint64_t r[1] = {0x0};
 
 int main(void)
 {
@@ -23,11 +41,12 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000040, "./file1\000", 8);
-	res = syscall(__NR_openat, 0xffffff9c, 0x20000040ul, 0x42ul, 0ul);
+	syscall(__NR_setreuid, 0xee00, 0);
+	res = -1;
+res = syz_clone(0, 0, 0, 0, 0, 0);
 	if (res != -1)
 		r[0] = res;
-memcpy((void*)0x20000140, "!%l+\324\357%{\000", 9);
-	syscall(__NR_fsconfig, r[0], 4ul, 0x20000140ul, 0ul, -1);
+	syscall(__NR_setresuid, 0, 0, 0);
+	syscall(__NR_prlimit64, r[0], 0ul, 0ul, 0ul);
 	return 0;
 }

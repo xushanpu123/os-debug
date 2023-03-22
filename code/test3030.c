@@ -3,6 +3,7 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
+#include <sched.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,33 +12,55 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[2] = {0xffffffffffffffff, 0x0};
+#include <linux/sched.h>
+
+#ifndef __NR_clone3
+#define __NR_clone3 435
+#endif
+
+#define USLEEP_FORKED_CHILD (3 * 50 *1000)
+
+static long handle_clone_ret(long ret)
+{
+	if (ret != 0) {
+		return ret;
+	}
+	usleep(USLEEP_FORKED_CHILD);
+	syscall(__NR_exit, 0);
+	while (1) {
+	}
+}
+
+#define MAX_CLONE_ARGS_BYTES 256
+static long syz_clone3(volatile long a0, volatile long a1)
+{
+	unsigned long copy_size = a1;
+	if (copy_size < sizeof(uint64_t) || copy_size > MAX_CLONE_ARGS_BYTES)
+		return -1;
+	char clone_args[MAX_CLONE_ARGS_BYTES];
+	memcpy(&clone_args, (void*)a0, copy_size);
+	uint64_t* flags = (uint64_t*)&clone_args;
+	*flags &= ~CLONE_VM;
+	return handle_clone_ret((long)syscall(__NR_clone3, &clone_args, copy_size));
+}
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-	res = syscall(__NR_socket, 0xaul, 2ul, 0);
-	if (res != -1)
-		r[0] = res;
-	res = syscall(__NR_io_setup, 6, 0x20000100ul);
-	if (res != -1)
-r[1] = *(uint64_t*)0x20000100;
-*(uint64_t*)0x20001380 = 0x20001140;
-*(uint64_t*)0x20001140 = 0;
-*(uint32_t*)0x20001148 = 0;
-*(uint32_t*)0x2000114c = 0;
-*(uint16_t*)0x20001150 = 8;
-*(uint16_t*)0x20001152 = 0;
-*(uint32_t*)0x20001154 = r[0];
-*(uint64_t*)0x20001158 = 0;
-*(uint64_t*)0x20001160 = 0;
-*(uint64_t*)0x20001168 = 2;
-*(uint64_t*)0x20001170 = 0;
-*(uint32_t*)0x20001178 = 0;
-*(uint32_t*)0x2000117c = -1;
-	syscall(__NR_io_submit, r[1], 1ul, 0x20001380ul);
+
+*(uint64_t*)0x20000240 = 0;
+*(uint64_t*)0x20000248 = 0;
+*(uint64_t*)0x20000250 = 0;
+*(uint64_t*)0x20000258 = 0;
+*(uint32_t*)0x20000260 = 0;
+*(uint64_t*)0x20000268 = 0;
+*(uint64_t*)0x20000270 = 0;
+*(uint64_t*)0x20000278 = 0;
+*(uint64_t*)0x20000280 = 0;
+*(uint64_t*)0x20000288 = 0xfffffd0f;
+*(uint32_t*)0x20000290 = -1;
+syz_clone3(0x20000240, 0x42);
 	return 0;
 }

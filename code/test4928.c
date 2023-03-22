@@ -11,10 +11,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#ifndef __NR_memfd_create
-#define __NR_memfd_create 319
-#endif
-
 uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
@@ -23,10 +19,11 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000280, "/dev/rfkill\000", 12);
-	res = syscall(__NR_memfd_create, 0x20000280ul, 0ul);
+	res = syscall(__NR_socket, 0xaul, 3ul, 2);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_fallocate, r[0], 0ul, 0ul, 0x1ful);
+memcpy((void*)0x20000340, "batadv_slave_0\000\000", 16);
+*(uint32_t*)0x20000350 = 0;
+	syscall(__NR_ioctl, r[0], 0x8918, 0x20000340ul);
 	return 0;
 }

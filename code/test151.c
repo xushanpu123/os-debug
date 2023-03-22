@@ -3,40 +3,15 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
-#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-#ifndef __NR_io_uring_setup
-#define __NR_io_uring_setup 425
-#endif
-
-static long syz_open_dev(volatile long a0, volatile long a1, volatile long a2)
-{
-	if (a0 == 0xc || a0 == 0xb) {
-		char buf[128];
-		sprintf(buf, "/dev/%s/%d:%d", a0 == 0xc ? "char" : "block", (uint8_t)a1, (uint8_t)a2);
-		return open(buf, O_RDWR, 0);
-	} else {
-		char buf[1024];
-		char* hash;
-		strncpy(buf, (char*)a0, sizeof(buf) - 1);
-		buf[sizeof(buf) - 1] = 0;
-		while ((hash = strchr(buf, '#'))) {
-			*hash = '0' + (char)(a1 % 10);
-			a1 /= 10;
-		}
-		return open(buf, a2, 0);
-	}
-}
-
-uint64_t r[2] = {0xffffffffffffffff, 0xffffffffffffffff};
+uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
 {
@@ -44,20 +19,19 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000040, "/dev/loop#\000", 11);
-	res = -1;
-res = syz_open_dev(0x20000040, 0, 0);
+	res = syscall(__NR_socket, 0x10ul, 3ul, 0);
 	if (res != -1)
 		r[0] = res;
-*(uint32_t*)0x20000084 = 0xf8c1;
-*(uint32_t*)0x20000088 = 0;
-*(uint32_t*)0x2000008c = 0;
-*(uint32_t*)0x20000090 = 0;
-*(uint32_t*)0x20000098 = -1;
-memset((void*)0x2000009c, 0, 12);
-	res = syscall(__NR_io_uring_setup, 0x6f33, 0x20000080ul);
-	if (res != -1)
-		r[1] = res;
-	syscall(__NR_ioctl, r[0], 0x4c06, r[1]);
+*(uint64_t*)0x20000040 = 0;
+*(uint32_t*)0x20000048 = 0;
+*(uint64_t*)0x20000050 = 0x20000300;
+*(uint64_t*)0x20000300 = 0x20000080;
+memcpy((void*)0x20000080, "\x18\x00\x00\x00\x68\x00\x03\x00\xf3\xef\x2f\xd9\x2f\xa1\x00\xbf\x05\xed", 18);
+*(uint64_t*)0x20000308 = 0x18;
+*(uint64_t*)0x20000058 = 1;
+*(uint64_t*)0x20000060 = 0;
+*(uint64_t*)0x20000068 = 0;
+*(uint32_t*)0x20000070 = 0;
+	syscall(__NR_sendmsg, r[0], 0x20000040ul, 0ul);
 	return 0;
 }

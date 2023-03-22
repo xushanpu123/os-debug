@@ -133,74 +133,23 @@ error_clear_loop:
 	return res;
 }
 
-uint64_t r[1] = {0xffffffffffffffff};
-
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-memcpy((void*)0x20000000, "vfat\000", 5);
-memcpy((void*)0x20000100, "./file0\000", 8);
-*(uint64_t*)0x20000200 = 0x20010000;
-memcpy((void*)0x20010000, "\x60\x1c\x6d\x6b\x64\x6f\x73\x66\x89\x62\x06\x00\x08\x40\x20\x00\x02\x00\x00\x00\x02\xf8\x00\x00\x10\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x01\x00\x06\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 96);
-*(uint64_t*)0x20000208 = 0x60;
-*(uint64_t*)0x20000210 = 0;
-*(uint64_t*)0x20000218 = 0x20010060;
-memcpy((void*)0x20010060, "RRaA\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000", 32);
-*(uint64_t*)0x20000220 = 0x20;
-*(uint64_t*)0x20000228 = 0x800;
-*(uint64_t*)0x20000230 = 0x20010080;
-memcpy((void*)0x20010080, "\x00\x00\x00\x00\x72\x72\x41\x61\x01\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x55\xaa", 32);
-*(uint64_t*)0x20000238 = 0x20;
-*(uint64_t*)0x20000240 = 0x9e0;
-*(uint64_t*)0x20000248 = 0x200100a0;
-memcpy((void*)0x200100a0, "\x60\x1c\x6d\x6b\x64\x6f\x73\x66\x89\x62\x06\x00\x08\x40\x20\x00\x02\x00\x00\x00\x02\xf8\x00\x00\x10\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x01\x00\x06\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 96);
-*(uint64_t*)0x20000250 = 0x60;
-*(uint64_t*)0x20000258 = 0x3000;
-*(uint64_t*)0x20000260 = 0x20010100;
-memcpy((void*)0x20010100, "RRaA\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000", 32);
-*(uint64_t*)0x20000268 = 0x20;
-*(uint64_t*)0x20000270 = 0x3800;
-*(uint64_t*)0x20000278 = 0x20010120;
-memcpy((void*)0x20010120, "\x00\x00\x00\x00\x72\x72\x41\x61\x06\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x55\xaa", 32);
-*(uint64_t*)0x20000280 = 0x20;
-*(uint64_t*)0x20000288 = 0x39e0;
-*(uint64_t*)0x20000290 = 0x20010140;
-memcpy((void*)0x20010140, "\xf8\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f", 32);
-*(uint64_t*)0x20000298 = 0x20;
-*(uint64_t*)0x200002a0 = 0x10000;
-*(uint64_t*)0x200002a8 = 0x20010160;
-memcpy((void*)0x20010160, "\xf8\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f", 32);
-*(uint64_t*)0x200002b0 = 0x20;
-*(uint64_t*)0x200002b8 = 0x10800;
-*(uint64_t*)0x200002c0 = 0x20010180;
-memcpy((void*)0x20010180, "\x53\x59\x5a\x4b\x41\x4c\x4c\x45\x52\x20\x20\x08\x00\x00\x18\x60\x2c\x55\x2c\x55\x00\x00\x18\x60\x2c\x55\x00\x00\x00\x00\x00\x00\x41\x66\x00\x69\x00\x6c\x00\x65\x00\x30\x00\x0f\x00\xfc\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x00\xff\xff\xff\xff\x46\x49\x4c\x45\x30\x20\x20\x20\x20\x20\x20\x10\x00\x38\x18\x60\x2c\x55\x2c\x55\x00\x00\x18\x60\x2c\x55\x03\x00\x00\x00\x00\x00\x41\x66\x00\x69\x00\x6c\x00\x65\x00\x31\x00\x0f\x00\x10\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x00\xff\xff\xff\xff\x46\x49\x4c\x45\x31\x20\x20\x20\x20\x20\x20\x20\x00\x38\x18\x60\x2c\x55\x2c\x55\x00\x00\x18\x60\x2c\x55\x05\x00\x0a\x00\x00\x00\x41\x66\x00\x69\x00\x6c\x00\x65\x00\x32\x00\x0f\x00\x14\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x00\xff\xff\xff\xff\x46\x49\x4c\x45\x32\x20\x20\x20\x20\x20\x20\x20\x00\x38\x18\x60\x2c\x55\x2c\x55\x00\x00\x18\x60\x2c\x55\x06\x00\x28\x23\x00\x00\x41\x66\x00\x69\x00\x6c\x00\x65\x00\x2e\x00\x0f\x00\xd2\x63\x00\x6f\x00\x6c\x00\x64\x00\x00\x00\xff\xff\x00\x00\xff\xff\xff\xff\x46\x49\x4c\x45\x7e\x31\x20\x20\x43\x4f\x4c\x20\x00\x38\x18\x60\x2c\x55\x2c\x55\x00\x00\x18\x60\x2c\x55\x07\x00\x64\x00\x00\x00", 288);
-*(uint64_t*)0x200002c8 = 0x120;
-*(uint64_t*)0x200002d0 = 0x11000;
-*(uint64_t*)0x200002d8 = 0x200102a0;
-memcpy((void*)0x200102a0, "\x2e\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x10\x00\x38\x18\x60\x2c\x55\x2c\x55\x00\x00\x18\x60\x2c\x55\x03\x00\x00\x00\x00\x00\x2e\x2e\x20\x20\x20\x20\x20\x20\x20\x20\x20\x10\x00\x38\x18\x60\x2c\x55\x2c\x55\x00\x00\x18\x60\x2c\x55\x00\x00\x00\x00\x00\x00\x41\x66\x00\x69\x00\x6c\x00\x65\x00\x30\x00\x0f\x00\xfc\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x00\xff\xff\xff\xff\x46\x49\x4c\x45\x30\x20\x20\x20\x20\x20\x20\x20\x00\x38\x18\x60\x2c\x55\x2c\x55\x00\x00\x18\x60\x2c\x55\x04\x00\x1a\x04\x00\x00", 128);
-*(uint64_t*)0x200002e0 = 0x80;
-*(uint64_t*)0x200002e8 = 0x31000;
-*(uint64_t*)0x200002f0 = 0x20010320;
-memcpy((void*)0x20010320, "syzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkal\000\000\000\000\000\000", 1056);
-*(uint64_t*)0x200002f8 = 0x420;
-*(uint64_t*)0x20000300 = 0x51000;
-*(uint64_t*)0x20000308 = 0x20010740;
-memcpy((void*)0x20010740, "syzkallers\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000", 32);
-*(uint64_t*)0x20000310 = 0x20;
-*(uint64_t*)0x20000318 = 0x71000;
-*(uint64_t*)0x20000320 = 0x20010760;
-memcpy((void*)0x20010760, "syzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallers\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000", 128);
-*(uint64_t*)0x20000328 = 0x80;
-*(uint64_t*)0x20000330 = 0xb1000;
-memset((void*)0x200107e0, 0, 1);
-syz_mount_image(0x20000000, 0x20000100, 0x100000, 0xd, 0x20000200, 0, 0x200107e0, 1);
-memcpy((void*)0x20000040, "./file1\000", 8);
-	res = syscall(__NR_openat, 0xffffff9c, 0x20000040ul, 0x42ul, 0ul);
-	if (res != -1)
-		r[0] = res;
-	syscall(__NR_close, r[0]);
+
+memcpy((void*)0x20000140, "tmpfs\000", 6);
+memcpy((void*)0x20000180, "./file0\000", 8);
+memcpy((void*)0x20005580, "mpol", 4);
+*(uint8_t*)0x20005584 = 0x3d;
+memcpy((void*)0x20005585, "bind", 4);
+*(uint8_t*)0x20005589 = 0x3a;
+*(uint8_t*)0x2000558a = 0x2c;
+*(uint8_t*)0x2000558b = 0x30;
+*(uint8_t*)0x2000558c = 0;
+*(uint8_t*)0x2000558d = 0x2c;
+*(uint8_t*)0x2000558e = 0;
+syz_mount_image(0x20000140, 0x20000180, 0, 0, 0x20000000, 0, 0x20005580, 0);
 	return 0;
 }

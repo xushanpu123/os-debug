@@ -11,22 +11,21 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[2] = {0xffffffffffffffff, 0x0};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-memcpy((void*)0x20000040, "./file1\000", 8);
-	syscall(__NR_openat, 0xffffff9c, 0x20000040ul, 0x42ul, 0ul);
-memcpy((void*)0x20000000, "./file1\000", 8);
-*(uint32_t*)0x200000c0 = 0x90;
-*(uint32_t*)0x200000c4 = 0x24;
-*(uint32_t*)0x200000c8 = 0;
-*(uint32_t*)0x200000cc = 0;
-*(uint32_t*)0x200000d0 = 0;
-*(uint16_t*)0x200000d4 = 0x80;
-memcpy((void*)0x200000d6, "\x34\xf1\xe3\x78\x32\xbb\xfa\x15\xad\xfa\xab\xd7\x86\xe6\x83\x45\x00\x9e\x67\x4d\xd9\x45\x43\xd9\x24\x0a\xdc\x40\xa0\x4a\x5d\x0e\x1c\x2f\x52\xa5\x91\x20\x22\x21\x83\xf9\xcd\xdc\xb7\xae\x60\x47\xc0\x56\x6a\x42\xb5\x96\xcb\x66\x2b\xea\xb0\x95\xc1\x0f\xd9\xe2\xf1\x41\xad\x50\xda\x21\x43\x89\x28\x86\xdb\x25\xb0\x19\xf2\x2b\xc1\x02\x19\x4a\x42\xe2\x0f\x6d\x26\xfe\x6f\x69\x8a\x3e\x43\x84\x65\x97\xee\x0f\x0e\x0d\x94\x2f\x51\x33\xdf\x88\xcb\x33\x0a\x5e\x26\xb3\xa8\x56\xf8\x32\xa3\x64\xbd\x1f\x99\x81\x72\xb1\x21\xb1", 128);
-	syscall(__NR_name_to_handle_at, 0xffffff9c, 0x20000000ul, 0x200000c0ul, 0ul, 0ul);
+				intptr_t res = 0;
+memcpy((void*)0x20000100, "/dev/loop-control\000", 18);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000100ul, 0ul, 0ul);
+	if (res != -1)
+		r[0] = res;
+	res = syscall(__NR_ioctl, r[0], 0x4c82, 0);
+	if (res != -1)
+		r[1] = res;
+	syscall(__NR_ioctl, r[0], 0x4c80, r[1]);
 	return 0;
 }

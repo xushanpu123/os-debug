@@ -17,9 +17,10 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 
-memcpy((void*)0x20000040, "./file1\000", 8);
-	syscall(__NR_openat, 0xffffff9c, 0x20000040ul, 0x42ul, 0ul);
-memcpy((void*)0x20000100, "./file1\000", 8);
-	syscall(__NR_statfs, 0x20000100ul, 0x20000140ul);
+*(uint64_t*)0x200001c0 = 0;
+*(uint32_t*)0x200001c8 = 0;
+*(uint32_t*)0x200001cc = 0;
+*(uint32_t*)0x200001d0 = 0;
+	syscall(__NR_timer_create, 0ul, 0x200001c0ul, 0ul);
 	return 0;
 }

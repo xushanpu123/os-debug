@@ -3,20 +3,22 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
+#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifndef __NR_io_uring_register
+#define __NR_io_uring_register 427
+#endif
 #ifndef __NR_io_uring_setup
 #define __NR_io_uring_setup 425
-#endif
-#ifndef __NR_pwritev2
-#define __NR_pwritev2 328
 #endif
 
 #define SIZEOF_IO_URING_SQE 64
@@ -90,26 +92,50 @@ static long syz_io_uring_setup(volatile long a0, volatile long a1, volatile long
 	return fd_io_uring;
 }
 
+static long syz_open_procfs(volatile long a0, volatile long a1)
+{
+	char buf[128];
+	memset(buf, 0, sizeof(buf));
+	if (a0 == 0) {
+		snprintf(buf, sizeof(buf), "/proc/self/%s", (char*)a1);
+	} else if (a0 == -1) {
+		snprintf(buf, sizeof(buf), "/proc/thread-self/%s", (char*)a1);
+	} else {
+		snprintf(buf, sizeof(buf), "/proc/self/task/%d/%s", (int)a0, (char*)a1);
+	}
+	int fd = open(buf, O_RDWR);
+	if (fd == -1)
+		fd = open(buf, O_RDONLY);
+	return fd;
+}
+
+uint64_t r[2] = {0xffffffffffffffff, 0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-*(uint64_t*)0x20001440 = 0;
-*(uint64_t*)0x20001448 = 0;
-*(uint64_t*)0x20001450 = 0x20002680;
-memset((void*)0x20002680, 249, 1);
-*(uint64_t*)0x20001458 = 1;
-	syscall(__NR_pwritev2, -1, 0x20001440ul, 2ul, 0, 0, 0ul);
-	syscall(__NR_socket, 2ul, 2ul, 0);
-	syscall(__NR_ioctl, -1, 0xd000943e, 0ul);
-*(uint32_t*)0x200014c4 = 0;
-*(uint32_t*)0x200014c8 = 0;
-*(uint32_t*)0x200014cc = 0;
-*(uint32_t*)0x200014d0 = 0x358;
-*(uint32_t*)0x200014d8 = -1;
-memset((void*)0x200014dc, 0, 12);
-syz_io_uring_setup(0x3089, 0x200014c0, 0x20ffd000, 0x20ffb000, 0x20002540, 0x20002580);
+				intptr_t res = 0;
+*(uint32_t*)0x20000084 = 0;
+*(uint32_t*)0x20000088 = 0;
+*(uint32_t*)0x2000008c = 0;
+*(uint32_t*)0x20000090 = 0;
+*(uint32_t*)0x20000098 = 0;
+memset((void*)0x2000009c, 0, 12);
+	res = -1;
+res = syz_io_uring_setup(0x41b2, 0x20000080, 0x200a0000, 0x200b0000, 0x20000000, 0x20000140);
+	if (res != -1)
+		r[0] = res;
+*(uint32_t*)0x20000240 = -1;
+*(uint32_t*)0x20000244 = -1;
+*(uint32_t*)0x20000248 = -1;
+	syscall(__NR_io_uring_register, r[0], 2ul, 0x20000240ul, 0x40000000000002a1ul);
+memcpy((void*)0x20000380, "fdinfo/3\000", 9);
+	res = -1;
+res = syz_open_procfs(-1, 0x20000380);
+	if (res != -1)
+		r[1] = res;
+	syscall(__NR_pread64, r[1], 0x20000080ul, 0xc4ul, 0ul);
 	return 0;
 }

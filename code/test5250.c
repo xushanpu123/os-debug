@@ -11,7 +11,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[2] = {0xffffffffffffffff, 0xffffffffffffffff};
+#ifndef __NR_seccomp
+#define __NR_seccomp 317
+#endif
+
+uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
 {
@@ -19,26 +23,16 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x200002c0, "./file0\000", 8);
-	res = syscall(__NR_creat, 0x200002c0ul, 0ul);
+*(uint16_t*)0x20000340 = 1;
+*(uint64_t*)0x20000348 = 0x20000300;
+*(uint16_t*)0x20000300 = 6;
+*(uint8_t*)0x20000302 = 0;
+*(uint8_t*)0x20000303 = 0;
+*(uint32_t*)0x20000304 = 0x7fc00002;
+	res = syscall(__NR_seccomp, 1ul, 8ul, 0x20000340ul);
 	if (res != -1)
 		r[0] = res;
-memcpy((void*)0x20000080, "/dev/full\000", 10);
-	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000080ul, 0ul, 0ul);
-	if (res != -1)
-		r[1] = res;
-memcpy((void*)0x20000000, "./file0\000", 8);
-memcpy((void*)0x20000040, "9p\000", 3);
-memcpy((void*)0x200000c0, "trans=fd,", 9);
-memcpy((void*)0x200000c9, "rfdno", 5);
-*(uint8_t*)0x200000ce = 0x3d;
-sprintf((char*)0x200000cf, "0x%016llx", (long long)r[1]);
-*(uint8_t*)0x200000e1 = 0x2c;
-memcpy((void*)0x200000e2, "wfdno", 5);
-*(uint8_t*)0x200000e7 = 0x3d;
-sprintf((char*)0x200000e8, "0x%016llx", (long long)r[0]);
-*(uint8_t*)0x200000fa = 0x2c;
-*(uint8_t*)0x200000fb = 0;
-	syscall(__NR_mount, 0ul, 0x20000000ul, 0x20000040ul, 0ul, 0x200000c0ul);
+	syscall(__NR_ioctl, -1, 0xc0182101, 0ul);
+	syscall(__NR_ioctl, r[0], 0xc0502100, 0x20001e80ul);
 	return 0;
 }

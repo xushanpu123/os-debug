@@ -11,24 +11,17 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+#ifndef __NR_renameat2
+#define __NR_renameat2 316
+#endif
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-	res = syscall(__NR_socket, 2ul, 3ul, 2);
-	if (res != -1)
-		r[0] = res;
-	syscall(__NR_write, -1, 0ul, 0ul);
-*(uint64_t*)0x200000c0 = 0;
-*(uint64_t*)0x200000c8 = 0;
-*(uint32_t*)0x200000d0 = 0;
-*(uint32_t*)0x200000d4 = 0x80;
-*(uint32_t*)0x200000d8 = 0;
-	syscall(__NR_ioctl, -1, 0xc020660b, 0x200000c0ul);
-	syscall(__NR_ioctl, r[0], 0xc0189436, 0x200000c0ul);
+
+memcpy((void*)0x20000240, "./file0\000", 8);
+	syscall(__NR_renameat2, -1, 0ul, -1, 0x20000240ul, 6ul);
 	return 0;
 }

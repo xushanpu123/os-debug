@@ -17,11 +17,7 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 
-memcpy((void*)0x20000040, "./cgroup/cgroup.procs\000", 22);
-	syscall(__NR_openat, 0xffffff9c, 0x20000040ul, 0ul, 0ul);
-*(uint32_t*)0x20000000 = 0;
-*(uint32_t*)0x20000004 = 0;
-*(uint32_t*)0x20000008 = 9;
-	syscall(__NR_rt_sigqueueinfo, 0, 0, 0x20000000ul);
+memcpy((void*)0x20000000, "/dev/snapshot\000", 14);
+	syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000000ul, 0x2003ul, 0ul);
 	return 0;
 }

@@ -11,6 +11,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#define BITMASK(bf_off,bf_len) (((1ull << (bf_len)) - 1) << (bf_off))
+#define STORE_BY_BITMASK(type,htobe,addr,val,bf_off,bf_len) *(type*)(addr) = htobe((htobe(*(type*)(addr)) & ~BITMASK((bf_off), (bf_len))) | (((type)(val) << (bf_off)) & BITMASK((bf_off), (bf_len))))
+
 uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
@@ -19,15 +22,28 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000240, "/dev/snd/timer\000", 15);
-	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000240ul, 0ul, 0);
+memcpy((void*)0x20000080, "/dev/snd/seq\000", 13);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000080ul, 0x8001ul, 0);
 	if (res != -1)
 		r[0] = res;
-*(uint32_t*)0x20000000 = 1;
-*(uint32_t*)0x20000004 = 0;
-*(uint32_t*)0x20000008 = 0;
-*(uint32_t*)0x2000000c = 0;
-*(uint32_t*)0x20000010 = 0;
-	syscall(__NR_ioctl, r[0], 0xc0145401, 0x20000000ul);
+*(uint32_t*)0x20000100 = 0;
+*(uint32_t*)0x20000104 = 0;
+STORE_BY_BITMASK(uint32_t, , 0x20000108, 0, 0, 1);
+memcpy((void*)0x20000109, "queue1\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000", 64);
+*(uint32_t*)0x2000014c = 0;
+memset((void*)0x20000150, 0, 60);
+	syscall(__NR_ioctl, r[0], 0xc08c5332, 0x20000100ul);
+*(uint8_t*)0x200000c0 = 0;
+*(uint8_t*)0x200000c1 = 0;
+*(uint8_t*)0x200000c2 = 0;
+*(uint8_t*)0x200000c3 = 0;
+*(uint32_t*)0x200000c4 = 0;
+*(uint32_t*)0x200000c8 = 0;
+*(uint8_t*)0x200000cc = 0;
+*(uint8_t*)0x200000cd = 0;
+*(uint8_t*)0x200000ce = 0;
+*(uint8_t*)0x200000cf = 0x20;
+memcpy((void*)0x200000d0, "\x7d\xec\x05\x2e\x0f\xa3\xad\xe0\x47\x7c\xbb\x73", 12);
+	syscall(__NR_write, r[0], 0x200000c0ul, 0x1cul);
 	return 0;
 }

@@ -11,15 +11,22 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifndef __NR_io_uring_setup
+#define __NR_io_uring_setup 425
+#endif
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 
-*(uint32_t*)0x20000000 = -1;
-*(uint16_t*)0x20000004 = 0;
-*(uint16_t*)0x20000006 = 0;
-	syscall(__NR_poll, 0x20000000ul, 0x200000000000009ful, 1);
+*(uint32_t*)0x20000004 = 0;
+*(uint32_t*)0x20000008 = 0x10;
+*(uint32_t*)0x2000000c = 0;
+*(uint32_t*)0x20000010 = 0;
+*(uint32_t*)0x20000018 = -1;
+memset((void*)0x2000001c, 0, 12);
+	syscall(__NR_io_uring_setup, 0x800070fa, 0x20000000ul);
 	return 0;
 }

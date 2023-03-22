@@ -3,34 +3,13 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
-#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-static long syz_open_dev(volatile long a0, volatile long a1, volatile long a2)
-{
-	if (a0 == 0xc || a0 == 0xb) {
-		char buf[128];
-		sprintf(buf, "/dev/%s/%d:%d", a0 == 0xc ? "char" : "block", (uint8_t)a1, (uint8_t)a2);
-		return open(buf, O_RDWR, 0);
-	} else {
-		char buf[1024];
-		char* hash;
-		strncpy(buf, (char*)a0, sizeof(buf) - 1);
-		buf[sizeof(buf) - 1] = 0;
-		while ((hash = strchr(buf, '#'))) {
-			*hash = '0' + (char)(a1 % 10);
-			a1 /= 10;
-		}
-		return open(buf, a2, 0);
-	}
-}
 
 uint64_t r[1] = {0xffffffffffffffff};
 
@@ -40,11 +19,53 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000000, "/dev/loop#\000", 11);
-	res = -1;
-res = syz_open_dev(0x20000000, 0, 0);
+	res = syscall(__NR_socket, 0x10ul, 3ul, 6);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_writev, r[0], 0ul, 0ul);
+*(uint64_t*)0x20000200 = 0;
+*(uint32_t*)0x20000208 = 0;
+*(uint64_t*)0x20000210 = 0x20000140;
+*(uint64_t*)0x20000140 = 0x200004c0;
+*(uint32_t*)0x200004c0 = 0xb8;
+*(uint16_t*)0x200004c4 = 0x13;
+*(uint16_t*)0x200004c6 = 1;
+*(uint32_t*)0x200004c8 = 0;
+*(uint32_t*)0x200004cc = 0;
+*(uint32_t*)0x200004d0 = htobe32(0xe0000001);
+memset((void*)0x200004e0, 0, 16);
+*(uint16_t*)0x200004f0 = htobe16(0);
+*(uint16_t*)0x200004f2 = htobe16(0);
+*(uint16_t*)0x200004f4 = htobe16(0);
+*(uint16_t*)0x200004f6 = htobe16(0);
+*(uint16_t*)0x200004f8 = 2;
+*(uint8_t*)0x200004fa = 0x20;
+*(uint8_t*)0x200004fb = 0;
+*(uint8_t*)0x200004fc = 0;
+*(uint32_t*)0x20000500 = 0;
+*(uint32_t*)0x20000504 = 0;
+*(uint64_t*)0x20000508 = 0;
+*(uint64_t*)0x20000510 = 0;
+*(uint64_t*)0x20000518 = 0;
+*(uint64_t*)0x20000520 = 0;
+*(uint64_t*)0x20000528 = 0;
+*(uint64_t*)0x20000530 = 0;
+*(uint64_t*)0x20000538 = 0;
+*(uint64_t*)0x20000540 = 0;
+*(uint64_t*)0x20000548 = 0;
+*(uint64_t*)0x20000550 = 0;
+*(uint64_t*)0x20000558 = 0;
+*(uint64_t*)0x20000560 = 0;
+*(uint32_t*)0x20000568 = 0;
+*(uint32_t*)0x2000056c = 0;
+*(uint8_t*)0x20000570 = 0;
+*(uint8_t*)0x20000571 = 0;
+*(uint8_t*)0x20000572 = 0;
+*(uint8_t*)0x20000573 = 0;
+*(uint64_t*)0x20000148 = 0xb8;
+*(uint64_t*)0x20000218 = 1;
+*(uint64_t*)0x20000220 = 0;
+*(uint64_t*)0x20000228 = 0;
+*(uint32_t*)0x20000230 = 0;
+	syscall(__NR_sendmsg, r[0], 0x20000200ul, 0ul);
 	return 0;
 }

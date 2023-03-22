@@ -11,11 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#ifndef __NR_close_range
-#define __NR_close_range 436
-#endif
-
-uint64_t r[1] = {0xffffffffffffffff};
+uint64_t r[1] = {0x0};
 
 int main(void)
 {
@@ -23,11 +19,16 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000040, "./file1\000", 8);
-	res = syscall(__NR_openat, 0xffffff9c, 0x20000040ul, 0x42ul, 0ul);
+memcpy((void*)0x20000080, ".\000", 2);
+	res = syscall(__NR_newfstatat, 0xffffffffffffff9cul, 0x20000080ul, 0x20000140ul, 0ul);
 	if (res != -1)
-		r[0] = res;
-	syscall(__NR_close_range, -1, -1, 2ul);
-	syscall(__NR_write, r[0], 0ul, 0ul);
+r[0] = *(uint32_t*)0x20000158;
+	syscall(__NR_setresuid, 0, r[0], 0);
+memcpy((void*)0x200001c0, "dns_resolver\000", 13);
+memcpy((void*)0x20000080, "syz", 3);
+*(uint8_t*)0x20000083 = 0x21;
+*(uint8_t*)0x20000084 = 0;
+memcpy((void*)0x200000c0, "\x81\x4b\x53\x5b\x7f\x76\x17\x4a\xc3\xca\x98\x86\x60\xc2\xff\x6b\x0e\x0e\xfd\x93\x6d\xe6\x44\xb8\xb2\xc2\xbd\x1e\xc7\xb1\x64\x74\x7d\x6a\x68\x77\x83\xa6\x50\x1e\x25\x40\xf8\xd1\x66\xf6\x78\x3d\x10\x25\x69\x42\x7a\xcb\x73\x3b\x94\x78\xb7\x52\x17\xd3\xcc\x2c\xf1\xbe\xc1\xde\x4c\x95\x79\x51\xbf\xa7\xcd\x02\x3a\x4a\xbd\x2a\x98\x09\xcb\x28\xac\xcb\x05\x3f\x16\x2b\x06\x4c\x58\xa6\xc7\x7f\x0a\xb8\x05\xe6\x79\xe9\xd8\x4b\x78\xf7\x56\xf2\x24\x60\xda\x7c\xcb\x3f\x0f\x33\x06\xed\xd8\xf6\x22\x96\xa1\x3f\xe3\x92\x91\xf1\x65\xe9\x6b\x31\x0c\x87\x13\x99\x6c\xaf\xd7\x1b\x92\x0b\x7e\xe1\x7a\xdc\x00\x4a\xc6\xdb\x7c\x28\xab\x0a\x9f\x7f\xca\x78\x00", 159);
+	syscall(__NR_add_key, 0x200001c0ul, 0x20000080ul, 0x200000c0ul, 0xfe72ul, 0xfffffffd);
 	return 0;
 }

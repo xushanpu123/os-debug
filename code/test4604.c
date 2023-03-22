@@ -3,6 +3,7 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
+#include <sched.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,26 +12,55 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+#include <linux/sched.h>
+
+#ifndef __NR_clone3
+#define __NR_clone3 435
+#endif
+
+#define USLEEP_FORKED_CHILD (3 * 50 *1000)
+
+static long handle_clone_ret(long ret)
+{
+	if (ret != 0) {
+		return ret;
+	}
+	usleep(USLEEP_FORKED_CHILD);
+	syscall(__NR_exit, 0);
+	while (1) {
+	}
+}
+
+#define MAX_CLONE_ARGS_BYTES 256
+static long syz_clone3(volatile long a0, volatile long a1)
+{
+	unsigned long copy_size = a1;
+	if (copy_size < sizeof(uint64_t) || copy_size > MAX_CLONE_ARGS_BYTES)
+		return -1;
+	char clone_args[MAX_CLONE_ARGS_BYTES];
+	memcpy(&clone_args, (void*)a0, copy_size);
+	uint64_t* flags = (uint64_t*)&clone_args;
+	*flags &= ~CLONE_VM;
+	return handle_clone_ret((long)syscall(__NR_clone3, &clone_args, copy_size));
+}
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-	res = syscall(__NR_socket, 0xaul, 3ul, 2);
-	if (res != -1)
-		r[0] = res;
-*(uint32_t*)0x20000f40 = 0;
-*(uint16_t*)0x20000f48 = 0xa;
-*(uint16_t*)0x20000f4a = htobe16(0);
-*(uint32_t*)0x20000f4c = htobe32(0);
-*(uint8_t*)0x20000f50 = 0xfe;
-*(uint8_t*)0x20000f51 = 0x80;
-memset((void*)0x20000f52, 0, 13);
-*(uint8_t*)0x20000f5f = 0;
-*(uint32_t*)0x20000f60 = 0;
-	syscall(__NR_setsockopt, r[0], 0x29, 0x2a, 0x20000f40ul, 0x88ul);
+
+*(uint64_t*)0x20000440 = 0;
+*(uint64_t*)0x20000448 = 0;
+*(uint64_t*)0x20000450 = 0;
+*(uint64_t*)0x20000458 = 0;
+*(uint32_t*)0x20000460 = 0;
+*(uint64_t*)0x20000468 = 0;
+*(uint64_t*)0x20000470 = 0;
+*(uint64_t*)0x20000478 = 0;
+*(uint64_t*)0x20000480 = 0;
+*(uint64_t*)0x20000488 = 0;
+*(uint32_t*)0x20000490 = -1;
+syz_clone3(0x20000440, 0x41);
 	return 0;
 }

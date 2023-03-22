@@ -16,7 +16,11 @@ int main(void)
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				syscall(__NR_setuid, 0xee01);
-	syscall(__NR_setresgid, 0, 0xee00, 0);
+
+memcpy((void*)0x20000040, "dns_resolver\000", 13);
+memcpy((void*)0x20000080, "syz", 3);
+*(uint8_t*)0x20000083 = 0x20;
+*(uint8_t*)0x20000084 = 0;
+	syscall(__NR_request_key, 0x20000040ul, 0x20000080ul, 0ul, 0);
 	return 0;
 }

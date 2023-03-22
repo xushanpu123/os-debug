@@ -11,6 +11,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#define BITMASK(bf_off,bf_len) (((1ull << (bf_len)) - 1) << (bf_off))
+#define STORE_BY_BITMASK(type,htobe,addr,val,bf_off,bf_len) *(type*)(addr) = htobe((htobe(*(type*)(addr)) & ~BITMASK((bf_off), (bf_len))) | (((type)(val) << (bf_off)) & BITMASK((bf_off), (bf_len))))
+
 uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
@@ -19,10 +22,26 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 1ul, 1ul, 0);
+memcpy((void*)0x20000000, "/dev/snd/seq\000", 13);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000000ul, 0ul, 0);
 	if (res != -1)
 		r[0] = res;
-*(uint32_t*)0x20000100 = 0x3f1e;
-	syscall(__NR_setsockopt, r[0], 1, 0x23, 0x20000100ul, 4ul);
+*(uint32_t*)0x20000080 = 0;
+*(uint32_t*)0x20000084 = 0;
+STORE_BY_BITMASK(uint32_t, , 0x20000088, 0, 0, 1);
+memcpy((void*)0x20000089, "queue1\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000", 64);
+*(uint32_t*)0x200000cc = 0;
+memset((void*)0x200000d0, 0, 60);
+	syscall(__NR_ioctl, -1, 0xc08c5332, 0x20000080ul);
+*(uint32_t*)0x20000140 = 0;
+*(uint32_t*)0x20000144 = 0;
+*(uint32_t*)0x20000148 = 1;
+*(uint32_t*)0x2000014c = 0;
+*(uint32_t*)0x20000150 = -1;
+*(uint32_t*)0x20000154 = 1;
+*(uint32_t*)0x20000158 = 0;
+*(uint32_t*)0x2000015c = 0xfffffffc;
+memset((void*)0x20000160, 0, 64);
+	syscall(__NR_ioctl, r[0], 0x40605346, 0x20000140ul);
 	return 0;
 }

@@ -11,11 +11,25 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[1] = {0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				syscall(__NR_request_key, 0ul, 0ul, 0ul, 0xfffffff8);
+				intptr_t res = 0;
+memcpy((void*)0x20000040, "/dev/snd/timer\000", 15);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000040ul, 0ul, 0);
+	if (res != -1)
+		r[0] = res;
+*(uint32_t*)0x20000000 = 0;
+*(uint32_t*)0x20000004 = 1;
+*(uint32_t*)0x20000008 = 0;
+*(uint32_t*)0x2000000c = 0;
+*(uint32_t*)0x20000010 = 0;
+memset((void*)0x20000014, 0, 32);
+	syscall(__NR_ioctl, r[0], 0x40345410, 0x20000000ul);
+	syscall(__NR_ioctl, r[0], 0x40505412, 0ul);
 	return 0;
 }

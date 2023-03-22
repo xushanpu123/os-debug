@@ -16,6 +16,11 @@ int main(void)
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				syscall(__NR_setresuid, 0, -1, 0xee00);
+
+*(uint32_t*)0x20000300 = 0;
+*(uint32_t*)0x20000304 = 0;
+	syscall(__NR_setgroups, 2ul, 0x20000300ul);
+	syscall(__NR_unshare, 0x48000000ul);
+	syscall(__NR_socket, 2ul, 2ul, 1);
 	return 0;
 }

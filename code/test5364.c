@@ -11,25 +11,27 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[1] = {0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-memcpy((void*)0x20000000, "./file0\000", 8);
-	syscall(__NR_creat, 0x20000000ul, 0ul);
-memcpy((void*)0x200000c0, "./file0\000", 8);
-memcpy((void*)0x20000100, "cgroup\000", 7);
-memcpy((void*)0x20000140, "all", 3);
-*(uint8_t*)0x20000143 = 0x2c;
-memcpy((void*)0x20000144, "xattr", 5);
-*(uint8_t*)0x20000149 = 0x2c;
-memcpy((void*)0x2000014a, "cpuset_v2_mode", 14);
-*(uint8_t*)0x20000158 = 0x2c;
-memcpy((void*)0x20000159, "noprefix", 8);
-*(uint8_t*)0x20000161 = 0x2c;
-*(uint8_t*)0x20000162 = 0;
-	syscall(__NR_mount, 0ul, 0x200000c0ul, 0x20000100ul, 0ul, 0x20000140ul);
+				intptr_t res = 0;
+	res = syscall(__NR_socket, 0x10ul, 3ul, 0);
+	if (res != -1)
+		r[0] = res;
+*(uint64_t*)0x20000000 = 0;
+*(uint32_t*)0x20000008 = 0;
+*(uint64_t*)0x20000010 = 0x20000040;
+*(uint64_t*)0x20000040 = 0x20000300;
+memcpy((void*)0x20000300, "\x24\x00\x00\x00\x18\x00\x01\xde\x35\xa2\x2b\x00\x00\x00\x00\x00\x0a\x6e\xb6\x2d\xa2\xfb\x7d\x02", 24);
+*(uint64_t*)0x20000048 = 0x24;
+*(uint64_t*)0x20000018 = 1;
+*(uint64_t*)0x20000020 = 0;
+*(uint64_t*)0x20000028 = 0;
+*(uint32_t*)0x20000030 = 0;
+	syscall(__NR_sendmsg, r[0], 0x20000000ul, 0ul);
 	return 0;
 }

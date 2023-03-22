@@ -11,11 +11,43 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifndef __NR_io_pgetevents
+#define __NR_io_pgetevents 333
+#endif
+
+uint64_t r[3] = {0x0, 0x0, 0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				syscall(__NR_prctl, 0x23ul, 2ul, 0x20ff1000ul, 0, 0);
+				intptr_t res = 0;
+	res = syscall(__NR_io_setup, 0x3ff, 0x20000040ul);
+	if (res != -1)
+r[0] = *(uint64_t*)0x20000040;
+	res = syscall(__NR_clock_gettime, 0ul, 0x20000280ul);
+	if (res != -1)
+r[1] = *(uint64_t*)0x20000288;
+*(uint64_t*)0x20000000 = 0;
+*(uint64_t*)0x20000008 = r[1]+60000000;
+	syscall(__NR_io_pgetevents, r[0], 1ul, 1ul, 0x20000300ul, 0x20000000ul, 0ul);
+	res = syscall(__NR_socket, 1ul, 2ul, 0);
+	if (res != -1)
+		r[2] = res;
+*(uint64_t*)0x20001480 = 0x200002c0;
+*(uint64_t*)0x200002c0 = 0;
+*(uint32_t*)0x200002c8 = 0;
+*(uint32_t*)0x200002cc = 0;
+*(uint16_t*)0x200002d0 = 0;
+*(uint16_t*)0x200002d2 = 0;
+*(uint32_t*)0x200002d4 = r[2];
+*(uint64_t*)0x200002d8 = 0;
+*(uint64_t*)0x200002e0 = 0;
+*(uint64_t*)0x200002e8 = 0;
+*(uint64_t*)0x200002f0 = 0;
+*(uint32_t*)0x200002f8 = 0;
+*(uint32_t*)0x200002fc = -1;
+	syscall(__NR_io_submit, r[0], 1ul, 0x20001480ul);
 	return 0;
 }

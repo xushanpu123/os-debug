@@ -3,26 +3,147 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/ioctl.h>
+#include <sys/mount.h>
+#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+#include <linux/loop.h>
+
+#ifndef __NR_memfd_create
+#define __NR_memfd_create 319
+#endif
+
+static unsigned long long procid;
+
+struct fs_image_segment {
+	void* data;
+	uintptr_t size;
+	uintptr_t offset;
+};
+static int setup_loop_device(long unsigned size, long unsigned nsegs, struct fs_image_segment* segs, const char* loopname, int* memfd_p, int* loopfd_p)
+{
+	int err = 0, loopfd = -1;
+	int memfd = syscall(__NR_memfd_create, "syzkaller", 0);
+	if (memfd == -1) {
+		err = errno;
+		goto error;
+	}
+	if (ftruncate(memfd, size)) {
+		err = errno;
+		goto error_close_memfd;
+	}
+	for (size_t i = 0; i < nsegs; i++) {
+		if (pwrite(memfd, segs[i].data, segs[i].size, segs[i].offset) < 0) {
+		}
+	}
+	loopfd = open(loopname, O_RDWR);
+	if (loopfd == -1) {
+		err = errno;
+		goto error_close_memfd;
+	}
+	if (ioctl(loopfd, LOOP_SET_FD, memfd)) {
+		if (errno != EBUSY) {
+			err = errno;
+			goto error_close_loop;
+		}
+		ioctl(loopfd, LOOP_CLR_FD, 0);
+		usleep(1000);
+		if (ioctl(loopfd, LOOP_SET_FD, memfd)) {
+			err = errno;
+			goto error_close_loop;
+		}
+	}
+	*memfd_p = memfd;
+	*loopfd_p = loopfd;
+	return 0;
+
+error_close_loop:
+	close(loopfd);
+error_close_memfd:
+	close(memfd);
+error:
+	errno = err;
+	return -1;
+}
+
+static long syz_mount_image(volatile long fsarg, volatile long dir, volatile unsigned long size, volatile unsigned long nsegs, volatile long segments, volatile long flags, volatile long optsarg, volatile long change_dir)
+{
+	struct fs_image_segment* segs = (struct fs_image_segment*)segments;
+	int res = -1, err = 0, loopfd = -1, memfd = -1, need_loop_device = !!segs;
+	char* mount_opts = (char*)optsarg;
+	char* target = (char*)dir;
+	char* fs = (char*)fsarg;
+	char* source = NULL;
+	char loopname[64];
+	if (need_loop_device) {
+		memset(loopname, 0, sizeof(loopname));
+		snprintf(loopname, sizeof(loopname), "/dev/loop%llu", procid);
+		if (setup_loop_device(size, nsegs, segs, loopname, &memfd, &loopfd) == -1)
+			return -1;
+		source = loopname;
+	}
+	mkdir(target, 0777);
+	char opts[256];
+	memset(opts, 0, sizeof(opts));
+	if (strlen(mount_opts) > (sizeof(opts) - 32)) {
+	}
+	strncpy(opts, mount_opts, sizeof(opts) - 32);
+	if (strcmp(fs, "iso9660") == 0) {
+		flags |= MS_RDONLY;
+	} else if (strncmp(fs, "ext", 3) == 0) {
+		if (strstr(opts, "errors=panic") || strstr(opts, "errors=remount-ro") == 0)
+			strcat(opts, ",errors=continue");
+	} else if (strcmp(fs, "xfs") == 0) {
+		strcat(opts, ",nouuid");
+	}
+	res = mount(source, target, fs, flags, opts);
+	if (res == -1) {
+		err = errno;
+		goto error_clear_loop;
+	}
+	res = open(target, O_RDONLY | O_DIRECTORY);
+	if (res == -1) {
+		err = errno;
+		goto error_clear_loop;
+	}
+	if (change_dir) {
+		res = chdir(target);
+		if (res == -1) {
+			err = errno;
+		}
+	}
+
+error_clear_loop:
+	if (need_loop_device) {
+		ioctl(loopfd, LOOP_CLR_FD, 0);
+		close(loopfd);
+		close(memfd);
+	}
+	errno = err;
+	return res;
+}
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-	res = syscall(__NR_socket, 0xaul, 3ul, 0x3a);
-	if (res != -1)
-		r[0] = res;
-*(uint32_t*)0x20000100 = 0;
-	syscall(__NR_getsockopt, r[0], 0x29, 0x40, 0ul, 0x20000100ul);
+
+*(uint64_t*)0x20001bc0 = 0x20000bc0;
+memcpy((void*)0x20000bc0, "\x61\xc3\x62\x80\x32\xcf\x61\x77\x31\x15\x46\x51\x36\x08\x49\x73\xc4\x99\x91\xe6\x94\xa3\x50\xdc\x83\xcf\x53\x1d\x0d\x1a\x19\xc9\x16\x21\x2e\x92\x04\xda\xf8\xb3\x78\xb1\x0d\xd7\x94\x8a\x9d\x24\x00\x29\xd7\xb2\xc0\xdb\x14\x0a\x8a\x06\x86\xdb\x37\x6a\xef\x87\xaa\xf8\x1b\xc1\x57\x08\x55\xc2\x47\x4a\xb0\x95\x73\x00\x72\xde\x62\xab\x7f\x2f\xec\xbf\x34\x11\x9e\x56\xab\x1b\xba\xfb\x6c\x46\xfa\x86\xd7\x44\xbc\x4b\x7b\x9d\x0d\x1f\x29\x89\x37\xcc\x18\x96\x52\xd8\x18\xbd\x7c\xbd\xd2\xba\xea\x8b\xa2\x2a\x0b\xbb\x88\xf9\x53\x8e\x1c\xdd\xc5\xc4\x67\x29\x9b\x23\x18\x48\x2a\x62\x84\x9a\x3b\x06\xde\x74\x4a\xfc\xf7\x09\x4f\x8d\x63\x91\xde\x72\xb7\x0f\x2d\xc6\xe1\x04\x32\x6e\xed\x42\x2b\x87\xc9\x8a\xfd\x7f\x4b\x4b\xc9\x9d\xc0\xc6\x30\xde\x98\x6f\x1b\x40\xff\x7e\x3a\x96\x0f\xb0\xbc\xf1\xeb\xc8\x50\x00\x01\x9a\xfa\x0d\x4f\xf4\x80\x34\x21\x52\x7c\x00\xd1\x06\x84\x41\xb9\xe3\x76\xf5\x69\xc5\xba\xa3\xe7\x26\x4f\x78\x7c\xc5\x8d\xbb\x49\x4c\x97\x0a\x22\x92\x40\xb3\x00\xd1\xac\xc5\x7c\x33\x5f\x01\x4d\x41\x6e\x6e\x99\xd1\xe7\xfa\xd7\x3f\xf8\x6a\xe1\xc1\xb8\x51\xe9\xbd\xfb\x76\x35\x04\xab\x69\x6e\xd9\x06\x4c\xdf\x12\xdb\x8e\x83\x6f\x7a\x5f\x62\x9b\x78\x71\x14\x9c\xa1\x8e\x95\x1d\xe2\x0a\x21\x23\xb0\x57\x98\xb6\xf7\xa4\x39\x01\xbd\x4d\x3c\xe3\xa1\xc3\x87\xa3\x26\xc8\xd9\x89\x4b\xa1\xd7\x4c\x24\xe5\xfe\x15\x25\xbd\xc5\xc4\x10\xb3\x5c\x27\xfd\x4b\xe0\xf7\x84\x42\x5d\xdc\xfc\xca\xed\xf6\x11\x31\x35\x64\xe6\x70\xae\x30\x65\x3f\x90\x7f\x1f\xeb\xd0\x6a\xa3\x54\x0c\x7c\xbe\xf4\x04\x1a\x75\x12\xc4\x0d\x59\x33\xfb\x0e\x39\x78\x54\x3f\x5c\xc8\x5a\x60\x7c\x90\x21\x0f\x56\x98\x70\x76\xf9\x2e\x3f\xe5\x69\x7e\x04\xe1\x45\xa5\xf0\x9d\x03\x80\x15\x77\x0c\xde\xad\x8c\x5b\xab\x76\xe7\x8d\x18\x53\xa4\xfc\xcc\xfd\x68\x40\x5f\xfc\xab\x15\xb9\xba\xc4\x07\xef\xa0\xe2\x1b\xd3\x52\xf7\xd4\x87\x5f\x4b\x66\x1a\x3d\xf2\xdd\x8f\xe7\x59\xed\xf5\x81\x77\xc3\x6e\x5f\x89\x09\x46\x5c\x0d\xd8\x25\x32\x07\xdd\xce\x42\x7f\x98\x64\x0a\x47\x05\x28\x70\xa9\x2f\xb1\xda\xfd\xf2\x0b\x21\xf4\xf6\xb8\x09\x51\xf4\xa0\x8e\x46\x27\x38\xb9\x80\x19\xa8\x71\xb8\x95", 505);
+*(uint64_t*)0x20001bc8 = 0x1f9;
+*(uint64_t*)0x20001bd0 = 7;
+*(uint8_t*)0x20001c00 = 0;
+syz_mount_image(0, 0, 0x200, 1, 0x20001bc0, 0, 0x20001c00, 0);
 	return 0;
 }

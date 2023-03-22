@@ -3,7 +3,6 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
-#include <sched.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,28 +11,14 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define USLEEP_FORKED_CHILD (3 * 50 *1000)
+#ifndef __NR_io_uring_register
+#define __NR_io_uring_register 427
+#endif
+#ifndef __NR_io_uring_setup
+#define __NR_io_uring_setup 425
+#endif
 
-static long handle_clone_ret(long ret)
-{
-	if (ret != 0) {
-		return ret;
-	}
-	usleep(USLEEP_FORKED_CHILD);
-	syscall(__NR_exit, 0);
-	while (1) {
-	}
-}
-
-static long syz_clone(volatile long flags, volatile long stack, volatile long stack_len,
-		      volatile long ptid, volatile long ctid, volatile long tls)
-{
-	long sp = (stack + stack_len) & ~15;
-	long ret = (long)syscall(__NR_clone, flags & ~CLONE_VM, sp, ptid, ctid, tls);
-	return handle_clone_ret(ret);
-}
-
-uint64_t r[1] = {0x0};
+uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
 {
@@ -41,10 +26,19 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = -1;
-res = syz_clone(0, 0, 0, 0, 0, 0);
+*(uint32_t*)0x20000004 = 0;
+*(uint32_t*)0x20000008 = 0;
+*(uint32_t*)0x2000000c = 0;
+*(uint32_t*)0x20000010 = 0;
+*(uint32_t*)0x20000018 = -1;
+memset((void*)0x2000001c, 0, 12);
+	res = syscall(__NR_io_uring_setup, 0xedd, 0x20000000ul);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_setpriority, 1ul, r[0], 0ul);
+*(uint32_t*)0x200000c0 = -1;
+	syscall(__NR_io_uring_register, r[0], 2ul, 0x200000c0ul, 1ul);
+*(uint64_t*)0x20000380 = 0;
+*(uint64_t*)0x20000388 = 0;
+	syscall(__NR_io_uring_register, r[0], 0ul, 0x20000380ul, 1ul);
 	return 0;
 }

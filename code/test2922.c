@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+uint64_t r[1] = {0x0};
 
 int main(void)
 {
@@ -19,25 +19,15 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 0xaul, 3ul, 0x3a);
+	res = syscall(__NR_getpgrp, 0);
 	if (res != -1)
 		r[0] = res;
-*(uint8_t*)0x20000300 = -1;
-*(uint8_t*)0x20000301 = 2;
-memset((void*)0x20000302, 0, 13);
-*(uint8_t*)0x2000030f = 1;
-*(uint8_t*)0x20000310 = 0xfe;
-*(uint8_t*)0x20000311 = 0x80;
-memset((void*)0x20000312, 0, 13);
-*(uint8_t*)0x2000031f = 0xbb;
-memcpy((void*)0x20000320, " \001\000\000\000\000\000\000\000\000\000\000\000\000\000\000", 16);
-*(uint32_t*)0x20000330 = 0;
-*(uint16_t*)0x20000334 = 0;
-*(uint16_t*)0x20000336 = 0;
-*(uint32_t*)0x20000338 = 0;
-*(uint64_t*)0x20000340 = 0;
-*(uint32_t*)0x20000348 = 0;
-*(uint32_t*)0x2000034c = 0;
-	syscall(__NR_ioctl, r[0], 0x890c, 0x20000300ul);
+*(uint64_t*)0x20000500 = 0x20000140;
+*(uint64_t*)0x20000508 = 0xaa;
+*(uint64_t*)0x200006c0 = 0;
+*(uint64_t*)0x200006c8 = 0;
+*(uint64_t*)0x200006d0 = 0x20000600;
+*(uint64_t*)0x200006d8 = 0x86;
+	syscall(__NR_process_vm_writev, r[0], 0x20000500ul, 1ul, 0x200006c0ul, 2ul, 0ul);
 	return 0;
 }

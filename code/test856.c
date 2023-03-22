@@ -11,33 +11,78 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+#define BITMASK(bf_off,bf_len) (((1ull << (bf_len)) - 1) << (bf_off))
+#define STORE_BY_BITMASK(type,htobe,addr,val,bf_off,bf_len) *(type*)(addr) = htobe((htobe(*(type*)(addr)) & ~BITMASK((bf_off), (bf_len))) | (((type)(val) << (bf_off)) & BITMASK((bf_off), (bf_len))))
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-	res = syscall(__NR_socket, 0xaul, 2ul, 0);
-	if (res != -1)
-		r[0] = res;
-*(uint64_t*)0x20000980 = 0x20001180;
-*(uint16_t*)0x20001180 = 0xa;
-*(uint16_t*)0x20001182 = htobe16(0x4e21);
-*(uint32_t*)0x20001184 = htobe32(0);
-*(uint8_t*)0x20001188 = 0xfe;
-*(uint8_t*)0x20001189 = 0x80;
-memset((void*)0x2000118a, 0, 13);
-*(uint8_t*)0x20001197 = 0;
-*(uint32_t*)0x20001198 = 0;
-*(uint32_t*)0x20000988 = 0x1c;
-*(uint64_t*)0x20000990 = 0;
-*(uint64_t*)0x20000998 = 0;
-*(uint64_t*)0x200009a0 = 0x200024c0;
-*(uint64_t*)0x200009a8 = 0xf;
-*(uint32_t*)0x200009b0 = 0;
-*(uint32_t*)0x200009b8 = 0;
-	syscall(__NR_sendmmsg, r[0], 0x20000980ul, 1ul, 0ul);
+
+*(uint32_t*)0x20000900 = 0;
+*(uint32_t*)0x20000904 = 0x80;
+*(uint8_t*)0x20000908 = 0;
+*(uint8_t*)0x20000909 = 0;
+*(uint8_t*)0x2000090a = 0;
+*(uint8_t*)0x2000090b = 0;
+*(uint32_t*)0x2000090c = 0;
+*(uint64_t*)0x20000910 = 0;
+*(uint64_t*)0x20000918 = 0;
+*(uint64_t*)0x20000920 = 0;
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 0, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 1, 1, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 2, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 3, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 4, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 1, 5, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 6, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 7, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 8, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 9, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 1, 10, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 11, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 12, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 13, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 14, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 15, 2);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 17, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 18, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 19, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 20, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 21, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 22, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 23, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 24, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 25, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 26, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 27, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 28, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 29, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 30, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 31, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 32, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 33, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 34, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 35, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 36, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 37, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000928, 0, 38, 26);
+*(uint32_t*)0x20000930 = 0;
+*(uint32_t*)0x20000934 = 0;
+*(uint64_t*)0x20000938 = 0;
+*(uint64_t*)0x20000940 = 0;
+*(uint64_t*)0x20000948 = 0;
+*(uint64_t*)0x20000950 = 0;
+*(uint32_t*)0x20000958 = 0;
+*(uint32_t*)0x2000095c = 0;
+*(uint64_t*)0x20000960 = 0;
+*(uint32_t*)0x20000968 = 0;
+*(uint16_t*)0x2000096c = 0x3f;
+*(uint16_t*)0x2000096e = 0;
+*(uint32_t*)0x20000970 = 0;
+*(uint32_t*)0x20000974 = 0;
+*(uint64_t*)0x20000978 = 0;
+	syscall(__NR_perf_event_open, 0x20000900ul, 0, 0ul, -1, 0xaul);
 	return 0;
 }

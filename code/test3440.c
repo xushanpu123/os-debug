@@ -11,16 +11,87 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[4] = {0xffffffffffffffff, 0x0, 0xffffffffffffffff, 0x0};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-*(uint64_t*)0x20000140 = 0x200000c0;
-*(uint32_t*)0x20000148 = 0;
-*(uint64_t*)0x20000150 = 0x2c;
-*(uint64_t*)0x200002c0 = 0;
-	syscall(__NR_sigaltstack, 0x20000140ul, 0x200002c0ul);
+				intptr_t res = 0;
+	syscall(__NR_shmat, 0, 0x20ffd000ul, 0x4000ul);
+	syscall(__NR_semctl, -1, 2ul, 0x14ul, 0x20000100ul);
+	syscall(__NR_shmat, 0, 0x20ffa000ul, 0ul);
+memcpy((void*)0x20001100, "/dev/null\000", 10);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20001100ul, 0x2c8000ul, 0ul);
+	if (res != -1)
+		r[0] = res;
+	syscall(__NR_ioctl, r[0], 0xd000943e, 0ul);
+	res = syscall(__NR_getegid);
+	if (res != -1)
+		r[1] = res;
+*(uint32_t*)0x200001c0 = 0x6a;
+*(uint8_t*)0x200001c4 = 0x7d;
+*(uint16_t*)0x200001c5 = 1;
+*(uint16_t*)0x200001c7 = 0;
+*(uint16_t*)0x200001c9 = 0x55;
+*(uint16_t*)0x200001cb = 7;
+*(uint32_t*)0x200001cd = 8;
+*(uint8_t*)0x200001d1 = 4;
+*(uint32_t*)0x200001d2 = 1;
+*(uint64_t*)0x200001d6 = 6;
+*(uint32_t*)0x200001de = 0;
+*(uint32_t*)0x200001e2 = 8;
+*(uint32_t*)0x200001e6 = 9;
+*(uint64_t*)0x200001ea = 0;
+*(uint16_t*)0x200001f2 = 0x10;
+memcpy((void*)0x200001f4, "0000111122223333", 16);
+*(uint16_t*)0x20000204 = 0x10;
+memcpy((void*)0x20000206, "0000111122223333", 16);
+*(uint16_t*)0x20000216 = 2;
+memset((void*)0x20000218, 93, 2);
+*(uint16_t*)0x2000021a = 0;
+*(uint16_t*)0x2000021c = 0;
+*(uint32_t*)0x2000021e = 0xee01;
+*(uint32_t*)0x20000222 = r[1];
+*(uint32_t*)0x20000226 = 0;
+	syscall(__NR_write, r[0], 0x200001c0ul, 0x6aul);
+	syscall(__NR_mlock, 0x20ffc000ul, 0x1000ul);
+	res = syscall(__NR_socket, 0x10ul, 3ul, 0xc);
+	if (res != -1)
+		r[2] = res;
+*(uint64_t*)0x20000400 = 0;
+*(uint32_t*)0x20000408 = 0;
+*(uint64_t*)0x20000410 = 0x200003c0;
+*(uint64_t*)0x200003c0 = 0x20000380;
+*(uint32_t*)0x20000380 = 0x14;
+*(uint8_t*)0x20000384 = 3;
+*(uint8_t*)0x20000385 = 1;
+*(uint16_t*)0x20000386 = 0x401;
+*(uint32_t*)0x20000388 = 0;
+*(uint32_t*)0x2000038c = 0;
+*(uint8_t*)0x20000390 = 4;
+*(uint8_t*)0x20000391 = 0;
+*(uint16_t*)0x20000392 = htobe16(0);
+*(uint64_t*)0x200003c8 = 0x14;
+*(uint64_t*)0x20000418 = 1;
+*(uint64_t*)0x20000420 = 0;
+*(uint64_t*)0x20000428 = 0;
+*(uint32_t*)0x20000430 = 0x8000;
+	syscall(__NR_sendmsg, r[2], 0x20000400ul, 0ul);
+memcpy((void*)0x20000000, "logon\000", 6);
+memcpy((void*)0x20000040, "fscrypt:", 8);
+memcpy((void*)0x20000048, "0000111122223333", 16);
+*(uint8_t*)0x20000058 = 0;
+*(uint32_t*)0x20000080 = 0;
+memcpy((void*)0x20000084, "\x30\x40\xa3\x01\x68\xf7\xda\xa3\x98\x43\x3f\xbd\xba\x73\x9e\x55\x09\xe9\xf3\xce\x70\xd1\x59\xa6\x6e\xdc\x40\x7a\x63\x03\x35\x2d\x1a\x78\x27\x59\x5e\x5c\x79\xe6\xf1\x4a\x85\x3a\x06\xaf\x34\x50\x54\xf9\x3d\x68\x37\xda\x13\xfd\x38\x97\x0f\x86\x7a\x6b\xd0\x70", 64);
+*(uint32_t*)0x200000c4 = 0x31;
+	syscall(__NR_add_key, 0x20000000ul, 0x20000040ul, 0x20000080ul, 0x48ul, 0xfffffffb);
+	res = syscall(__NR_semget, 0ul, 1ul, 0x790ul);
+	if (res != -1)
+		r[3] = res;
+	syscall(__NR_semctl, r[3], 0ul, 0ul, 0);
+	syscall(__NR_madvise, 0x20ffe000ul, 0x2000ul, 9ul);
+	syscall(__NR_fcntl, -1, 8ul, 0);
 	return 0;
 }

@@ -11,7 +11,17 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+#ifndef __NR_fsconfig
+#define __NR_fsconfig 431
+#endif
+#ifndef __NR_fsmount
+#define __NR_fsmount 432
+#endif
+#ifndef __NR_fsopen
+#define __NR_fsopen 430
+#endif
+
+uint64_t r[3] = {0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff};
 
 int main(void)
 {
@@ -19,9 +29,21 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 0xaul, 2ul, 0x88);
+memcpy((void*)0x200001c0, "cgroup2\000", 8);
+	res = syscall(__NR_fsopen, 0x200001c0ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_setsockopt, r[0], 0x29, 0x4e, 0ul, 0ul);
+	syscall(__NR_fsconfig, r[0], 6ul, 0ul, 0ul, 0ul);
+	res = syscall(__NR_fsmount, r[0], 0ul, 0ul);
+	if (res != -1)
+		r[1] = res;
+memcpy((void*)0x20000100, "cgroup.subtree_control\000", 23);
+	res = syscall(__NR_openat, r[1], 0x20000100ul, 2ul, 0ul);
+	if (res != -1)
+		r[2] = res;
+*(uint8_t*)0x20000000 = 0x2b;
+memcpy((void*)0x20000001, "cpuset", 6);
+*(uint8_t*)0x20000007 = 0x20;
+	syscall(__NR_write, r[2], 0x20000000ul, 8ul);
 	return 0;
 }

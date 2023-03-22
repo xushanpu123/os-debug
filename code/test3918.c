@@ -22,28 +22,7 @@ int main(void)
 	res = syscall(__NR_socket, 0xaul, 2ul, 0);
 	if (res != -1)
 		r[0] = res;
-*(uint64_t*)0x20000040 = 0x20000000;
-*(uint16_t*)0x20000000 = 0xa;
-*(uint16_t*)0x20000002 = htobe16(0x4e23);
-*(uint32_t*)0x20000004 = htobe32(0);
-*(uint64_t*)0x20000008 = htobe64(0);
-*(uint64_t*)0x20000010 = htobe64(1);
-*(uint32_t*)0x20000018 = 0;
-*(uint32_t*)0x20000048 = 0x1c;
-*(uint64_t*)0x20000050 = 0;
-*(uint64_t*)0x20000058 = 0;
-*(uint64_t*)0x20000060 = 0;
-*(uint64_t*)0x20000068 = 0;
-*(uint32_t*)0x20000070 = 0;
-*(uint32_t*)0x20000078 = 0;
-*(uint64_t*)0x20000080 = 0;
-*(uint32_t*)0x20000088 = 0;
-*(uint64_t*)0x20000090 = 0;
-*(uint64_t*)0x20000098 = 0;
-*(uint64_t*)0x200000a0 = 0;
-*(uint64_t*)0x200000a8 = 0x18;
-*(uint32_t*)0x200000b0 = 0;
-*(uint32_t*)0x200000b8 = 0;
-	syscall(__NR_sendmmsg, r[0], 0x20000040ul, 2ul, 0ul);
+*(uint32_t*)0x200002c0 = 0;
+	syscall(__NR_getsockopt, r[0], 1, 0x29, 0ul, 0x200002c0ul);
 	return 0;
 }

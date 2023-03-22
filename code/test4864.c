@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+uint64_t r[2] = {0xffffffffffffffff, 0xffffffffffffffff};
 
 int main(void)
 {
@@ -19,10 +19,22 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000000, "/dev/snd/seq\000", 13);
-	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000000ul, 0ul, 0);
+	res = syscall(__NR_socket, 2ul, 2ul, 0);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_ioctl, r[0], 0x80045301, 0x20000040ul);
+*(uint16_t*)0x20000040 = 2;
+*(uint16_t*)0x20000042 = htobe16(0x4e20);
+*(uint32_t*)0x20000044 = htobe32(0);
+	syscall(__NR_bind, r[0], 0x20000040ul, 0x10ul);
+	res = syscall(__NR_socket, 2ul, 2ul, 0);
+	if (res != -1)
+		r[1] = res;
+memcpy((void*)0x20000300, "\xf4\x74\x83\x96\xe2\xb2\xe4\xe9\x3a\x4f\xf1\xea\x0c\xcd\xe9\x32\x8f\x3f\x40\x84\x40\x85\x06\x71\x94\xc7\x43\x82\xeb\x1b\x13\x2c\x06\x4f\x60\xf1\xbd\xa0\x1c\xe2\x13\x31\xb3\x79\xc4\xb6\x13\x77\xb9\x2c\xef\xbd\xbb\x36\xec\xc9\xfc\x3e\x08\xfe\x7e\xb0\x0c\x53\x64\xc9\x43\x69\xa9", 69);
+*(uint16_t*)0x20000100 = 2;
+*(uint16_t*)0x20000102 = htobe16(0x4e20);
+*(uint32_t*)0x20000104 = htobe32(0x7f000001);
+	syscall(__NR_sendto, r[1], 0x20000300ul, 0x45ul, 0x48824ul, 0x20000100ul, 0x10ul);
+	syscall(__NR_sendto, r[1], 0ul, 0ul, 0ul, 0ul, 0ul);
+	syscall(__NR_recvfrom, r[0], 0ul, 0xfffffeb5ul, 0ul, 0ul, 0ul);
 	return 0;
 }

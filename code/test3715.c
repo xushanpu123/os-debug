@@ -11,11 +11,49 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[1] = {0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				syscall(__NR_timer_getoverrun, 0);
+				intptr_t res = 0;
+	res = syscall(__NR_socket, 0x10ul, 3ul, 0xa);
+	if (res != -1)
+		r[0] = res;
+*(uint16_t*)0x20000580 = 0x10;
+*(uint16_t*)0x20000582 = 0;
+*(uint32_t*)0x20000584 = 0x25dfdbfd;
+*(uint32_t*)0x20000588 = 0;
+	syscall(__NR_connect, r[0], 0x20000580ul, 0xcul);
+*(uint64_t*)0x20000180 = 0x20000000;
+*(uint16_t*)0x20000000 = 0x10;
+*(uint16_t*)0x20000002 = 0;
+*(uint32_t*)0x20000004 = 0;
+*(uint32_t*)0x20000008 = 0;
+*(uint32_t*)0x20000188 = 0xc;
+*(uint64_t*)0x20000190 = 0x20000140;
+*(uint64_t*)0x20000140 = 0x200000c0;
+*(uint32_t*)0x200000c0 = 0x24;
+*(uint16_t*)0x200000c4 = 0;
+*(uint16_t*)0x200000c6 = 0;
+*(uint32_t*)0x200000c8 = 0;
+*(uint32_t*)0x200000cc = 0;
+*(uint8_t*)0x200000d0 = 8;
+*(uint8_t*)0x200000d1 = 0;
+*(uint16_t*)0x200000d2 = 0;
+*(uint16_t*)0x200000d4 = 8;
+*(uint16_t*)0x200000d6 = 0x31;
+*(uint32_t*)0x200000d8 = 0;
+*(uint16_t*)0x200000dc = 8;
+*(uint16_t*)0x200000de = 0x3b;
+*(uint32_t*)0x200000e0 = 0;
+*(uint64_t*)0x20000148 = 0x24;
+*(uint64_t*)0x20000198 = 1;
+*(uint64_t*)0x200001a0 = 0;
+*(uint64_t*)0x200001a8 = 0;
+*(uint32_t*)0x200001b0 = 0;
+	syscall(__NR_sendmsg, r[0], 0x20000180ul, 0ul);
 	return 0;
 }

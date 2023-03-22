@@ -11,6 +11,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifndef __NR_close_range
+#define __NR_close_range 436
+#endif
+
 uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
@@ -19,55 +23,20 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 2ul, 2ul, 0);
+	res = syscall(__NR_socket, 0xaul, 1ul, 0);
 	if (res != -1)
 		r[0] = res;
-*(uint32_t*)0x20000340 = htobe32(0);
-*(uint8_t*)0x20000350 = 0xac;
-*(uint8_t*)0x20000351 = 0x14;
-*(uint8_t*)0x20000352 = 0x14;
-*(uint8_t*)0x20000353 = 0;
-*(uint16_t*)0x20000360 = htobe16(0);
-*(uint16_t*)0x20000362 = htobe16(0);
-*(uint16_t*)0x20000364 = htobe16(0);
-*(uint16_t*)0x20000366 = htobe16(0);
-*(uint16_t*)0x20000368 = 0;
-*(uint8_t*)0x2000036a = 0;
-*(uint8_t*)0x2000036b = 0;
-*(uint8_t*)0x2000036c = 0;
-*(uint32_t*)0x20000370 = 0;
-*(uint32_t*)0x20000374 = 0xee01;
-*(uint64_t*)0x20000378 = 0;
-*(uint64_t*)0x20000380 = 0;
-*(uint64_t*)0x20000388 = 0;
-*(uint64_t*)0x20000390 = 0;
-*(uint64_t*)0x20000398 = 0;
-*(uint64_t*)0x200003a0 = 0;
-*(uint64_t*)0x200003a8 = 0;
-*(uint64_t*)0x200003b0 = 0;
-*(uint64_t*)0x200003b8 = 0;
-*(uint64_t*)0x200003c0 = 0;
-*(uint64_t*)0x200003c8 = 0;
-*(uint64_t*)0x200003d0 = 0;
-*(uint32_t*)0x200003d8 = 0;
-*(uint32_t*)0x200003dc = 0;
-*(uint8_t*)0x200003e0 = 0;
-*(uint8_t*)0x200003e1 = 0;
-*(uint8_t*)0x200003e2 = 0;
-*(uint8_t*)0x200003e3 = 0;
-*(uint64_t*)0x200003e8 = htobe64(0);
-*(uint64_t*)0x200003f0 = htobe64(1);
-*(uint32_t*)0x200003f8 = htobe32(0);
-*(uint8_t*)0x200003fc = 0;
-*(uint16_t*)0x20000400 = 0;
-*(uint32_t*)0x20000404 = htobe32(0x7f000001);
-*(uint32_t*)0x20000414 = 0;
-*(uint8_t*)0x20000418 = 0;
-*(uint8_t*)0x20000419 = 0;
-*(uint8_t*)0x2000041a = 0;
-*(uint32_t*)0x2000041c = 0;
-*(uint32_t*)0x20000420 = 0;
-*(uint32_t*)0x20000424 = 0;
-	syscall(__NR_setsockopt, r[0], 0, 0x10, 0x20000340ul, 0xe8ul);
+*(uint32_t*)0x20001380 = 1;
+	syscall(__NR_setsockopt, r[0], 6, 0x13, 0x20001380ul, 4ul);
+*(uint16_t*)0x20000000 = 0xa;
+*(uint16_t*)0x20000002 = htobe16(0);
+*(uint32_t*)0x20000004 = htobe32(0);
+memset((void*)0x20000008, 0, 10);
+memset((void*)0x20000012, 255, 2);
+*(uint32_t*)0x20000014 = htobe32(0x7f000001);
+*(uint32_t*)0x20000018 = 0;
+	syscall(__NR_connect, r[0], 0x20000000ul, 0x1cul);
+	syscall(__NR_close_range, -1, -1, 2ul);
+	syscall(__NR_shutdown, r[0], 0ul);
 	return 0;
 }

@@ -3,13 +3,34 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
+#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+static long syz_open_dev(volatile long a0, volatile long a1, volatile long a2)
+{
+	if (a0 == 0xc || a0 == 0xb) {
+		char buf[128];
+		sprintf(buf, "/dev/%s/%d:%d", a0 == 0xc ? "char" : "block", (uint8_t)a1, (uint8_t)a2);
+		return open(buf, O_RDWR, 0);
+	} else {
+		char buf[1024];
+		char* hash;
+		strncpy(buf, (char*)a0, sizeof(buf) - 1);
+		buf[sizeof(buf) - 1] = 0;
+		while ((hash = strchr(buf, '#'))) {
+			*hash = '0' + (char)(a1 % 10);
+			a1 /= 10;
+		}
+		return open(buf, a2, 0);
+	}
+}
 
 uint64_t r[1] = {0xffffffffffffffff};
 
@@ -19,31 +40,11 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 2ul, 1ul, 0);
+memcpy((void*)0x20000080, "/dev/sg#\000", 9);
+	res = -1;
+res = syz_open_dev(0x20000080, 0, 0);
 	if (res != -1)
 		r[0] = res;
-*(uint64_t*)0x200001c0 = 0;
-*(uint16_t*)0x200001c8 = 2;
-*(uint16_t*)0x200001ca = htobe16(0);
-*(uint8_t*)0x200001cc = 0xac;
-*(uint8_t*)0x200001cd = 0x14;
-*(uint8_t*)0x200001ce = 0x14;
-*(uint8_t*)0x200001cf = 0xaa;
-*(uint16_t*)0x200001d8 = 2;
-*(uint16_t*)0x200001da = htobe16(0);
-*(uint32_t*)0x200001dc = htobe32(0);
-*(uint16_t*)0x200001e8 = 2;
-*(uint16_t*)0x200001ea = htobe16(0);
-*(uint32_t*)0x200001ec = htobe32(0xe0000002);
-*(uint16_t*)0x200001f8 = 0;
-*(uint16_t*)0x200001fa = 0;
-*(uint64_t*)0x20000200 = 0;
-*(uint64_t*)0x20000208 = 0;
-*(uint16_t*)0x20000210 = 0;
-*(uint64_t*)0x20000218 = 0;
-*(uint64_t*)0x20000220 = 0;
-*(uint64_t*)0x20000228 = 0;
-*(uint16_t*)0x20000230 = 0;
-	syscall(__NR_ioctl, r[0], 0x890c, 0x200001c0ul);
+	syscall(__NR_ioctl, r[0], 0x5385, 0x20000180ul);
 	return 0;
 }

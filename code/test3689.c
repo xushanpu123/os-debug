@@ -11,17 +11,46 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[1] = {0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-*(uint16_t*)0x20000140 = 0;
-*(uint16_t*)0x20000142 = 0;
-*(uint16_t*)0x20000144 = 0x1000;
-	syscall(__NR_semtimedop, 0, 0x20000140ul, 1ul, 0ul);
-*(uint16_t*)0x20000080 = 3;
-	syscall(__NR_semctl, 0, 0ul, 0x11ul, 0x20000080ul);
+				intptr_t res = 0;
+	res = syscall(__NR_socket, 0xaul, 1ul, 0);
+	if (res != -1)
+		r[0] = res;
+*(uint16_t*)0x20000280 = 0;
+*(uint16_t*)0x20000282 = 0x33;
+memcpy((void*)0x20000284, "\x35\x79\xb2\xf0\x12\x7b\xe9\x45", 8);
+memcpy((void*)0x2000028c, "\x09\x7d\xde\x09\xf8\xe2\x10\xf1\xd0\xd3\xaf\x4d\xd9\x1b\x59\x26", 16);
+memcpy((void*)0x2000029c, "\x58\xe6\x13\x95", 4);
+memcpy((void*)0x200002a0, "\xdc\x74\xbc\x71\xef\x34\xf3\x67", 8);
+	syscall(__NR_setsockopt, r[0], 6, 1, 0x20000280ul, 0x28ul);
+*(uint32_t*)0x20001380 = 1;
+	syscall(__NR_setsockopt, r[0], 6, 0x13, 0x20001380ul, 4ul);
+*(uint16_t*)0x20000000 = 0xa;
+*(uint16_t*)0x20000002 = htobe16(0);
+*(uint32_t*)0x20000004 = htobe32(0);
+memset((void*)0x20000008, 0, 16);
+*(uint32_t*)0x20000018 = 0;
+	syscall(__NR_connect, r[0], 0x20000000ul, 0x1cul);
+	syscall(__NR_setsockopt, r[0], 0x29, 0x37, 0x200004c0ul, 8ul);
+*(uint32_t*)0x20000140 = 0;
+	syscall(__NR_setsockopt, r[0], 6, 0x13, 0x20000140ul, 4ul);
+*(uint64_t*)0x20004880 = 0;
+*(uint32_t*)0x20004888 = 0;
+*(uint64_t*)0x20004890 = 0x20000c80;
+*(uint64_t*)0x20000c80 = 0x200013c0;
+memset((void*)0x200013c0, 104, 1);
+*(uint64_t*)0x20000c88 = 1;
+*(uint64_t*)0x20004898 = 1;
+*(uint64_t*)0x200048a0 = 0;
+*(uint64_t*)0x200048a8 = 0;
+*(uint32_t*)0x200048b0 = 0;
+*(uint32_t*)0x200048b8 = 0;
+	syscall(__NR_sendmmsg, r[0], 0x20004880ul, 1ul, 0ul);
 	return 0;
 }

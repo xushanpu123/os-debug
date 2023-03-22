@@ -11,11 +11,22 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[1] = {0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				syscall(__NR_getresgid, 0x200000c0ul, 0ul, 0ul);
+				intptr_t res = 0;
+	res = syscall(__NR_socket, 1ul, 5ul, 0);
+	if (res != -1)
+		r[0] = res;
+*(uint16_t*)0x20000100 = 1;
+memcpy((void*)0x20000102, "./file0\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000", 108);
+	syscall(__NR_bind, r[0], 0x20000100ul, 0x6eul);
+memcpy((void*)0x20000040, "./file0\000", 8);
+memcpy((void*)0x20000080, "trusted.overlay.nlink\000", 22);
+	syscall(__NR_setxattr, 0x20000040ul, 0x20000080ul, 0ul, 0x36ul, 0ul);
 	return 0;
 }

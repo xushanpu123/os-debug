@@ -19,12 +19,12 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000240, "/dev/snd/timer\000", 15);
-	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000240ul, 0ul, 0);
+memcpy((void*)0x20000100, "./file0\000", 8);
+	res = syscall(__NR_open, 0x20000100ul, 0xe0142ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-memcpy((void*)0x20000080, "security.selinux\000", 17);
-memcpy((void*)0x20000040, "system_u:object_r:crypt_device_t:s0\000", 36);
-	syscall(__NR_fsetxattr, r[0], 0x20000080ul, 0x20000040ul, 0x1eul, 0ul);
+*(uint32_t*)0x20000000 = 0;
+	syscall(__NR_ioctl, r[0], 0x40086602, 0x20000000ul);
+	syscall(__NR_fallocate, r[0], 0ul, 0ul, 4ul);
 	return 0;
 }

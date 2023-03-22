@@ -11,23 +11,23 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+#ifndef __NR_seccomp
+#define __NR_seccomp 317
+#endif
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-memcpy((void*)0x20000040, "/proc/sys/net/ipv4/tcp_congestion_control\000", 42);
-	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000040ul, 1ul, 0ul);
-	if (res != -1)
-		r[0] = res;
-*(uint16_t*)0x20000000 = 0;
-*(uint16_t*)0x20000002 = 0;
-*(uint64_t*)0x20000008 = 0x1f;
-*(uint64_t*)0x20000010 = 0xfffffffffffffffa;
-*(uint32_t*)0x20000018 = -1;
-	syscall(__NR_fcntl, r[0], 5ul, 0x20000000ul);
+
+*(uint16_t*)0x20000100 = 1;
+*(uint64_t*)0x20000108 = 0x200000c0;
+*(uint16_t*)0x200000c0 = 6;
+*(uint8_t*)0x200000c2 = 0;
+*(uint8_t*)0x200000c3 = 0;
+*(uint32_t*)0x200000c4 = 0x7fffffff;
+	syscall(__NR_seccomp, 1ul, 0ul, 0x20000100ul);
+	syscall(__NR_semctl, 0, 0ul, 0x13ul, 0x20000000ul);
 	return 0;
 }

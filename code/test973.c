@@ -11,13 +11,19 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[1] = {0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-memset((void*)0x20000000, 0, 1);
-	syscall(__NR_keyctl, 0x18ul, 0, 0ul, 0x20000000ul, 0ul);
+				intptr_t res = 0;
+	syscall(__NR_mprotect, 0x20001000ul, 0x3000ul, 4ul);
+memcpy((void*)0x20000080, "/proc/self/exe\000", 15);
+	res = syscall(__NR_openat, 0xffffff9c, 0x20000080ul, 0ul, 0ul);
+	if (res != -1)
+		r[0] = res;
+	syscall(__NR_read, r[0], 0x20000000ul, 0xffffff41ul);
 	return 0;
 }

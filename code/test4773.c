@@ -11,11 +11,19 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifndef __NR_execveat
+#define __NR_execveat 322
+#endif
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				syscall(__NR_waitid, 2ul, -1, 0ul, 8ul, 0ul);
+
+memcpy((void*)0x20001680, "./file0\000", 8);
+*(uint64_t*)0x20001880 = 0x20001840;
+memcpy((void*)0x20001840, "S\000", 2);
+	syscall(__NR_execveat, -1, 0x20001680ul, 0ul, 0x20001880ul, 0ul);
 	return 0;
 }

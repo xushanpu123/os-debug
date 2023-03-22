@@ -32,7 +32,7 @@ static long syz_open_dev(volatile long a0, volatile long a1, volatile long a2)
 	}
 }
 
-uint64_t r[1] = {0xffffffffffffffff};
+uint64_t r[3] = {0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff};
 
 int main(void)
 {
@@ -40,11 +40,32 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000000, "/dev/loop#\000", 11);
+memcpy((void*)0x200002c0, "./file0\000", 8);
+	syscall(__NR_creat, 0x200002c0ul, 0ul);
 	res = -1;
-res = syz_open_dev(0x20000000, 0, 0);
+res = syz_open_dev(0xc, 4, 0x15);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_ioctl, r[0], 0x401870cc, 0ul);
+	syscall(__NR_ioctl, -1, 0x540a, 0ul);
+	res = syscall(__NR_dup, r[0]);
+	if (res != -1)
+		r[1] = res;
+	res = -1;
+res = syz_open_dev(0xc, 4, 0x15);
+	if (res != -1)
+		r[2] = res;
+memcpy((void*)0x200001c0, "./file0\000", 8);
+memcpy((void*)0x20000240, "9p\000", 3);
+memcpy((void*)0x200003c0, "trans=fd,", 9);
+memcpy((void*)0x200003c9, "rfdno", 5);
+*(uint8_t*)0x200003ce = 0x3d;
+sprintf((char*)0x200003cf, "0x%016llx", (long long)r[1]);
+*(uint8_t*)0x200003e1 = 0x2c;
+memcpy((void*)0x200003e2, "wfdno", 5);
+*(uint8_t*)0x200003e7 = 0x3d;
+sprintf((char*)0x200003e8, "0x%016llx", (long long)r[2]);
+*(uint8_t*)0x200003fa = 0x2c;
+*(uint8_t*)0x200003fb = 0;
+	syscall(__NR_mount, 0ul, 0x200001c0ul, 0x20000240ul, 0ul, 0x200003c0ul);
 	return 0;
 }

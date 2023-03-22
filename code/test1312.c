@@ -11,18 +11,19 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+#ifndef __NR_pkey_mprotect
+#define __NR_pkey_mprotect 329
+#endif
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-	res = syscall(__NR_socket, 2ul, 1ul, 0);
-	if (res != -1)
-		r[0] = res;
-*(uint32_t*)0x20000100 = 0;
-	syscall(__NR_setsockopt, r[0], 6, 0xa, 0x20000100ul, 4ul);
+				syscall(__NR_pkey_mprotect, 0x20ffc000ul, 0x3000ul, 0ul, -1);
+memcpy((void*)0x20000000, "freezer.state\000", 14);
+	syscall(__NR_openat, -1, 0x20000000ul, 2ul, 0ul);
+	syscall(__NR_pkey_mprotect, 0x20ffb000ul, 0x2000ul, 0ul, -1);
+	syscall(__NR_pkey_mprotect, 0x20ffa000ul, 0x3000ul, 0xaul, -1);
 	return 0;
 }

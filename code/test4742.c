@@ -16,6 +16,7 @@ int main(void)
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				syscall(__NR_dup3, -1, -1, 0x4d2948fff2a0fae9ul);
+				syscall(__NR_setuid, 0xee01);
+	syscall(__NR_setresgid, 0, -1, 0xee01);
 	return 0;
 }

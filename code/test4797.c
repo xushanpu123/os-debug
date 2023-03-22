@@ -11,11 +11,17 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[1] = {0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				syscall(__NR_prctl, 0x15ul, 0, 0, 0, 0);
+				intptr_t res = 0;
+	res = syscall(__NR_pipe2, 0x20000000ul, 0ul);
+	if (res != -1)
+r[0] = *(uint32_t*)0x20000000;
+	syscall(__NR_fcntl, r[0], 0x407ul, 0x7ffffffful);
 	return 0;
 }

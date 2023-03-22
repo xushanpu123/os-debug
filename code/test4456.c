@@ -19,10 +19,14 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 0x10ul, 3ul, 0x10);
+memcpy((void*)0x20000400, "/dev/bsg\000", 9);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000400ul, 0ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-*(uint32_t*)0x20000000 = 7;
-	syscall(__NR_setsockopt, r[0], 0x10e, 4, 0x20000000ul, 4ul);
+memcpy((void*)0x20000180, "./file0\000", 8);
+*(uint32_t*)0x20000300 = 8;
+*(uint32_t*)0x20000304 = 1;
+*(uint64_t*)0x20000308 = 0;
+	syscall(__NR_name_to_handle_at, r[0], 0x20000180ul, 0x20000300ul, 0ul, 0ul);
 	return 0;
 }

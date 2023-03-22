@@ -11,25 +11,24 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+#ifndef __NR_seccomp
+#define __NR_seccomp 317
+#endif
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-	res = syscall(__NR_socket, 0xaul, 3ul, 0x3a);
-	if (res != -1)
-		r[0] = res;
-memset((void*)0x20000000, 0, 16);
-*(uint32_t*)0x20000010 = 0;
-*(uint8_t*)0x20000014 = 0;
-*(uint8_t*)0x20000015 = 0;
-*(uint16_t*)0x20000016 = 0;
-*(uint16_t*)0x20000018 = 0;
-*(uint16_t*)0x2000001a = 0;
-*(uint32_t*)0x2000001c = 0;
-	syscall(__NR_setsockopt, r[0], 0x29, 0x20, 0x20000000ul, 0x20ul);
+
+*(uint16_t*)0x20000000 = 1;
+*(uint64_t*)0x20000008 = 0x20000040;
+*(uint16_t*)0x20000040 = 6;
+*(uint8_t*)0x20000042 = 0;
+*(uint8_t*)0x20000043 = 0;
+*(uint32_t*)0x20000044 = 0x7fffffff;
+	syscall(__NR_seccomp, 1ul, 0ul, 0x20000000ul);
+memcpy((void*)0x20000080, "vfat\000", 5);
+	syscall(__NR_sysfs, 1ul, 0x20000080ul, 0);
 	return 0;
 }

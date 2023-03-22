@@ -3,15 +3,34 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
+#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+static long syz_open_procfs(volatile long a0, volatile long a1)
+{
+	char buf[128];
+	memset(buf, 0, sizeof(buf));
+	if (a0 == 0) {
+		snprintf(buf, sizeof(buf), "/proc/self/%s", (char*)a1);
+	} else if (a0 == -1) {
+		snprintf(buf, sizeof(buf), "/proc/thread-self/%s", (char*)a1);
+	} else {
+		snprintf(buf, sizeof(buf), "/proc/self/task/%d/%s", (int)a0, (char*)a1);
+	}
+	int fd = open(buf, O_RDWR);
+	if (fd == -1)
+		fd = open(buf, O_RDONLY);
+	return fd;
+}
+
+uint64_t r[2] = {0xffffffffffffffff, 0xffffffffffffffff};
 
 int main(void)
 {
@@ -19,27 +38,23 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 0x10ul, 3ul, 0);
+memcpy((void*)0x20000000, "/dev/sr0\000", 9);
+	syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000000ul, 0x882ul, 0ul);
+	syscall(__NR_openat, 0xffffffffffffff9cul, 0ul, 0ul, 0ul);
+memcpy((void*)0x200001c0, "ns/net\000", 7);
+	res = -1;
+res = syz_open_procfs(0, 0x200001c0);
 	if (res != -1)
 		r[0] = res;
-*(uint64_t*)0x20000180 = 0;
-*(uint32_t*)0x20000188 = 0;
-*(uint64_t*)0x20000190 = 0x20000080;
-*(uint64_t*)0x20000080 = 0x20000100;
-*(uint32_t*)0x20000100 = 0x14;
-*(uint8_t*)0x20000104 = 2;
-*(uint8_t*)0x20000105 = 2;
-*(uint16_t*)0x20000106 = 0x101;
-*(uint32_t*)0x20000108 = 0;
-*(uint32_t*)0x2000010c = 0;
-*(uint8_t*)0x20000110 = 0;
-*(uint8_t*)0x20000111 = 0;
-*(uint16_t*)0x20000112 = htobe16(0);
-*(uint64_t*)0x20000088 = 0x14;
-*(uint64_t*)0x20000198 = 1;
-*(uint64_t*)0x200001a0 = 0;
-*(uint64_t*)0x200001a8 = 0;
-*(uint32_t*)0x200001b0 = 0;
-	syscall(__NR_sendmsg, r[0], 0x20000180ul, 0ul);
+memcpy((void*)0x20000200, "\x1a\xba\xa7\x38\x0b\xd9\x94\x29\x4b\x31\x94\x4c\x77\x92\xc0\xaa\x91\x35\xde\xd1\xdb\x35\x6a\x8d\xba\x4c\x80\x48\x37\x18\x26\x1d\xa1\x7f\x02\x99\x92\x3c\x18\xeb\x94\xe9\xd9\xf4\x47\x7c\x8d\x4d\x6c\x96\xe0\x0f\xf0\x75\xed\x65\xfc\x79\x69\xe7\x9e\xce\xa5\x1c\x55\xbc\x87\x9e\x9e\x1a\x6b\x6a\xf2\xa0\x66\x01\x07\x67\x48\xc3\x75\x79\xbb\x01\x92\x9c\xd0\x9e\x4c\x07\xe0\x3a\xd5\xc4\x17\x43\xe7\x5d\xf4\x14\x6c\x31\xae", 103);
+	syscall(__NR_write, r[0], 0x20000200ul, 0x67ul);
+	res = syscall(__NR_socket, 2ul, 3ul, 2);
+	if (res != -1)
+		r[1] = res;
+	syscall(__NR_ioctl, r[1], 0x8916, 0ul);
+	syscall(__NR_getsockopt, r[1], 1, 0x3d, 0x20000100ul, 0ul);
+	syscall(__NR_openat, 0xffffffffffffff9cul, 0ul, 2ul, 0ul);
+*(uint64_t*)0x200000c0 = 0;
+	syscall(__NR_fcntl, -1, 0x40cul, 0x200000c0ul);
 	return 0;
 }

@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+uint64_t r[1] = {0x0};
 
 int main(void)
 {
@@ -19,20 +19,15 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 2ul, 3ul, 2);
+memcpy((void*)0x20000340, "keyring\000", 8);
+memcpy((void*)0x20000380, "syz", 3);
+*(uint8_t*)0x20000383 = 0x22;
+*(uint8_t*)0x20000384 = 0;
+	res = syscall(__NR_add_key, 0x20000340ul, 0x20000380ul, 0ul, 0ul, 0xfffffffe);
 	if (res != -1)
 		r[0] = res;
-*(uint32_t*)0x20000000 = htobe32(-1);
-*(uint8_t*)0x20000004 = 0xac;
-*(uint8_t*)0x20000005 = 0x14;
-*(uint8_t*)0x20000006 = 0x14;
-*(uint8_t*)0x20000007 = 0xaa;
-*(uint16_t*)0x20000008 = 0;
-memcpy((void*)0x2000000a, "\x93\x43\x8b\xae\x90\x67\x1e\x79\x83\x37\xdb\x0c\xd2\xb5\xe4\xfc\x15\xea\x44\x97\x47\xd7\xa6\xc8\x16\xd9\xe1\x23\x14\x7a\x82\x7e", 32);
-*(uint32_t*)0x2000002c = 0;
-*(uint32_t*)0x20000030 = 0;
-*(uint32_t*)0x20000034 = 0;
-*(uint32_t*)0x20000038 = 0;
-	syscall(__NR_setsockopt, r[0], 0, 0xcc, 0x20000000ul, 0x3cul);
+memcpy((void*)0x20000000, "asymmetric\000", 11);
+memcpy((void*)0x20000040, "keyring\000", 8);
+	syscall(__NR_keyctl, 0x1dul, r[0], 0x20000000ul, 0x20000040ul, 0);
 	return 0;
 }

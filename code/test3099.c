@@ -19,10 +19,10 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000180, "/dev/vcs\000", 9);
-	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000180ul, 0ul, 0ul);
+memcpy((void*)0x20005600, "/dev/ptmx\000", 10);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20005600ul, 0ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_read, r[0], 0x20000200ul, 0xffffffffffffffd5ul);
+	syscall(__NR_ioctl, r[0], 0x80045439, 0x20000000ul);
 	return 0;
 }

@@ -11,11 +11,19 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[1] = {0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				syscall(__NR_shmat, 0, 0x20ffa000ul, 0xc000ul);
+				intptr_t res = 0;
+memcpy((void*)0x200000c0, "/proc/thread-self/attr/fscreate\000", 32);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x200000c0ul, 2ul, 0ul);
+	if (res != -1)
+		r[0] = res;
+memcpy((void*)0x20000000, "system_u:object_r:initrc_var_run_t:s0\000", 38);
+	syscall(__NR_write, r[0], 0x20000000ul, 0x22ul);
 	return 0;
 }

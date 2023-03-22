@@ -19,11 +19,11 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000040, "./file1\000", 8);
-	res = syscall(__NR_openat, 0xffffff9c, 0x20000040ul, 0x42ul, 0ul);
+memcpy((void*)0x20000600, "/sys/power/sync_on_suspend", 26);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000600ul, 0xa2001ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_close, r[0]);
-	syscall(__NR_dup, r[0]);
+sprintf((char*)0x20000000, "%023llo", (long long)r[0]);
+	syscall(__NR_write, r[0], 0x20000000ul, 0x13ul);
 	return 0;
 }

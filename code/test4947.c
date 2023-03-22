@@ -19,10 +19,11 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000040, "/proc/sys/net/ipv4/tcp_congestion_control\000", 42);
-	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000040ul, 1ul, 0ul);
+	res = syscall(__NR_socket, 2ul, 1ul, 0);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_ftruncate, r[0], 0ul);
+*(uint32_t*)0x20000040 = 0x5908;
+	syscall(__NR_setsockopt, r[0], 1, 0x25, 0x20000040ul, 4ul);
+	syscall(__NR_ioctl, r[0], 0x8907, 0ul);
 	return 0;
 }

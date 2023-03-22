@@ -19,18 +19,22 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 2ul, 3ul, 2);
+memcpy((void*)0x20000200, "/dev/cdrom\000", 11);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000200ul, 0x6800ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-*(uint16_t*)0x20000040 = 0;
-*(uint8_t*)0x20000042 = 0;
-*(uint8_t*)0x20000043 = 0;
-*(uint32_t*)0x20000044 = 0;
-*(uint32_t*)0x20000048 = 0;
-*(uint8_t*)0x2000004c = 0xac;
-*(uint8_t*)0x2000004d = 0x14;
-*(uint8_t*)0x2000004e = 0x14;
-*(uint8_t*)0x2000004f = 0;
-	syscall(__NR_setsockopt, r[0], 0, 0xca, 0x20000040ul, 0x10ul);
+	syscall(__NR_setresuid, 0, 0xee01, 0xee01);
+	syscall(__NR_fstat, -1, 0ul);
+	syscall(__NR_sendmmsg, -1, 0ul, 0ul, 0ul);
+memcpy((void*)0x20000140, "\x81\x2f\x05\x35\x79\xa7\xe6\xbe\xad\xdd\x2e\xec", 12);
+*(uint64_t*)0x20000150 = 0;
+*(uint32_t*)0x20000158 = 0;
+*(uint32_t*)0x2000015c = 0;
+*(uint64_t*)0x20000160 = 0;
+*(uint8_t*)0x20000168 = 0;
+*(uint32_t*)0x2000016c = 0;
+*(uint32_t*)0x20000170 = 0;
+*(uint64_t*)0x20000178 = 0;
+	syscall(__NR_ioctl, r[0], 0x5393, 0x20000140ul);
 	return 0;
 }

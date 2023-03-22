@@ -19,10 +19,10 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000040, "/proc/cpuinfo\000", 14);
-	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000040ul, 0ul, 0ul);
+	syscall(__NR_ioctl, -1, 0xc0182101, 0ul);
+	res = syscall(__NR_pipe2, 0x20000080ul, 0x4800ul);
 	if (res != -1)
-		r[0] = res;
-	syscall(__NR_close, r[0]);
+r[0] = *(uint32_t*)0x20000080;
+	syscall(__NR_read, r[0], 0x200000c0ul, 0x3dul);
 	return 0;
 }

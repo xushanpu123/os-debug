@@ -11,7 +11,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0x0};
+#ifndef __NR_io_uring_setup
+#define __NR_io_uring_setup 425
+#endif
+
+uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
 {
@@ -19,16 +23,15 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_semget, 0x798e2636ul, 0ul, 0ul);
+*(uint32_t*)0x20000004 = 0;
+*(uint32_t*)0x20000008 = 0;
+*(uint32_t*)0x2000000c = 0;
+*(uint32_t*)0x20000010 = 0;
+*(uint32_t*)0x20000018 = -1;
+memset((void*)0x2000001c, 0, 12);
+	res = syscall(__NR_io_uring_setup, 0x661e, 0x20000000ul);
 	if (res != -1)
 		r[0] = res;
-*(uint16_t*)0x20000140 = 0;
-*(uint16_t*)0x20000142 = 0;
-*(uint16_t*)0x20000144 = 0x1000;
-	syscall(__NR_semtimedop, r[0], 0x20000140ul, 1ul, 0ul);
-*(uint16_t*)0x200000c0 = 0;
-*(uint16_t*)0x200000c2 = 3;
-*(uint16_t*)0x200000c4 = 0x1800;
-	syscall(__NR_semtimedop, r[0], 0x200000c0ul, 1ul, 0ul);
+	syscall(__NR_mmap, 0x20002000ul, 0x2000ul, 0ul, 0x12ul, r[0], 0x10000000ul);
 	return 0;
 }

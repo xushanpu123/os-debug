@@ -11,17 +11,25 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifndef __NR_fsconfig
+#define __NR_fsconfig 431
+#endif
+#ifndef __NR_fsopen
+#define __NR_fsopen 430
+#endif
+
+uint64_t r[1] = {0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-memcpy((void*)0x20000340, "./file0\000", 8);
-	syscall(__NR_openat, 0xffffff9c, 0x20000340ul, 0x42ul, 0ul);
-memcpy((void*)0x20000540, "./file0\000", 8);
-memcpy((void*)0x20000580, "9p\000", 3);
-memcpy((void*)0x20000640, "trans=", 6);
-	syscall(__NR_mount, 0ul, 0x20000540ul, 0x20000580ul, 0ul, 0x20000640ul);
+				intptr_t res = 0;
+memcpy((void*)0x20000000, "rpc_pipefs\000", 11);
+	res = syscall(__NR_fsopen, 0x20000000ul, 0ul);
+	if (res != -1)
+		r[0] = res;
+	syscall(__NR_fsconfig, r[0], 6ul, 0ul, 0ul, 0ul);
 	return 0;
 }

@@ -3,48 +3,42 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
-#include <fcntl.h>
+#include <sched.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-static long syz_open_dev(volatile long a0, volatile long a1, volatile long a2)
+#define USLEEP_FORKED_CHILD (3 * 50 *1000)
+
+static long handle_clone_ret(long ret)
 {
-	if (a0 == 0xc || a0 == 0xb) {
-		char buf[128];
-		sprintf(buf, "/dev/%s/%d:%d", a0 == 0xc ? "char" : "block", (uint8_t)a1, (uint8_t)a2);
-		return open(buf, O_RDWR, 0);
-	} else {
-		char buf[1024];
-		char* hash;
-		strncpy(buf, (char*)a0, sizeof(buf) - 1);
-		buf[sizeof(buf) - 1] = 0;
-		while ((hash = strchr(buf, '#'))) {
-			*hash = '0' + (char)(a1 % 10);
-			a1 /= 10;
-		}
-		return open(buf, a2, 0);
+	if (ret != 0) {
+		return ret;
+	}
+	usleep(USLEEP_FORKED_CHILD);
+	syscall(__NR_exit, 0);
+	while (1) {
 	}
 }
 
-uint64_t r[1] = {0xffffffffffffffff};
+static long syz_clone(volatile long flags, volatile long stack, volatile long stack_len,
+		      volatile long ptid, volatile long ctid, volatile long tls)
+{
+	long sp = (stack + stack_len) & ~15;
+	long ret = (long)syscall(__NR_clone, flags & ~CLONE_VM, sp, ptid, ctid, tls);
+	return handle_clone_ret(ret);
+}
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-memcpy((void*)0x200000c0, "/dev/sg#\000", 9);
-	res = -1;
-res = syz_open_dev(0x200000c0, 0, 0);
-	if (res != -1)
-		r[0] = res;
-	syscall(__NR_ioctl, r[0], 0x2270, 0ul);
+				syscall(__NR_socket, 0x10ul, 3ul, 4);
+syz_clone(0x40200000, 0, 0, 0, 0, 0);
 	return 0;
 }

@@ -11,23 +11,12 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
-
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-	res = syscall(__NR_socket, 2ul, 2ul, 0);
-	if (res != -1)
-		r[0] = res;
-*(uint32_t*)0x20000080 = 0;
-*(uint16_t*)0x20000088 = 2;
-*(uint16_t*)0x2000008a = htobe16(0);
-*(uint32_t*)0x2000008c = htobe32(0x7f000001);
-*(uint32_t*)0x20000108 = 0;
-*(uint32_t*)0x2000010c = 0;
-	syscall(__NR_setsockopt, r[0], 0, 0x30, 0x20000080ul, 0x90ul);
+				syscall(__NR_keyctl, 0xeul, 2ul, 0, 0, 0);
+	syscall(__NR_keyctl, 0xeul, 0ul, 0, 0, 0);
 	return 0;
 }

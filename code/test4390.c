@@ -11,10 +11,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#ifndef __NR_close_range
-#define __NR_close_range 436
-#endif
-
 uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
@@ -23,11 +19,18 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	syscall(__NR_close_range, -1, -1, 2ul);
-memcpy((void*)0x20000000, "/dev/bsg\000", 9);
-	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000000ul, 0ul, 0ul);
+memcpy((void*)0x20000000, "/dev/snd/seq\000", 13);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000000ul, 0ul, 0);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_readv, r[0], 0ul, 0ul);
+*(uint32_t*)0x20000080 = 0x540e86f6;
+*(uint32_t*)0x20000084 = 0;
+*(uint32_t*)0x20000088 = 0;
+*(uint32_t*)0x2000008c = 0;
+*(uint32_t*)0x20000090 = 0;
+*(uint32_t*)0x20000094 = 0;
+*(uint32_t*)0x20000098 = 0;
+memset((void*)0x2000009c, 0, 64);
+	syscall(__NR_ioctl, r[0], 0xc05c5340, 0x20000080ul);
 	return 0;
 }

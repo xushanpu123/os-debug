@@ -11,7 +11,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0x0};
+#ifndef __NR_close_range
+#define __NR_close_range 436
+#endif
+
+uint64_t r[4] = {0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff};
 
 int main(void)
 {
@@ -19,15 +23,21 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_semget, 0ul, 3ul, 0ul);
-	if (res != -1)
-		r[0] = res;
-*(uint16_t*)0x20000000 = 0;
-*(uint16_t*)0x20000002 = 0;
-*(uint16_t*)0x20000004 = 0;
-*(uint16_t*)0x20000006 = 2;
-*(uint16_t*)0x20000008 = 9;
-*(uint16_t*)0x2000000a = 0;
-	syscall(__NR_semop, r[0], 0x20000000ul, 2ul);
+	res = syscall(__NR_pipe, 0x200002c0ul);
+	if (res != -1) {
+r[0] = *(uint32_t*)0x200002c0;
+r[1] = *(uint32_t*)0x200002c4;
+	}
+	res = syscall(__NR_pipe, 0x200002c0ul);
+	if (res != -1) {
+r[2] = *(uint32_t*)0x200002c0;
+r[3] = *(uint32_t*)0x200002c4;
+	}
+*(uint32_t*)0x20000200 = r[2];
+*(uint16_t*)0x20000204 = 0;
+*(uint16_t*)0x20000206 = 0;
+	syscall(__NR_poll, 0x20000200ul, 1ul, 0x100);
+	syscall(__NR_tee, r[0], r[3], 3ul, 0ul);
+	syscall(__NR_close_range, r[1], -1, 0ul);
 	return 0;
 }

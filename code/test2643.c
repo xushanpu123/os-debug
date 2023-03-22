@@ -11,24 +11,31 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifndef __NR_fsconfig
+#define __NR_fsconfig 431
+#endif
+#ifndef __NR_fsmount
+#define __NR_fsmount 432
+#endif
+#ifndef __NR_fsopen
+#define __NR_fsopen 430
+#endif
+
+uint64_t r[1] = {0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-*(uint64_t*)0x20000180 = 0;
-*(uint32_t*)0x20000188 = 0;
-*(uint32_t*)0x2000018c = 0;
-*(uint16_t*)0x20000190 = 0;
-*(uint16_t*)0x20000192 = 0;
-*(uint32_t*)0x20000194 = -1;
-*(uint64_t*)0x20000198 = 0;
-*(uint64_t*)0x200001a0 = 0;
-*(uint64_t*)0x200001a8 = 0;
-*(uint64_t*)0x200001b0 = 0;
-*(uint32_t*)0x200001b8 = 0;
-*(uint32_t*)0x200001bc = -1;
-	syscall(__NR_io_cancel, 0ul, 0x20000180ul, 0ul);
+				intptr_t res = 0;
+memcpy((void*)0x20000000, "rpc_pipefs\000", 11);
+	res = syscall(__NR_fsopen, 0x20000000ul, 0ul);
+	if (res != -1)
+		r[0] = res;
+memcpy((void*)0x20000240, "mand\000", 5);
+	syscall(__NR_fsconfig, r[0], 0ul, 0x20000240ul, 0ul, 0ul);
+	syscall(__NR_fsconfig, r[0], 6ul, 0ul, 0ul, 0ul);
+	syscall(__NR_fsmount, r[0], 0ul, 0ul);
 	return 0;
 }

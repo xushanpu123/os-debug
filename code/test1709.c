@@ -19,28 +19,10 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 0xaul, 2ul, 0);
+memcpy((void*)0x20000000, "/dev/sr0\000", 9);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000000ul, 0x800ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-memset((void*)0x20000000, 0, 10);
-memset((void*)0x2000000a, 255, 2);
-*(uint32_t*)0x2000000c = htobe32(-1);
-*(uint8_t*)0x20000010 = 0xfe;
-*(uint8_t*)0x20000011 = 0x80;
-memset((void*)0x20000012, 0, 13);
-*(uint8_t*)0x2000001f = 0xbb;
-*(uint8_t*)0x20000020 = 0xfe;
-*(uint8_t*)0x20000021 = 0x88;
-memset((void*)0x20000022, 0, 12);
-*(uint8_t*)0x2000002e = 0;
-*(uint8_t*)0x2000002f = 1;
-*(uint32_t*)0x20000030 = 0;
-*(uint16_t*)0x20000034 = 0x81;
-*(uint16_t*)0x20000036 = 0;
-*(uint32_t*)0x20000038 = 0;
-*(uint64_t*)0x20000040 = 0;
-*(uint32_t*)0x20000048 = 0;
-*(uint32_t*)0x2000004c = 0;
-	syscall(__NR_ioctl, r[0], 0x890c, 0x20000000ul);
+	syscall(__NR_read, r[0], 0x200000c0ul, 0x9aul);
 	return 0;
 }

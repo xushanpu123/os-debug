@@ -11,17 +11,86 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#define BITMASK(bf_off,bf_len) (((1ull << (bf_len)) - 1) << (bf_off))
+#define STORE_BY_BITMASK(type,htobe,addr,val,bf_off,bf_len) *(type*)(addr) = htobe((htobe(*(type*)(addr)) & ~BITMASK((bf_off), (bf_len))) | (((type)(val) << (bf_off)) & BITMASK((bf_off), (bf_len))))
+
+const int kInitNetNsFd = 201;
+
+static long syz_init_net_socket(volatile long domain, volatile long type, volatile long proto)
+{
+	return syscall(__NR_socket, domain, type, proto);
+}
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 
-memcpy((void*)0x20000080, "./file0\000", 8);
-	syscall(__NR_creat, 0x20000080ul, 0ul);
-memcpy((void*)0x20000000, "./file0\000", 8);
-memcpy((void*)0x200000c0, "./file0\000", 8);
-memcpy((void*)0x20000100, "9p\000", 3);
-	syscall(__NR_mount, 0x20000000ul, 0x200000c0ul, 0x20000100ul, 0ul, 0ul);
+*(uint32_t*)0x20000000 = 0;
+*(uint32_t*)0x20000004 = 0x80;
+*(uint8_t*)0x20000008 = 0;
+*(uint8_t*)0x20000009 = 0;
+*(uint8_t*)0x2000000a = 0;
+*(uint8_t*)0x2000000b = 0;
+*(uint32_t*)0x2000000c = 0;
+*(uint64_t*)0x20000010 = 0;
+*(uint64_t*)0x20000018 = 0;
+*(uint64_t*)0x20000020 = 0;
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 0, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 1, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 2, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 3, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 4, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 5, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 6, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 7, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 8, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 9, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 10, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 11, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 12, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 13, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 14, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 15, 2);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 17, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 18, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 19, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 20, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 21, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 22, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 23, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 24, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 25, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 26, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 27, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 28, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 29, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 30, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 31, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 1, 32, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 33, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 34, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 35, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 36, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 37, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 38, 26);
+*(uint32_t*)0x20000030 = 0;
+*(uint32_t*)0x20000034 = 0;
+*(uint64_t*)0x20000038 = 0;
+*(uint64_t*)0x20000040 = 0;
+*(uint64_t*)0x20000048 = 0;
+*(uint64_t*)0x20000050 = 0;
+*(uint32_t*)0x20000058 = 0;
+*(uint32_t*)0x2000005c = 0;
+*(uint64_t*)0x20000060 = 0;
+*(uint32_t*)0x20000068 = 0;
+*(uint16_t*)0x2000006c = 0;
+*(uint16_t*)0x2000006e = 0;
+*(uint32_t*)0x20000070 = 1;
+*(uint32_t*)0x20000074 = 0;
+*(uint64_t*)0x20000078 = 0;
+	syscall(__NR_perf_event_open, 0x20000000ul, 0, 0ul, -1, 0ul);
+syz_init_net_socket(0x10, 3, 0x10);
 	return 0;
 }

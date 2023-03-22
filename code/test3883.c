@@ -11,13 +11,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#ifndef __NR_close_range
-#define __NR_close_range 436
-#endif
-#ifndef __NR_statx
-#define __NR_statx 332
-#endif
-
 uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
@@ -26,12 +19,14 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000000, "/proc/consoles\000", 15);
-	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000000ul, 0ul, 0ul);
+memcpy((void*)0x20000080, "/sys/kernel/rcu_normal", 22);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000080ul, 0x141941ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_close_range, -1, -1, 2ul);
-memcpy((void*)0x20000640, "./file0\000", 8);
-	syscall(__NR_statx, r[0], 0x20000640ul, 0ul, 0ul, 0ul);
+memcpy((void*)0x20000000, "macvlan1", 8);
+*(uint8_t*)0x20000008 = 0x32;
+*(uint8_t*)0x20000009 = 0;
+memset((void*)0x2000000a, 0, 1);
+	syscall(__NR_write, r[0], 0x20000000ul, 0xbul);
 	return 0;
 }

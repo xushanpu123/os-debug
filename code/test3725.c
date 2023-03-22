@@ -11,18 +11,16 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
-
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-	res = syscall(__NR_socket, 0xaul, 3ul, 0x3a);
-	if (res != -1)
-		r[0] = res;
-*(uint32_t*)0x20000040 = 0;
-	syscall(__NR_getsockopt, r[0], 1, 0x1d, 0ul, 0x20000040ul);
+
+memcpy((void*)0x200000c0, "dns_resolver\000", 13);
+memcpy((void*)0x20000100, "syz", 3);
+*(uint8_t*)0x20000103 = 0x23;
+*(uint8_t*)0x20000104 = 0;
+	syscall(__NR_request_key, 0x200000c0ul, 0x20000100ul, 0ul, 0);
 	return 0;
 }

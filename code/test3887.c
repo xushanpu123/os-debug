@@ -19,17 +19,24 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 0xaul, 1ul, 0);
+	res = syscall(__NR_socket, 0x10ul, 3ul, 6);
 	if (res != -1)
 		r[0] = res;
-*(uint16_t*)0x20000080 = 2;
-*(uint16_t*)0x20000082 = htobe16(0);
-*(uint32_t*)0x20000084 = htobe32(0xe0000002);
-*(uint8_t*)0x20000100 = 0;
-*(uint8_t*)0x20000101 = 0;
-*(uint16_t*)0x20000102 = 0;
-*(uint32_t*)0x20000104 = 0;
-memcpy((void*)0x20000108, "\x4b\xb8\xab\xa1\x4a\x26\x51\x8c\x0d\x30\xb7\x1c\xe4\x4d\x6d\x5f\x83\xff\x78\x97\xf5\xdd\x21\x8c\x97\x29\xaf\xf7\x67\x31\xa5\xb8\xe0\xf4\xda\xbf\xea\x43\x48\x76\xd9\x76\x02\x17\x6c\xab\x6e\x73\xb9\x6b\x2e\x44\x70\xb7\xe1\x17\x84\xf9\xdc\x34\xb5\x2f\x9a\x88\x6c\xb5\xe5\x7c\x79\x7e\xba\x65\x07\x4e\xb4\x56\x6b\x42\x67\x2c", 80);
-	syscall(__NR_setsockopt, r[0], 6, 0xe, 0x20000080ul, 0xd8ul);
+*(uint64_t*)0x200001c0 = 0;
+*(uint32_t*)0x200001c8 = 0;
+*(uint64_t*)0x200001d0 = 0x20000180;
+*(uint64_t*)0x20000180 = 0x20000200;
+*(uint32_t*)0x20000200 = 0x14;
+*(uint16_t*)0x20000204 = 0x23;
+*(uint16_t*)0x20000206 = 0x411;
+*(uint32_t*)0x20000208 = 0;
+*(uint32_t*)0x2000020c = 0;
+*(uint32_t*)0x20000210 = 0;
+*(uint64_t*)0x20000188 = 0x14;
+*(uint64_t*)0x200001d8 = 1;
+*(uint64_t*)0x200001e0 = 0;
+*(uint64_t*)0x200001e8 = 0;
+*(uint32_t*)0x200001f0 = 0;
+	syscall(__NR_sendmsg, r[0], 0x200001c0ul, 0ul);
 	return 0;
 }

@@ -11,6 +11,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#define BITMASK(bf_off,bf_len) (((1ull << (bf_len)) - 1) << (bf_off))
+#define STORE_BY_BITMASK(type,htobe,addr,val,bf_off,bf_len) *(type*)(addr) = htobe((htobe(*(type*)(addr)) & ~BITMASK((bf_off), (bf_len))) | (((type)(val) << (bf_off)) & BITMASK((bf_off), (bf_len))))
+
 uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
@@ -19,10 +22,16 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000080, "/proc/sysvipc/sem\000", 18);
-	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000080ul, 0ul, 0ul);
+memcpy((void*)0x200000c0, "/dev/snd/seq\000", 13);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x200000c0ul, 0ul, 0);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_pread64, r[0], 0x200000c0ul, 0x8bul, 0x1659ef56ul);
+*(uint32_t*)0x20000180 = 0;
+*(uint32_t*)0x20000184 = 0;
+STORE_BY_BITMASK(uint32_t, , 0x20000188, 0, 0, 1);
+memcpy((void*)0x20000189, "queue0\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000", 64);
+*(uint32_t*)0x200001cc = 0;
+memset((void*)0x200001d0, 0, 60);
+	syscall(__NR_ioctl, r[0], 0xc08c5332, 0x20000180ul);
 	return 0;
 }

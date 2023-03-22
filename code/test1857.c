@@ -3,13 +3,37 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
+#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+#define BITMASK(bf_off,bf_len) (((1ull << (bf_len)) - 1) << (bf_off))
+#define STORE_BY_BITMASK(type,htobe,addr,val,bf_off,bf_len) *(type*)(addr) = htobe((htobe(*(type*)(addr)) & ~BITMASK((bf_off), (bf_len))) | (((type)(val) << (bf_off)) & BITMASK((bf_off), (bf_len))))
+
+static long syz_open_dev(volatile long a0, volatile long a1, volatile long a2)
+{
+	if (a0 == 0xc || a0 == 0xb) {
+		char buf[128];
+		sprintf(buf, "/dev/%s/%d:%d", a0 == 0xc ? "char" : "block", (uint8_t)a1, (uint8_t)a2);
+		return open(buf, O_RDWR, 0);
+	} else {
+		char buf[1024];
+		char* hash;
+		strncpy(buf, (char*)a0, sizeof(buf) - 1);
+		buf[sizeof(buf) - 1] = 0;
+		while ((hash = strchr(buf, '#'))) {
+			*hash = '0' + (char)(a1 % 10);
+			a1 /= 10;
+		}
+		return open(buf, a2, 0);
+	}
+}
 
 uint64_t r[1] = {0xffffffffffffffff};
 
@@ -19,10 +43,50 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000040, "/dev/nvram\000", 11);
-	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000040ul, 0ul, 0ul);
+*(uint64_t*)0x20001a80 = 0;
+*(uint32_t*)0x20001a88 = 0;
+*(uint64_t*)0x20001a90 = 0x20001a40;
+*(uint64_t*)0x20001a40 = 0x200001c0;
+*(uint32_t*)0x200001c0 = 0x180;
+*(uint8_t*)0x200001c4 = 0;
+*(uint8_t*)0x200001c5 = 0;
+*(uint16_t*)0x200001c6 = 0;
+*(uint32_t*)0x200001c8 = 0;
+*(uint32_t*)0x200001cc = 0;
+*(uint8_t*)0x200001d0 = 0;
+*(uint8_t*)0x200001d1 = 0;
+*(uint16_t*)0x200001d2 = htobe16(0);
+memcpy((void*)0x200001d4, "\xaa\x26\xb6\x9a\x56\x5f\x2b\x1b\xd6\xea\xe1\xf2\x45\x34\xea\x43\xc3\xd7\x67\xca\x5f\x66\x47\xe2\x48\xf4\x44\x4e\x78\x66\x74\xdf\x55\x96\x4f\xa1\xb1\x4e\xe1\x31\x02\xea\x5b\x73\xb2\xed\x91\xca\x84\x8c\x97\xc7\x94\xb5\x0f\x0b\x5f\x30\x49\xc1\xb5\x46\x22\x58\xf5\x0f\x0f\x43\xae\x85\xf5\x32\xf5\xa3\xb0\xdd\xb8\xe2\x32\x8f\x64\xdb\x04\x95\xfa\xed\x4d\x27\x78\x1b\x5a", 91);
+*(uint16_t*)0x2000022f = 0x10d;
+STORE_BY_BITMASK(uint16_t, , 0x20000231, 0, 0, 14);
+STORE_BY_BITMASK(uint16_t, , 0x20000232, 0, 6, 1);
+STORE_BY_BITMASK(uint16_t, , 0x20000232, 1, 7, 1);
+memcpy((void*)0x20000233, "\xaf\x34\xc5\x6e\x6f\xf7\x68\x4a\xc2\xc3\x11\x92\x9f\x0e\xb7\xfa\x84\xe6\x96\x0d\xa3\xc4\xaa\xbf\x33\xa5\xbe\x2e\xf3\x39\x03\xa5\x3f\xb2\xf7\xf8\x18\x35\x6b\x2e\x07\x0a\x4c\x31\x32\x02\x09\x41\x32\x15\x83\xd1\x87\x46\xe7\xa6\xda\xd6\x5c\xa2\xbf\x8d\x3e\x9d\x01\x47\x48\x4c\xee\x12\x12\x00\xba\xdd\xe7\x45\x38\x17\xac\x30\xce\x60\xea\x73\xf8\x78\x25\x4f\x76\xc7\x05\x7a\x10\x93\x18\xe9\xbf\x1d\xd9\x00\x41\x23\xd6\x02\x55\x10\x31\x75\x5f\x06\x06\x76\xab\xc9\xb3\xf9\x45\x66\x03\xb7\x62\x25\xe0\x9b\x7b\xdc\xda\xa8\x95\x99\x16\xcc\x91\x8b\xd5\xdc\x85\x89\x06\xc4\xcc\xe1\x21\x60\xba\x1c\x04\x86\xa7\xb0\x6e\x19\x05\x20\x8e\xd1\xd8\x52\x59\x96\xd5\x97\x2c\xda\x15\x1b\xca\x67\x62\x89\x74\x9b\x2c\xb0\xd2\x9b\x8d\xbf\xb7\xeb\x23\x9b\x53\x80\xb5\x99\xb6\x5e\xd4\x00\x25\x1e\x0d\x49\xf1\x61\x27\xb8\x57\xff\xde\x5d\x74\x84\x73\xab\x34\x9b\x73", 209);
+memcpy((void*)0x20000304, "\x9f\x64\x3e\xe5\x13\xac\x0b\x9b\xcd\x8e\x99\xfd\x8e\x51\x48\xd7\xca\x06\xd5\x7c\x72\xbf\x7e\x62\x14\x21\xe9\x72\x20\xca\xa1\x02\x4e\xfd\xf4\x0e\x2e\xae\x48\x91\x1f\xe3\xae\x73\x69\x75\x85\x1b", 48);
+*(uint16_t*)0x20000334 = 8;
+STORE_BY_BITMASK(uint16_t, , 0x20000336, 0x44, 0, 14);
+STORE_BY_BITMASK(uint16_t, , 0x20000337, 0, 6, 1);
+STORE_BY_BITMASK(uint16_t, , 0x20000337, 0, 7, 1);
+*(uint8_t*)0x20000338 = 0xac;
+*(uint8_t*)0x20000339 = 0x14;
+*(uint8_t*)0x2000033a = 0x14;
+*(uint8_t*)0x2000033b = 0;
+*(uint64_t*)0x20001a48 = 0x180;
+*(uint64_t*)0x20001a98 = 1;
+*(uint64_t*)0x20001aa0 = 0;
+*(uint64_t*)0x20001aa8 = 0;
+*(uint32_t*)0x20001ab0 = 0;
+	syscall(__NR_sendmsg, -1, 0x20001a80ul, 0ul);
+	res = -1;
+res = syz_open_dev(0xc, 4, 1);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_lseek, r[0], 0ul, 2ul);
+*(uint32_t*)0x20000000 = 0x14;
+*(uint8_t*)0x20000004 = 0x49;
+*(uint16_t*)0x20000005 = 0;
+*(uint8_t*)0x20000007 = 0;
+*(uint32_t*)0x20000008 = 0;
+*(uint64_t*)0x2000000c = 0;
+	syscall(__NR_write, r[0], 0x20000000ul, 0xff35ul);
 	return 0;
 }

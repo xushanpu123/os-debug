@@ -3,36 +3,15 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
-#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-static long syz_open_dev(volatile long a0, volatile long a1, volatile long a2)
-{
-	if (a0 == 0xc || a0 == 0xb) {
-		char buf[128];
-		sprintf(buf, "/dev/%s/%d:%d", a0 == 0xc ? "char" : "block", (uint8_t)a1, (uint8_t)a2);
-		return open(buf, O_RDWR, 0);
-	} else {
-		char buf[1024];
-		char* hash;
-		strncpy(buf, (char*)a0, sizeof(buf) - 1);
-		buf[sizeof(buf) - 1] = 0;
-		while ((hash = strchr(buf, '#'))) {
-			*hash = '0' + (char)(a1 % 10);
-			a1 /= 10;
-		}
-		return open(buf, a2, 0);
-	}
-}
-
-uint64_t r[1] = {0xffffffffffffffff};
+uint64_t r[3] = {0xffffffffffffffff, 0xffffffffffffffff, 0x0};
 
 int main(void)
 {
@@ -40,12 +19,28 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x200000c0, "/dev/sg#\000", 9);
-	res = -1;
-res = syz_open_dev(0x200000c0, 0, 0);
+	res = syscall(__NR_socket, 0x11ul, 3ul, 0x300);
 	if (res != -1)
 		r[0] = res;
-*(uint32_t*)0x20000080 = 0;
-	syscall(__NR_ioctl, r[0], 0x227e, 0x20000080ul);
+	res = syscall(__NR_socket, 0x11ul, 2ul, 0x300);
+	if (res != -1)
+		r[1] = res;
+memcpy((void*)0x20000000, "lo\000\000\000\000\000\000\000\000\000\000\000\000\000\000", 16);
+	res = syscall(__NR_ioctl, r[1], 0x8933, 0x20000000ul);
+	if (res != -1)
+r[2] = *(uint32_t*)0x20000010;
+*(uint32_t*)0x20000100 = r[2];
+*(uint16_t*)0x20000104 = 1;
+*(uint16_t*)0x20000106 = 6;
+memset((void*)0x20000108, 170, 5);
+*(uint8_t*)0x2000010d = 0xaa;
+memset((void*)0x2000010e, 0, 2);
+	syscall(__NR_setsockopt, r[0], 0x107, 1, 0x20000100ul, 0x10ul);
+*(uint32_t*)0x200000c0 = r[2];
+*(uint16_t*)0x200000c4 = 1;
+*(uint16_t*)0x200000c6 = 6;
+memcpy((void*)0x200000c8, "\x97\xf5\x3b\x39\x99\x11", 6);
+memset((void*)0x200000ce, 0, 2);
+	syscall(__NR_setsockopt, r[0], 0x107, 2, 0x200000c0ul, 0x10ul);
 	return 0;
 }

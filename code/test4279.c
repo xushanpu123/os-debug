@@ -11,27 +11,14 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
-
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-memcpy((void*)0x20000040, "/dev/snd/seq\000", 13);
-	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000040ul, 0ul, 0);
-	if (res != -1)
-		r[0] = res;
-*(uint32_t*)0x200000c0 = 0;
-*(uint32_t*)0x200000c4 = 1;
-*(uint32_t*)0x200000c8 = 0;
-*(uint32_t*)0x200000cc = 0;
-*(uint32_t*)0x200000d0 = 0;
-*(uint32_t*)0x200000d4 = 0;
-*(uint32_t*)0x200000d8 = 0;
-*(uint32_t*)0x200000dc = 0;
-memset((void*)0x200000e0, 0, 64);
-	syscall(__NR_ioctl, r[0], 0x40605346, 0x200000c0ul);
+
+*(uint64_t*)0x20000100 = 0;
+*(uint64_t*)0x20000108 = 0;
+	syscall(__NR_clock_nanosleep, 7ul, 0ul, 0x20000100ul, 0ul);
 	return 0;
 }

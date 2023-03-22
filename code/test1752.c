@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[2] = {0xffffffffffffffff, 0xffffffffffffffff};
+uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
 {
@@ -19,30 +19,29 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000040, "./file1\000", 8);
-	res = syscall(__NR_openat, 0xffffff9c, 0x20000040ul, 0x42ul, 0ul);
+	syscall(__NR_setuid, 0xee00);
+	res = syscall(__NR_socket, 0xaul, 2ul, 0);
 	if (res != -1)
 		r[0] = res;
-memcpy((void*)0x20000380, "./file1\000", 8);
-memcpy((void*)0x200003c0, "./file1\000", 8);
-	syscall(__NR_mount, 0x20000380ul, 0x200003c0ul, 0ul, 0xb3080ul, 0ul);
-memcpy((void*)0x20000040, "./file1\000", 8);
-	res = syscall(__NR_openat, 0xffffff9c, 0x20000040ul, 0x42ul, 0ul);
-	if (res != -1)
-		r[1] = res;
-	syscall(__NR_close, r[1]);
-memcpy((void*)0x20000480, "./file1\000", 8);
-memcpy((void*)0x200004c0, "9p\000", 3);
-memcpy((void*)0x20000500, "trans=fd,", 9);
-memcpy((void*)0x20000509, "rfdno", 5);
-*(uint8_t*)0x2000050e = 0x3d;
-sprintf((char*)0x2000050f, "0x%016llx", (long long)r[1]);
-*(uint8_t*)0x20000521 = 0x2c;
-memcpy((void*)0x20000522, "wfdno", 5);
-*(uint8_t*)0x20000527 = 0x3d;
-sprintf((char*)0x20000528, "0x%016llx", (long long)r[0]);
-*(uint8_t*)0x2000053a = 0x2c;
-*(uint8_t*)0x2000053b = 0;
-	syscall(__NR_mount, 0ul, 0x20000480ul, 0x200004c0ul, 0ul, 0x20000500ul);
+*(uint8_t*)0x200001c0 = 0xfe;
+*(uint8_t*)0x200001c1 = 0x88;
+memset((void*)0x200001c2, 0, 12);
+*(uint8_t*)0x200001ce = 0;
+*(uint8_t*)0x200001cf = 1;
+memset((void*)0x200001d0, 0, 16);
+memset((void*)0x200001e0, 0, 10);
+memset((void*)0x200001ea, 255, 2);
+*(uint8_t*)0x200001ec = 0xac;
+*(uint8_t*)0x200001ed = 0x14;
+*(uint8_t*)0x200001ee = 0x14;
+*(uint8_t*)0x200001ef = 0;
+*(uint32_t*)0x200001f0 = 0;
+*(uint16_t*)0x200001f4 = 0;
+*(uint16_t*)0x200001f6 = 0;
+*(uint32_t*)0x200001f8 = 0;
+*(uint64_t*)0x20000200 = 0;
+*(uint32_t*)0x20000208 = 0;
+*(uint32_t*)0x2000020c = 0;
+	syscall(__NR_ioctl, r[0], 0x890c, 0x200001c0ul);
 	return 0;
 }

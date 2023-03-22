@@ -11,29 +11,40 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[1] = {0x0};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-*(uint32_t*)0x20000040 = 0x19980330;
-*(uint32_t*)0x20000044 = 0;
-*(uint32_t*)0x20000080 = 0;
-*(uint32_t*)0x20000084 = 0;
-*(uint32_t*)0x20000088 = 0;
-*(uint32_t*)0x2000008c = 0;
-*(uint32_t*)0x20000090 = 0;
-*(uint32_t*)0x20000094 = 0;
-	syscall(__NR_capset, 0x20000040ul, 0x20000080ul);
-*(uint32_t*)0x20000140 = 0x20080522;
-*(uint32_t*)0x20000144 = 0;
-*(uint32_t*)0x20000180 = 0;
-*(uint32_t*)0x20000184 = 0;
-*(uint32_t*)0x20000188 = 0;
-*(uint32_t*)0x2000018c = 0;
-*(uint32_t*)0x20000190 = 0;
-*(uint32_t*)0x20000194 = 0;
-	syscall(__NR_capset, 0x20000140ul, 0x20000180ul);
+				intptr_t res = 0;
+*(uint64_t*)0x20000680 = 6;
+	syscall(__NR_sched_setaffinity, 0, 8ul, 0x20000680ul);
+	res = syscall(__NR_msgget, 0ul, 0ul);
+	if (res != -1)
+		r[0] = res;
+	syscall(__NR_msgrcv, r[0], 0ul, 0x1008ul, 0ul, 0ul);
+*(uint32_t*)0x20000000 = 0x798e2635;
+*(uint32_t*)0x20000004 = 0;
+*(uint32_t*)0x20000008 = 0xee00;
+*(uint32_t*)0x2000000c = 0;
+*(uint32_t*)0x20000010 = -1;
+*(uint32_t*)0x20000014 = 0;
+*(uint16_t*)0x20000018 = 0;
+*(uint64_t*)0x20000020 = 0;
+*(uint64_t*)0x20000028 = 0;
+*(uint64_t*)0x20000030 = 0;
+*(uint64_t*)0x20000038 = 0;
+*(uint64_t*)0x20000040 = 0;
+*(uint64_t*)0x20000048 = 0;
+*(uint64_t*)0x20000050 = 0;
+*(uint16_t*)0x20000058 = 0;
+*(uint16_t*)0x2000005a = 0;
+*(uint16_t*)0x2000005c = 0;
+*(uint32_t*)0x20000060 = -1;
+*(uint32_t*)0x20000064 = -1;
+	syscall(__NR_msgctl, r[0], 1ul, 0x20000000ul);
+	syscall(__NR_openat, 0xffffffffffffff9cul, 0ul, 0ul, 0ul);
 	return 0;
 }

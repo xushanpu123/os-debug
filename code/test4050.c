@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+uint64_t r[4] = {0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff};
 
 int main(void)
 {
@@ -19,10 +19,27 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 0x11ul, 3ul, 0x300);
+	res = syscall(__NR_epoll_create1, 0ul);
 	if (res != -1)
 		r[0] = res;
-*(uint32_t*)0x20000000 = 0;
-	syscall(__NR_setsockopt, r[0], 0x107, 8, 0x20000000ul, 4ul);
+	res = syscall(__NR_socket, 0xaul, 1ul, 0);
+	if (res != -1)
+		r[1] = res;
+*(uint32_t*)0x20000180 = 0;
+*(uint64_t*)0x20000184 = 0;
+	syscall(__NR_epoll_ctl, r[0], 1ul, r[1], 0x20000180ul);
+memcpy((void*)0x20000000, "/sys/kernel/profiling", 21);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000000ul, 0ul, 0ul);
+	if (res != -1)
+		r[2] = res;
+	res = syscall(__NR_socket, 0x10ul, 3ul, 0x10);
+	if (res != -1)
+		r[3] = res;
+*(uint32_t*)0x20000080 = 0;
+*(uint64_t*)0x20000084 = 0;
+	syscall(__NR_epoll_ctl, r[0], 1ul, r[3], 0x20000080ul);
+*(uint32_t*)0x200000c0 = 0;
+*(uint64_t*)0x200000c4 = 0;
+	syscall(__NR_epoll_ctl, r[0], 1ul, r[2], 0x200000c0ul);
 	return 0;
 }

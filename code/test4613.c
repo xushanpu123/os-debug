@@ -41,9 +41,26 @@ int main(void)
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
 	res = -1;
-res = syz_open_dev(0xc, 4, 1);
+res = syz_open_dev(0xc, 4, 0x15);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_ioctl, r[0], 0x540a, 0ul);
+*(uint32_t*)0x20000040 = 0;
+*(uint32_t*)0x20000044 = 0;
+*(uint32_t*)0x20000048 = 0;
+*(uint32_t*)0x2000004c = 0;
+*(uint8_t*)0x20000050 = 0;
+memcpy((void*)0x20000051, "\xc8\xc9\xe0\x37\x9e\x12\x9c\x58\xe7\xb1\xe4\xe9\x2e\x33\xf1\x05\x5d\x04\x57", 19);
+*(uint32_t*)0x20000064 = 0;
+*(uint32_t*)0x20000068 = 0;
+	syscall(__NR_ioctl, r[0], 0x402c542c, 0x20000040ul);
+*(uint16_t*)0x20000000 = 0;
+*(uint16_t*)0x20000002 = 0;
+*(uint16_t*)0x20000004 = 0;
+*(uint16_t*)0x20000006 = 0xf1ef;
+*(uint8_t*)0x20000008 = 0;
+memcpy((void*)0x20000009, "\x59\x1c\x4e\x2e\xab\xa3\x65\x94", 8);
+	syscall(__NR_ioctl, r[0], 0x5408, 0x20000000ul);
+*(uint8_t*)0x200001c0 = 3;
+	syscall(__NR_ioctl, r[0], 0x541c, 0x200001c0ul);
 	return 0;
 }

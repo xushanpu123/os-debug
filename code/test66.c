@@ -11,11 +11,18 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[1] = {0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				syscall(__NR_move_pages, 0, 0ul, 0ul, 0ul, 0ul, 0xeul);
+				intptr_t res = 0;
+memcpy((void*)0x200003c0, "/dev/snapshot\000", 14);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x200003c0ul, 0ul, 0ul);
+	if (res != -1)
+		r[0] = res;
+	syscall(__NR_ioctl, r[0], 0x330b, 0);
 	return 0;
 }

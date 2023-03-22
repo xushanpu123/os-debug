@@ -19,16 +19,9 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 1ul, 5ul, 0);
+	res = syscall(__NR_socket, 0xaul, 3ul, 2);
 	if (res != -1)
 		r[0] = res;
-*(uint64_t*)0x20000580 = 0;
-*(uint32_t*)0x20000588 = 0;
-*(uint64_t*)0x20000590 = 0;
-*(uint64_t*)0x20000598 = 0;
-*(uint64_t*)0x200005a0 = 0;
-*(uint64_t*)0x200005a8 = 0;
-*(uint32_t*)0x200005b0 = 0;
-	syscall(__NR_sendmsg, r[0], 0x20000580ul, 0ul);
+	syscall(__NR_setsockopt, r[0], 0x29, 0x49, 0ul, 0ul);
 	return 0;
 }

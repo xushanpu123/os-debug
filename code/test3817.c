@@ -3,40 +3,54 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
-#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-static long syz_open_procfs(volatile long a0, volatile long a1)
-{
-	char buf[128];
-	memset(buf, 0, sizeof(buf));
-	if (a0 == 0) {
-		snprintf(buf, sizeof(buf), "/proc/self/%s", (char*)a1);
-	} else if (a0 == -1) {
-		snprintf(buf, sizeof(buf), "/proc/thread-self/%s", (char*)a1);
-	} else {
-		snprintf(buf, sizeof(buf), "/proc/self/task/%d/%s", (int)a0, (char*)a1);
-	}
-	int fd = open(buf, O_RDWR);
-	if (fd == -1)
-		fd = open(buf, O_RDONLY);
-	return fd;
-}
+uint64_t r[2] = {0xffffffffffffffff, 0xffffffffffffffff};
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-memcpy((void*)0x200000c0, "mountstats\000", 11);
-syz_open_procfs(0, 0x200000c0);
+				intptr_t res = 0;
+memcpy((void*)0x20000440, "/proc/slabinfo\000", 15);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000440ul, 0ul, 0ul);
+	if (res != -1)
+		r[0] = res;
+	syscall(__NR_fcntl, r[0], 0x400ul, 0ul);
+	res = syscall(__NR_socket, 2ul, 3ul, 2);
+	if (res != -1)
+		r[1] = res;
+*(uint64_t*)0x20001d80 = 0x20000080;
+*(uint16_t*)0x20000080 = 0;
+*(uint8_t*)0x20000082 = 0;
+*(uint32_t*)0x20000084 = 0;
+*(uint32_t*)0x20001d88 = 0x6e;
+*(uint64_t*)0x20001d90 = 0;
+*(uint64_t*)0x20001d98 = 0;
+*(uint64_t*)0x20001da0 = 0x20001540;
+*(uint64_t*)0x20001540 = 0x10;
+*(uint32_t*)0x20001548 = 1;
+*(uint32_t*)0x2000154c = 1;
+*(uint64_t*)0x20001da8 = 0x10;
+*(uint32_t*)0x20001db0 = 0;
+*(uint32_t*)0x20001db8 = 0;
+	syscall(__NR_sendmmsg, r[1], 0x20001d80ul, 1ul, 0x4800ul);
+*(uint16_t*)0x20000000 = 0;
+*(uint8_t*)0x20000002 = 1;
+*(uint8_t*)0x20000003 = 0x3f;
+*(uint32_t*)0x20000004 = 7;
+*(uint32_t*)0x20000008 = htobe32(0xe0000002);
+*(uint8_t*)0x2000000c = 0xac;
+*(uint8_t*)0x2000000d = 0x1e;
+*(uint8_t*)0x2000000e = 0;
+*(uint8_t*)0x2000000f = 1;
+	syscall(__NR_setsockopt, r[1], 0, 0xca, 0x20000000ul, 0x10ul);
 	return 0;
 }

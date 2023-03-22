@@ -3,34 +3,13 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
-#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-static long syz_open_dev(volatile long a0, volatile long a1, volatile long a2)
-{
-	if (a0 == 0xc || a0 == 0xb) {
-		char buf[128];
-		sprintf(buf, "/dev/%s/%d:%d", a0 == 0xc ? "char" : "block", (uint8_t)a1, (uint8_t)a2);
-		return open(buf, O_RDWR, 0);
-	} else {
-		char buf[1024];
-		char* hash;
-		strncpy(buf, (char*)a0, sizeof(buf) - 1);
-		buf[sizeof(buf) - 1] = 0;
-		while ((hash = strchr(buf, '#'))) {
-			*hash = '0' + (char)(a1 % 10);
-			a1 /= 10;
-		}
-		return open(buf, a2, 0);
-	}
-}
 
 uint64_t r[1] = {0xffffffffffffffff};
 
@@ -40,11 +19,15 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = -1;
-res = syz_open_dev(0xc, 4, 4);
+	res = syscall(__NR_socket, 0xaul, 1ul, 0);
 	if (res != -1)
 		r[0] = res;
-memcpy((void*)0x20000280, "\x7f\x45\x4c\x46\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xc1\xbd\x69\xee\xc6\x69\x57\x81\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x38\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\xff\x0f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x36\x1e\x8b\xc6\xca\xdf\xd9\x54\x02\x49\x02\x98\xe1\x53\x08\x84\x53\x97\x5b\xb4\x65\x34\x75\x80\xdd\x72\xc2\x96\x31\x6a\x96\x47\x48\x96\x97\x16\x60\xda\xee\x59\x4c\xbf\x5f\x9b\x9c\xa8\xb8\x02\xfc\xdf\x8a\xd1\xd1\x13\x05\xc5\xdf\x86\x64\x82\x31\x19\xce\x7a\x68\x1c\x10\x7a\x7c\x9d\x1c\x88\xfd\x45\x66\x1d\x72\x82\xc4\xc8\xc9\x1f\x07\xac\x77\xd2\x9f\x59\x5f\x97\xb5\xc5\x09\xbc\x8b\x5e\x92\xee\x13\xae\xaa\xd7\x41\x83\xb4\xab\xd3\xc2\x81\x48\x9f\x5c\xf6\x97\xd3\xe5\xe8\x19\xa8\xfc\xb3\xbe\xef\x11\x09\xae\x93\x49\x3a\xaa", 226);
-	syscall(__NR_write, r[0], 0x20000280ul, 0xe2ul);
+	syscall(__NR_listen, r[0], 0);
+*(uint32_t*)0x20006340 = r[0];
+*(uint16_t*)0x20006344 = 0;
+*(uint16_t*)0x20006346 = 0;
+	syscall(__NR_ppoll, 0x20006340ul, 1ul, 0ul, 0ul, 0ul);
+*(uint32_t*)0x20000140 = 0;
+	syscall(__NR_setsockopt, r[0], 6, 0x19, 0x20000140ul, 0x64ul);
 	return 0;
 }

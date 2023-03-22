@@ -38,8 +38,7 @@ int main(void)
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				syscall(__NR_msgget, 0ul, 0ul);
-	syscall(__NR_openat, 0xffffffffffffff9cul, 0ul, 0ul, 0ul);
-syz_clone(0x40800000, 0, 0, 0x200052c0, 0, 0);
+
+syz_clone(0xc404c000, 0, 0, 0, 0, 0);
 	return 0;
 }

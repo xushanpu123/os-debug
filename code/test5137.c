@@ -19,10 +19,30 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 0xaul, 2ul, 0);
+	res = syscall(__NR_socket, 0x10ul, 3ul, 0);
 	if (res != -1)
 		r[0] = res;
-*(uint32_t*)0x20000040 = 0;
-	syscall(__NR_setsockopt, r[0], 0x11, 0x65, 0x20000040ul, 4ul);
+*(uint64_t*)0x20001740 = 0;
+*(uint32_t*)0x20001748 = 0;
+*(uint64_t*)0x20001750 = 0;
+*(uint64_t*)0x20001758 = 0;
+*(uint64_t*)0x20001760 = 0;
+*(uint64_t*)0x20001768 = 0;
+*(uint32_t*)0x20001770 = 0;
+*(uint32_t*)0x20001778 = 0;
+*(uint64_t*)0x20001800 = 0;
+*(uint64_t*)0x20001808 = 0;
+	syscall(__NR_recvmmsg, r[0], 0x20001740ul, 1ul, 0ul, 0x20001800ul);
+*(uint64_t*)0x20000140 = 0;
+*(uint32_t*)0x20000148 = 0;
+*(uint64_t*)0x20000150 = 0x20000100;
+*(uint64_t*)0x20000100 = 0x20000000;
+memcpy((void*)0x20000000, "\x14\x00\x00\x00\x3f\xbd\xb3", 7);
+*(uint64_t*)0x20000108 = 0x14;
+*(uint64_t*)0x20000158 = 1;
+*(uint64_t*)0x20000160 = 0;
+*(uint64_t*)0x20000168 = 0;
+*(uint32_t*)0x20000170 = 0;
+	syscall(__NR_sendmsg, r[0], 0x20000140ul, 0ul);
 	return 0;
 }

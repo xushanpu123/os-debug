@@ -11,7 +11,46 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0x0};
+#define SIZEOF_IO_URING_SQE 64
+#define SIZEOF_IO_URING_CQE 16
+#define SQ_HEAD_OFFSET 0
+#define SQ_TAIL_OFFSET 64
+#define SQ_RING_MASK_OFFSET 256
+#define SQ_RING_ENTRIES_OFFSET 264
+#define SQ_FLAGS_OFFSET 276
+#define SQ_DROPPED_OFFSET 272
+#define CQ_HEAD_OFFSET 128
+#define CQ_TAIL_OFFSET 192
+#define CQ_RING_MASK_OFFSET 260
+#define CQ_RING_ENTRIES_OFFSET 268
+#define CQ_RING_OVERFLOW_OFFSET 284
+#define CQ_FLAGS_OFFSET 280
+#define CQ_CQES_OFFSET 320
+
+static long syz_io_uring_submit(volatile long a0, volatile long a1, volatile long a2, volatile long a3)
+{
+	char* ring_ptr = (char*)a0;
+	char* sqes_ptr = (char*)a1;
+	char* sqe = (char*)a2;
+	uint32_t sqes_index = (uint32_t)a3;
+	uint32_t sq_ring_entries = *(uint32_t*)(ring_ptr + SQ_RING_ENTRIES_OFFSET);
+	uint32_t cq_ring_entries = *(uint32_t*)(ring_ptr + CQ_RING_ENTRIES_OFFSET);
+	uint32_t sq_array_off = (CQ_CQES_OFFSET + cq_ring_entries * SIZEOF_IO_URING_CQE + 63) & ~63;
+	if (sq_ring_entries)
+		sqes_index %= sq_ring_entries;
+	char* sqe_dest = sqes_ptr + sqes_index * SIZEOF_IO_URING_SQE;
+	memcpy(sqe_dest, sqe, SIZEOF_IO_URING_SQE);
+	uint32_t sq_ring_mask = *(uint32_t*)(ring_ptr + SQ_RING_MASK_OFFSET);
+	uint32_t* sq_tail_ptr = (uint32_t*)(ring_ptr + SQ_TAIL_OFFSET);
+	uint32_t sq_tail = *sq_tail_ptr & sq_ring_mask;
+	uint32_t sq_tail_next = *sq_tail_ptr + 1;
+	uint32_t* sq_array = (uint32_t*)(ring_ptr + sq_array_off);
+	*(sq_array + sq_tail) = sqes_index;
+	__atomic_store_n(sq_tail_ptr, sq_tail_next, __ATOMIC_RELEASE);
+	return 0;
+}
+
+uint64_t r[3] = {0xffffffffffffffff, 0xffffffffffffffff, 0x0};
 
 int main(void)
 {
@@ -19,24 +58,25 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000080, "logon\000", 6);
-memcpy((void*)0x200000c0, "fscrypt:", 8);
-memcpy((void*)0x200000c8, "0000111122223333", 16);
-*(uint8_t*)0x200000d8 = 0;
-*(uint32_t*)0x20000140 = 0;
-memcpy((void*)0x20000144, "\x76\xa8\xb3\xcf\x9f\x83\x80\xda\xc0\x1f\x99\x87\xd6\x4a\x27\xe6\xd7\x70\xa3\x8b\x45\xf9\x21\x15\xbb\x29\x16\xeb\x6b\xd5\xbe\x7c\x92\xca\x6a\x37\xdd\x45\xa1\xee\x68\x52\xd3\x5e\x9a\xcd\x3d\xbb\xaa\x0f\x24\x9b\x59\x19\xaa\x23\x27\xae\x1f\x49\x30\xce\xb4\xbf", 64);
-*(uint32_t*)0x20000184 = 0;
-	res = syscall(__NR_add_key, 0x20000080ul, 0x200000c0ul, 0x20000140ul, 0x48ul, 0xfffffffe);
+memcpy((void*)0x20001680, "./file0\000", 8);
+	res = syscall(__NR_open, 0x20001680ul, 0x4041ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_keyctl, 3ul, r[0], 0, 0, 0);
-memcpy((void*)0x20000080, "logon\000", 6);
-memcpy((void*)0x200000c0, "fscrypt:", 8);
-memcpy((void*)0x200000c8, "0000111122223333", 16);
-*(uint8_t*)0x200000d8 = 0;
-*(uint32_t*)0x20000100 = 0;
-memcpy((void*)0x20000104, "\x8e\x82\x81\xe5\x79\x4b\x42\x40\x94\x38\x78\xf2\x88\x1d\xa1\x20\xfc\x2e\x16\x3e\x5d\xf5\xcc\xf6\x54\x59\x54\x83\x26\x91\x62\x21\x26\x03\xa3\x43\xc9\xb1\x8d\x3b\xf7\x32\x84\x63\xaf\x59\xfa\xc3\xff\xd7\x78\xd9\x0e\x0f\x59\x0c\x0d\xa1\xca\x0d\x26\x38\x57\xea", 64);
-*(uint32_t*)0x20000144 = 0;
-	syscall(__NR_add_key, 0x20000080ul, 0x200000c0ul, 0x20000100ul, 0x48ul, 0xfffffffe);
+memcpy((void*)0x20000040, "./file0\000", 8);
+	res = syscall(__NR_open, 0x20000040ul, 0x14b242ul, 0ul);
+	if (res != -1)
+		r[1] = res;
+*(uint64_t*)0x200014c0 = 0x20000080;
+memset((void*)0x20000080, 238, 1);
+*(uint64_t*)0x200014c8 = 1;
+	syscall(__NR_pwritev, r[1], 0x200014c0ul, 1ul, 0, 0);
+*(uint64_t*)0x20001400 = 0x20000200;
+memset((void*)0x20000200, 122, 1);
+*(uint64_t*)0x20001408 = 1;
+	syscall(__NR_pwritev, r[0], 0x20001400ul, 1ul, 0, 0);
+	res = syscall(__NR_mmap, 0x20ffc000ul, 0x3000ul, 1ul, 0x12ul, r[1], 0ul);
+	if (res != -1)
+		r[2] = res;
+syz_io_uring_submit(r[2], 0, 0, 0);
 	return 0;
 }

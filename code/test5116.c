@@ -19,19 +19,10 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 0xaul, 1ul, 0);
+memcpy((void*)0x20000000, "/dev/autofs\000", 12);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000000ul, 0ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-*(uint16_t*)0x20000180 = 0xa;
-*(uint16_t*)0x20000182 = htobe16(0);
-*(uint32_t*)0x20000184 = htobe32(0);
-memset((void*)0x20000188, 0, 16);
-*(uint32_t*)0x20000198 = 0;
-*(uint8_t*)0x20000200 = 0;
-*(uint8_t*)0x20000201 = 0;
-*(uint16_t*)0x20000202 = 0x30;
-*(uint32_t*)0x20000204 = 0;
-memcpy((void*)0x20000208, "\x4b\xb8\xab\xa1\x4a\x26\x51\x8c\x0d\x30\xb7\x1c\xe4\x4d\x6d\x5f\x83\xff\x78\x97\xf5\xdd\x21\x8c\x97\x29\xaf\xf7\xbe\x5e\xa5\xb8\xe0\xf4\xda\xbf\xea\x43\x48\x76\xd9\x76\x02\x17\x6c\xab\x6e\x73\xb9\x6b\x26\x44\x70\xb7\xe1\x05\x00\x00\x00\x00\x00\x00\x00\x88\x6c\xb5\xe5\x7c\x79\x7e\xba\x65\x07\x4e\xb4\x56\x6b\x42\x67\x2c", 80);
-	syscall(__NR_setsockopt, r[0], 6, 0xe, 0x20000180ul, 0xd8ul);
+	syscall(__NR_ioctl, r[0], 0xc018937b, 0ul);
 	return 0;
 }

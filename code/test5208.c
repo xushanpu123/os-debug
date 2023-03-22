@@ -11,12 +11,22 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[2] = {0xffffffffffffffff, 0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				syscall(__NR_munmap, 0x20ff4000ul, 0x1000ul);
-	syscall(__NR_mprotect, 0x20ff2000ul, 0x3000ul, 0ul);
+				intptr_t res = 0;
+memcpy((void*)0x20000000, "/dev/cdrom\000", 11);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000000ul, 0x8c86ul, 0ul);
+	if (res != -1)
+		r[0] = res;
+memcpy((void*)0x20001480, "/dev/vcs\000", 9);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20001480ul, 0ul, 0ul);
+	if (res != -1)
+		r[1] = res;
+	syscall(__NR_dup2, r[1], r[0]);
 	return 0;
 }

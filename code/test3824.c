@@ -11,16 +11,21 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[1] = {0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-memcpy((void*)0x20000280, "dns_resolver\000", 13);
-memcpy((void*)0x20000240, "syz", 3);
-*(uint8_t*)0x20000243 = 0x23;
-*(uint8_t*)0x20000244 = 0;
-	syscall(__NR_request_key, 0x20000280ul, 0x20000240ul, 0ul, 0xfffffffb);
+				intptr_t res = 0;
+memcpy((void*)0x20000000, "/dev/null\000", 10);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000000ul, 0x880002ul, 0ul);
+	if (res != -1)
+		r[0] = res;
+*(uint32_t*)0x20000040 = 7;
+*(uint8_t*)0x20000044 = 0x47;
+*(uint16_t*)0x20000045 = 0;
+	syscall(__NR_write, r[0], 0x20000040ul, 7ul);
 	return 0;
 }

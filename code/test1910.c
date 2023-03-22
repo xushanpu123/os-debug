@@ -3,34 +3,15 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
-#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-static long syz_open_procfs(volatile long a0, volatile long a1)
-{
-	char buf[128];
-	memset(buf, 0, sizeof(buf));
-	if (a0 == 0) {
-		snprintf(buf, sizeof(buf), "/proc/self/%s", (char*)a1);
-	} else if (a0 == -1) {
-		snprintf(buf, sizeof(buf), "/proc/thread-self/%s", (char*)a1);
-	} else {
-		snprintf(buf, sizeof(buf), "/proc/self/task/%d/%s", (int)a0, (char*)a1);
-	}
-	int fd = open(buf, O_RDWR);
-	if (fd == -1)
-		fd = open(buf, O_RDONLY);
-	return fd;
-}
-
-uint64_t r[1] = {0xffffffffffffffff};
+uint64_t r[3] = {0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff};
 
 int main(void)
 {
@@ -38,11 +19,35 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x200000c0, "ns/ipc\000", 7);
-	res = -1;
-res = syz_open_procfs(0, 0x200000c0);
+	res = syscall(__NR_socketpair, 1ul, 2ul, 0, 0x20000080ul);
+	if (res != -1) {
+r[0] = *(uint32_t*)0x20000080;
+r[1] = *(uint32_t*)0x20000084;
+	}
+*(uint64_t*)0x20000400 = 0;
+*(uint32_t*)0x20000408 = 0;
+*(uint64_t*)0x20000410 = 0;
+*(uint64_t*)0x20000418 = 0;
+*(uint64_t*)0x20000420 = 0x20004700;
+*(uint64_t*)0x20000428 = 0x20;
+*(uint32_t*)0x20000430 = 0;
+*(uint32_t*)0x20000438 = 0;
+	syscall(__NR_recvmmsg, r[0], 0x20000400ul, 1ul, 0ul, 0ul);
+	res = syscall(__NR_socket, 0xaul, 2ul, 0x88);
 	if (res != -1)
-		r[0] = res;
-	syscall(__NR_ioctl, r[0], 0x80086601, 0ul);
+		r[2] = res;
+*(uint64_t*)0x20000480 = 0;
+*(uint32_t*)0x20000488 = 0;
+*(uint64_t*)0x20000490 = 0;
+*(uint64_t*)0x20000498 = 0;
+*(uint64_t*)0x200004a0 = 0x20000200;
+*(uint64_t*)0x20000200 = 0x18;
+*(uint32_t*)0x20000208 = 1;
+*(uint32_t*)0x2000020c = 1;
+*(uint32_t*)0x20000210 = r[2];
+*(uint32_t*)0x20000214 = r[0];
+*(uint64_t*)0x200004a8 = 0x18;
+*(uint32_t*)0x200004b0 = 0;
+	syscall(__NR_sendmsg, r[1], 0x20000480ul, 0ul);
 	return 0;
 }

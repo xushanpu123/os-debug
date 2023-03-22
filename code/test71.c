@@ -11,23 +11,15 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+#ifndef __NR_getrandom
+#define __NR_getrandom 318
+#endif
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-	res = syscall(__NR_socket, 2ul, 2ul, 0);
-	if (res != -1)
-		r[0] = res;
-memcpy((void*)0x20000000, "syzkaller0\000\000\000\000\000\000", 16);
-*(uint16_t*)0x20000010 = 0x1e;
-*(uint8_t*)0x20000012 = 3;
-*(uint8_t*)0x20000013 = 0;
-*(uint32_t*)0x20000014 = 0;
-*(uint32_t*)0x20000018 = 0;
-	syscall(__NR_ioctl, r[0], 0x8927, 0x20000000ul);
+				syscall(__NR_getrandom, 0ul, 0ul, 0ul);
 	return 0;
 }

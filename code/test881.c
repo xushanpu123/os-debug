@@ -3,34 +3,13 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
-#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-static long syz_open_dev(volatile long a0, volatile long a1, volatile long a2)
-{
-	if (a0 == 0xc || a0 == 0xb) {
-		char buf[128];
-		sprintf(buf, "/dev/%s/%d:%d", a0 == 0xc ? "char" : "block", (uint8_t)a1, (uint8_t)a2);
-		return open(buf, O_RDWR, 0);
-	} else {
-		char buf[1024];
-		char* hash;
-		strncpy(buf, (char*)a0, sizeof(buf) - 1);
-		buf[sizeof(buf) - 1] = 0;
-		while ((hash = strchr(buf, '#'))) {
-			*hash = '0' + (char)(a1 % 10);
-			a1 /= 10;
-		}
-		return open(buf, a2, 0);
-	}
-}
 
 uint64_t r[1] = {0xffffffffffffffff};
 
@@ -40,11 +19,11 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x200000c0, "/dev/sg#\000", 9);
-	res = -1;
-res = syz_open_dev(0x200000c0, 0, 0);
+	res = syscall(__NR_socket, 0xaul, 3ul, 6);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_ioctl, r[0], 0x2201, 0x9999999999999999ul);
+memcpy((void*)0x20000140, "\x3a\x19\x00\x00\x00\x00\x00\x00\x09\x24\x6e\x35\x7c\x82\x29\xad\x3d\x0b\xf9\x1c\xa7\xdb\xa8\x58\x7e\xa5\x65\x4d\xc2\x47\x85\xc7\x4b\x2f\x66\x8c\x08\x27\x1b\x40\xbb\x3a\x24\xc9\x6b\x80\x07\x85", 48);
+	syscall(__NR_setsockopt, r[0], 0x29, 0x36, 0x20000140ul, 0xd8ul);
+	syscall(__NR_setsockopt, r[0], 0x29, 0x36, 0ul, 0ul);
 	return 0;
 }

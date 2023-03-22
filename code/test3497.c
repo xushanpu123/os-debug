@@ -11,15 +11,22 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#ifndef __NR_membarrier
-#define __NR_membarrier 324
+#ifndef __NR_memfd_create
+#define __NR_memfd_create 319
 #endif
+
+uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				syscall(__NR_membarrier, 0x40ul, 0ul);
+				intptr_t res = 0;
+memcpy((void*)0x20000000, "](\'/\256\000", 6);
+	res = syscall(__NR_memfd_create, 0x20000000ul, 7ul);
+	if (res != -1)
+		r[0] = res;
+	syscall(__NR_lseek, r[0], 0ul, 1ul);
 	return 0;
 }

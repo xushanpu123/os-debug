@@ -11,10 +11,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#ifndef __NR_memfd_create
-#define __NR_memfd_create 319
-#endif
-
 uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
@@ -23,16 +19,84 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memset((void*)0x20000080, 0, 1);
-	res = syscall(__NR_memfd_create, 0x20000080ul, 0ul);
+	res = syscall(__NR_socket, 0xaul, 2ul, 0);
 	if (res != -1)
 		r[0] = res;
-*(uint32_t*)0x200000c0 = 0x105;
-*(uint32_t*)0x200000c4 = 0;
-*(uint32_t*)0x200000c8 = 0;
-*(uint32_t*)0x200000cc = 0;
-*(uint32_t*)0x200000d0 = 0;
-memset((void*)0x200000d4, 0, 8);
-	syscall(__NR_ioctl, r[0], 0x401c5820, 0x200000c0ul);
+*(uint64_t*)0x20001040 = 0x20000200;
+*(uint16_t*)0x20000200 = 0xa;
+*(uint16_t*)0x20000202 = htobe16(0x4e24);
+*(uint32_t*)0x20000204 = htobe32(0);
+memset((void*)0x20000208, 0, 10);
+memset((void*)0x20000212, 255, 2);
+*(uint32_t*)0x20000214 = htobe32(0x7f000001);
+*(uint32_t*)0x20000218 = 0;
+*(uint32_t*)0x20001048 = 0x1c;
+*(uint64_t*)0x20001050 = 0;
+*(uint64_t*)0x20001058 = 0;
+*(uint64_t*)0x20001060 = 0;
+*(uint64_t*)0x20001068 = 0;
+*(uint32_t*)0x20001070 = 0;
+*(uint32_t*)0x20001078 = 0;
+*(uint64_t*)0x20001080 = 0x200000c0;
+*(uint16_t*)0x200000c0 = 0xa;
+*(uint16_t*)0x200000c2 = htobe16(0x4e20);
+*(uint32_t*)0x200000c4 = htobe32(0);
+*(uint64_t*)0x200000c8 = htobe64(0);
+*(uint64_t*)0x200000d0 = htobe64(1);
+*(uint32_t*)0x200000d8 = 0;
+*(uint32_t*)0x20001088 = 0x1c;
+*(uint64_t*)0x20001090 = 0;
+*(uint64_t*)0x20001098 = 0;
+*(uint64_t*)0x200010a0 = 0x20000240;
+*(uint64_t*)0x20000240 = 0x6a;
+*(uint32_t*)0x20000248 = 0x29;
+*(uint32_t*)0x2000024c = 4;
+*(uint8_t*)0x20000250 = 0;
+*(uint8_t*)0x20000251 = 0xc;
+memset((void*)0x20000252, 0, 6);
+*(uint8_t*)0x20000258 = 0xc2;
+*(uint8_t*)0x20000259 = 4;
+*(uint32_t*)0x2000025a = htobe32(0);
+*(uint8_t*)0x2000025e = 0;
+*(uint8_t*)0x2000025f = 0x58;
+memcpy((void*)0x20000260, "\x1f\xaf\x6d\x7c\x82\x0b\xae\xda\x55\x80\xb6\x0c\xc1\xcc\x40\x24\xcd\xfc\x46\xb1\xce\x2d\x88\xcb\xc6\x28\x10\x6e\x65\xba\x57\x05\x8b\xbe\xb2\xcf\xcb\x77\x2d\x36\x37\xcf\x61\x01\xb3\x5e\x09\x1b\xae\x0c\x8c\xef\x5b\xcb\x1a\xcc\xab\x7f\xf7\xc7\xf8\x60\x53\x57\x14\x64\x18\x0f\x00\x6f\xad\xed\x49\x62\x34\x56\xb1\x3d\x74\x62\xe4\x16\x1e\x06\x42\xc7\xea\xc1", 88);
+*(uint64_t*)0x200002b8 = 0;
+*(uint32_t*)0x200002c0 = 0x29;
+*(uint32_t*)0x200002c4 = 0x39;
+*(uint8_t*)0x200002c8 = 0;
+*(uint8_t*)0x200002c9 = 0;
+*(uint8_t*)0x200002ca = 0;
+*(uint8_t*)0x200002cb = 0;
+*(uint32_t*)0x200002cc = 0;
+*(uint8_t*)0x200002d0 = 0xfe;
+*(uint8_t*)0x200002d1 = 0x80;
+memset((void*)0x200002d2, 0, 13);
+*(uint8_t*)0x200002df = 0xaa;
+memset((void*)0x200002e0, 0, 16);
+memcpy((void*)0x200002f0, " \001\000\000\000\000\000\000\000\000\000\000\000\000\000\001", 16);
+*(uint8_t*)0x20000300 = -1;
+*(uint8_t*)0x20000301 = 2;
+memset((void*)0x20000302, 0, 13);
+*(uint8_t*)0x2000030f = 1;
+*(uint8_t*)0x20000310 = 0xfe;
+*(uint8_t*)0x20000311 = 0x80;
+memset((void*)0x20000312, 0, 13);
+*(uint8_t*)0x2000031f = 0xbb;
+*(uint8_t*)0x20000320 = -1;
+*(uint8_t*)0x20000321 = 2;
+memset((void*)0x20000322, 0, 13);
+*(uint8_t*)0x2000032f = 1;
+*(uint8_t*)0x20000330 = 0xfc;
+*(uint8_t*)0x20000331 = 1;
+memset((void*)0x20000332, 0, 13);
+*(uint8_t*)0x2000033f = 0;
+*(uint64_t*)0x20000340 = 0;
+*(uint32_t*)0x20000348 = 0x29;
+*(uint32_t*)0x2000034c = 0xb;
+*(uint32_t*)0x20000350 = htobe32(0);
+*(uint64_t*)0x200010a8 = 0x78;
+*(uint32_t*)0x200010b0 = 0;
+*(uint32_t*)0x200010b8 = 0;
+	syscall(__NR_sendmmsg, r[0], 0x20001040ul, 2ul, 0ul);
 	return 0;
 }

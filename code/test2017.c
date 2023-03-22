@@ -11,7 +11,17 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0x0};
+#ifndef __NR_fsconfig
+#define __NR_fsconfig 431
+#endif
+#ifndef __NR_fsmount
+#define __NR_fsmount 432
+#endif
+#ifndef __NR_fsopen
+#define __NR_fsopen 430
+#endif
+
+uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
 {
@@ -19,17 +29,12 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000000, "keyring\000", 8);
-memcpy((void*)0x20000040, "syz", 3);
-*(uint8_t*)0x20000043 = 0x20;
-*(uint8_t*)0x20000044 = 0;
-	res = syscall(__NR_add_key, 0x20000000ul, 0x20000040ul, 0ul, 0ul, -1);
+memcpy((void*)0x20000040, "proc\000", 5);
+	res = syscall(__NR_fsopen, 0x20000040ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-memcpy((void*)0x20000000, "keyring\000", 8);
-memcpy((void*)0x20000040, "syz", 3);
-*(uint8_t*)0x20000043 = 0x20;
-*(uint8_t*)0x20000044 = 0;
-	syscall(__NR_keyctl, 0xaul, r[0], 0x20000000ul, 0x20000040ul, 0xfffffffe);
+	syscall(__NR_fsconfig, r[0], 6ul, 0ul, 0ul, 0ul);
+	syscall(__NR_fsmount, r[0], 0ul, 0ul);
+	syscall(__NR_fsconfig, r[0], 7ul, 0ul, 0ul, 0ul);
 	return 0;
 }

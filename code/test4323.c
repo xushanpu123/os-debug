@@ -11,7 +11,14 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[2] = {0xffffffffffffffff, 0xffffffffffffffff};
+const int kInitNetNsFd = 201;
+
+static long syz_init_net_socket(volatile long domain, volatile long type, volatile long proto)
+{
+	return syscall(__NR_socket, domain, type, proto);
+}
+
+uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
 {
@@ -19,33 +26,12 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000040, "./file1\000", 8);
-	res = syscall(__NR_openat, 0xffffff9c, 0x20000040ul, 0x42ul, 0ul);
+memcpy((void*)0x20000d40, "/dev/hpet\000", 10);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000d40ul, 0ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-memcpy((void*)0x20000040, "./file1\000", 8);
-	res = syscall(__NR_openat, 0xffffff9c, 0x20000040ul, 0x42ul, 0ul);
-	if (res != -1)
-		r[1] = res;
-memset((void*)0x20000080, 1, 1);
-	syscall(__NR_write, r[1], 0x20000080ul, 1ul);
-*(uint64_t*)0x20000600 = 0;
-*(uint64_t*)0x20000608 = 0xffffffff;
-*(uint32_t*)0x20000610 = 3;
-*(uint32_t*)0x20000614 = 0;
-*(uint32_t*)0x20000618 = 2;
-*(uint64_t*)0x20000620 = 0;
-*(uint64_t*)0x20000628 = 0;
-*(uint64_t*)0x20000630 = 0;
-memset((void*)0x20000638, 0, 16);
-*(uint32_t*)0x20000648 = 0;
-memset((void*)0x2000064c, 0, 12);
-*(uint64_t*)0x20000658 = 0;
-*(uint64_t*)0x20000660 = 0;
-*(uint64_t*)0x20000668 = 0;
-memset((void*)0x20000670, 0, 16);
-*(uint32_t*)0x20000680 = 0;
-memset((void*)0x20000684, 0, 12);
-	syscall(__NR_ioctl, r[0], 0xc020660b, 0x20000600ul);
+	syscall(__NR_sendmsg, -1, 0ul, 0ul);
+syz_init_net_socket(0x10, 3, 0x10);
+	syscall(__NR_fcntl, r[0], 0x407ul, 0ul);
 	return 0;
 }

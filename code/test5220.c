@@ -12,8 +12,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#ifndef __NR_io_uring_register
-#define __NR_io_uring_register 427
+#ifndef __NR_io_uring_enter
+#define __NR_io_uring_enter 426
 #endif
 #ifndef __NR_io_uring_setup
 #define __NR_io_uring_setup 425
@@ -90,7 +90,30 @@ static long syz_io_uring_setup(volatile long a0, volatile long a1, volatile long
 	return fd_io_uring;
 }
 
-uint64_t r[1] = {0xffffffffffffffff};
+static long syz_io_uring_submit(volatile long a0, volatile long a1, volatile long a2, volatile long a3)
+{
+	char* ring_ptr = (char*)a0;
+	char* sqes_ptr = (char*)a1;
+	char* sqe = (char*)a2;
+	uint32_t sqes_index = (uint32_t)a3;
+	uint32_t sq_ring_entries = *(uint32_t*)(ring_ptr + SQ_RING_ENTRIES_OFFSET);
+	uint32_t cq_ring_entries = *(uint32_t*)(ring_ptr + CQ_RING_ENTRIES_OFFSET);
+	uint32_t sq_array_off = (CQ_CQES_OFFSET + cq_ring_entries * SIZEOF_IO_URING_CQE + 63) & ~63;
+	if (sq_ring_entries)
+		sqes_index %= sq_ring_entries;
+	char* sqe_dest = sqes_ptr + sqes_index * SIZEOF_IO_URING_SQE;
+	memcpy(sqe_dest, sqe, SIZEOF_IO_URING_SQE);
+	uint32_t sq_ring_mask = *(uint32_t*)(ring_ptr + SQ_RING_MASK_OFFSET);
+	uint32_t* sq_tail_ptr = (uint32_t*)(ring_ptr + SQ_TAIL_OFFSET);
+	uint32_t sq_tail = *sq_tail_ptr & sq_ring_mask;
+	uint32_t sq_tail_next = *sq_tail_ptr + 1;
+	uint32_t* sq_array = (uint32_t*)(ring_ptr + sq_array_off);
+	*(sq_array + sq_tail) = sqes_index;
+	__atomic_store_n(sq_tail_ptr, sq_tail_next, __ATOMIC_RELEASE);
+	return 0;
+}
+
+uint64_t r[3] = {0xffffffffffffffff, 0x0, 0x0};
 
 int main(void)
 {
@@ -98,18 +121,47 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-*(uint32_t*)0x200001c4 = 0;
-*(uint32_t*)0x200001c8 = 0;
-*(uint32_t*)0x200001cc = 0;
-*(uint32_t*)0x200001d0 = 0;
-*(uint32_t*)0x200001d8 = -1;
-memset((void*)0x200001dc, 0, 12);
+*(uint64_t*)0x20000d00 = 0;
+*(uint32_t*)0x20000d08 = 0;
+*(uint64_t*)0x20000d10 = 0x200006c0;
+*(uint64_t*)0x200006c0 = 0x20000200;
+memset((void*)0x20000200, 235, 1);
+*(uint64_t*)0x200006c8 = 1;
+*(uint64_t*)0x20000d18 = 1;
+*(uint64_t*)0x20000d20 = 0;
+*(uint64_t*)0x20000d28 = 0;
+*(uint32_t*)0x20000d30 = 0;
+*(uint32_t*)0x20000d38 = 0;
+	syscall(__NR_sendmmsg, -1, 0x20000d00ul, 1ul, 0ul);
+*(uint32_t*)0x20000084 = 0;
+*(uint32_t*)0x20000088 = 0;
+*(uint32_t*)0x2000008c = 0;
+*(uint32_t*)0x20000090 = 0;
+*(uint32_t*)0x20000098 = 0;
+memset((void*)0x2000009c, 0, 12);
 	res = -1;
-res = syz_io_uring_setup(0x4ec4, 0x200001c0, 0x20ffd000, 0x20ffd000, 0x20000000, 0x20000240);
-	if (res != -1)
+res = syz_io_uring_setup(1, 0x20000080, 0x200a0000, 0x200b0000, 0x20000100, 0x20000140);
+	if (res != -1) {
 		r[0] = res;
-*(uint32_t*)0x200000c0 = -1;
-	syscall(__NR_io_uring_register, r[0], 2ul, 0x200000c0ul, 1ul);
-	syscall(__NR_io_uring_register, r[0], 2ul, 0x20000040ul, 0ul);
+r[1] = *(uint64_t*)0x20000100;
+r[2] = *(uint64_t*)0x20000140;
+	}
+*(uint8_t*)0x20000000 = 0x1c;
+*(uint8_t*)0x20000001 = 0;
+*(uint16_t*)0x20000002 = 0;
+*(uint32_t*)0x20000004 = -1;
+*(uint64_t*)0x20000008 = 0x200001c0;
+*(uint64_t*)0x200001c0 = 0;
+*(uint64_t*)0x200001c8 = 0;
+*(uint64_t*)0x200001d0 = 0;
+*(uint64_t*)0x20000010 = 0;
+*(uint32_t*)0x20000018 = 0x51;
+*(uint32_t*)0x2000001c = 0;
+*(uint64_t*)0x20000020 = 0;
+*(uint16_t*)0x20000028 = 0;
+*(uint16_t*)0x2000002a = 0;
+memset((void*)0x2000002c, 0, 20);
+syz_io_uring_submit(r[1], r[2], 0x20000000, 0);
+	syscall(__NR_io_uring_enter, r[0], 1, 0, 0ul, 0ul, 0ul);
 	return 0;
 }

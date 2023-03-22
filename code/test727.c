@@ -11,7 +11,14 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+const int kInitNetNsFd = 201;
+
+static long syz_init_net_socket(volatile long domain, volatile long type, volatile long proto)
+{
+	return syscall(__NR_socket, domain, type, proto);
+}
+
+uint64_t r[2] = {0x0, 0xffffffffffffffff};
 
 int main(void)
 {
@@ -19,9 +26,24 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 2ul, 2ul, 0);
+memcpy((void*)0x20000400, "keyring\000", 8);
+memcpy((void*)0x20000440, "syz", 3);
+*(uint8_t*)0x20000443 = 0x23;
+*(uint8_t*)0x20000444 = 0;
+	res = syscall(__NR_add_key, 0x20000400ul, 0x20000440ul, 0ul, 0ul, 0xfffffffd);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_setsockopt, r[0], 0, 0x21, 0ul, 0ul);
+memcpy((void*)0x20000400, "keyring\000", 8);
+memcpy((void*)0x20000440, "syz", 3);
+*(uint8_t*)0x20000443 = 0x23;
+*(uint8_t*)0x20000444 = 0;
+	syscall(__NR_add_key, 0x20000400ul, 0x20000440ul, 0ul, 0ul, 0xfffffffd);
+	res = -1;
+res = syz_init_net_socket(0x10, 3, 0x10);
+	if (res != -1)
+		r[1] = res;
+memcpy((void*)0x200007c0, "wpan3\000\000\000\000\000\000\000\000\000\000\000", 16);
+	syscall(__NR_ioctl, r[1], 0x8933, 0x200007c0ul);
+	syscall(__NR_keyctl, 8ul, r[0], 0xfffffffd, 0, 0);
 	return 0;
 }

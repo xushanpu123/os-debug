@@ -11,18 +11,33 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifndef __NR_fsconfig
+#define __NR_fsconfig 431
+#endif
+#ifndef __NR_fsmount
+#define __NR_fsmount 432
+#endif
+#ifndef __NR_fsopen
+#define __NR_fsopen 430
+#endif
+
+uint64_t r[2] = {0xffffffffffffffff, 0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-*(uint64_t*)0x20000600 = 0x20000080;
-*(uint64_t*)0x20000608 = 0x68;
-*(uint64_t*)0x20000ac0 = 0x20000680;
-*(uint64_t*)0x20000ac8 = 0xc3;
-*(uint64_t*)0x20000ad0 = 0;
-*(uint64_t*)0x20000ad8 = 0;
-	syscall(__NR_process_vm_readv, 0, 0x20000600ul, 1ul, 0x20000ac0ul, 2ul, 0ul);
+				intptr_t res = 0;
+memcpy((void*)0x20000000, "ramfs\000", 6);
+	res = syscall(__NR_fsopen, 0x20000000ul, 0ul);
+	if (res != -1)
+		r[0] = res;
+	syscall(__NR_fsconfig, r[0], 6ul, 0ul, 0ul, 0ul);
+	res = syscall(__NR_fsmount, r[0], 0ul, 0ul);
+	if (res != -1)
+		r[1] = res;
+memcpy((void*)0x20000040, "./file0\000", 8);
+	syscall(__NR_mknodat, r[1], 0x20000040ul, 0x6000ul, 0x700);
 	return 0;
 }

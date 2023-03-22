@@ -16,10 +16,6 @@ int main(void)
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-memcpy((void*)0x20000000, "./file0\000", 8);
-	syscall(__NR_creat, 0x20000000ul, 0x2076fb2bc10e5d2bul);
-memcpy((void*)0x20000380, "./file0\000", 8);
-	syscall(__NR_execve, 0x20000380ul, 0ul, 0ul);
+				syscall(__NR_unshare, 0x150b89475ef3cae7ul);
 	return 0;
 }

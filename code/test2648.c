@@ -11,7 +11,14 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+#ifndef __NR_pidfd_getfd
+#define __NR_pidfd_getfd 438
+#endif
+#ifndef __NR_pidfd_open
+#define __NR_pidfd_open 434
+#endif
+
+uint64_t r[2] = {0x0, 0xffffffffffffffff};
 
 int main(void)
 {
@@ -19,10 +26,12 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000040, "/proc/sys/net/ipv4/tcp_congestion_control\000", 42);
-	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000040ul, 1ul, 0ul);
+	res = syscall(__NR_getpgrp, -1);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_lseek, r[0], 0ul, 1ul);
+	res = syscall(__NR_pidfd_open, r[0], 0ul);
+	if (res != -1)
+		r[1] = res;
+	syscall(__NR_pidfd_getfd, r[1], -1, 0ul);
 	return 0;
 }

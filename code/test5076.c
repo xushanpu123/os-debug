@@ -11,24 +11,78 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0x0};
+#define BITMASK(bf_off,bf_len) (((1ull << (bf_len)) - 1) << (bf_off))
+#define STORE_BY_BITMASK(type,htobe,addr,val,bf_off,bf_len) *(type*)(addr) = htobe((htobe(*(type*)(addr)) & ~BITMASK((bf_off), (bf_len))) | (((type)(val) << (bf_off)) & BITMASK((bf_off), (bf_len))))
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-memcpy((void*)0x20000080, "logon\000", 6);
-memcpy((void*)0x200000c0, "fscrypt:", 8);
-memcpy((void*)0x200000c8, "0000111122223333", 16);
-*(uint8_t*)0x200000d8 = 0;
-*(uint32_t*)0x20000100 = 0;
-memcpy((void*)0x20000104, "\x8e\x82\x81\xe5\x79\x4b\x42\x40\x94\x38\x78\xf2\x88\x1d\xa1\x20\xfc\x2e\x16\x3e\x5d\xf5\xcc\xf6\x54\x59\x54\x83\x26\x91\x62\x21\x26\x03\xa3\x43\xc9\xb1\x8d\x3b\xf7\x32\x84\x63\xaf\x59\xfa\xc3\xff\xd7\x78\xd9\x0e\x0f\x59\x0c\x0d\xa1\xca\x0d\x26\x38\x57\xea", 64);
-*(uint32_t*)0x20000144 = 0;
-	res = syscall(__NR_add_key, 0x20000080ul, 0x200000c0ul, 0x20000100ul, 0x48ul, 0xfffffffe);
-	if (res != -1)
-		r[0] = res;
-	syscall(__NR_keyctl, 8ul, r[0], r[0], 0, 0);
+
+*(uint32_t*)0x20000380 = 2;
+*(uint32_t*)0x20000384 = 0x80;
+*(uint8_t*)0x20000388 = 0x3f;
+*(uint8_t*)0x20000389 = 0;
+*(uint8_t*)0x2000038a = 0;
+*(uint8_t*)0x2000038b = 0;
+*(uint32_t*)0x2000038c = 0;
+*(uint64_t*)0x20000390 = 0;
+*(uint64_t*)0x20000398 = 0x2122;
+*(uint64_t*)0x200003a0 = 0;
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 0, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 1, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 2, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 3, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 4, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 5, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 6, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 7, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 8, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 9, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 10, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 11, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 12, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 13, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 14, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 15, 2);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 17, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 18, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 19, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 20, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 21, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 22, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 23, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 24, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 25, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 26, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 27, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 28, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 29, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 30, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 31, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 32, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 33, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 34, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 35, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 36, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 37, 1);
+STORE_BY_BITMASK(uint64_t, , 0x200003a8, 0, 38, 26);
+*(uint32_t*)0x200003b0 = 0;
+*(uint32_t*)0x200003b4 = 0;
+*(uint64_t*)0x200003b8 = 0;
+*(uint64_t*)0x200003c0 = 0;
+*(uint64_t*)0x200003c8 = 0;
+*(uint64_t*)0x200003d0 = 0;
+*(uint32_t*)0x200003d8 = 0;
+*(uint32_t*)0x200003dc = 0;
+*(uint64_t*)0x200003e0 = 0;
+*(uint32_t*)0x200003e8 = 0;
+*(uint16_t*)0x200003ec = 0;
+*(uint16_t*)0x200003ee = 0;
+*(uint32_t*)0x200003f0 = 0;
+*(uint32_t*)0x200003f4 = 0;
+*(uint64_t*)0x200003f8 = 0;
+	syscall(__NR_perf_event_open, 0x20000380ul, 0, 0ul, -1, 0ul);
 	return 0;
 }

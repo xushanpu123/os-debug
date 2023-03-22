@@ -11,17 +11,39 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#ifndef __NR_memfd_create
-#define __NR_memfd_create 319
+#ifndef __NR_fsconfig
+#define __NR_fsconfig 431
 #endif
+#ifndef __NR_fsmount
+#define __NR_fsmount 432
+#endif
+#ifndef __NR_fsopen
+#define __NR_fsopen 430
+#endif
+
+uint64_t r[4] = {0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff};
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-memcpy((void*)0x20000040, "\213:{*:\205\314F:T-\326\344M\333\225\232\b\207)Jp\221\251\314,2!\177`\f;\360\311?M\355\221\251<\016\032O\rAb\037\275T\2562^1>\227X\nc\241~o;\207\274L\346x\367\314ti\301\235\f=\036\277\"PtQ\r\227\301\n\265\367\200\315\313\311\244N\336|\255\003\246\002\264\253\310\246\213!\300\205\217\303\323WV\306\266\232\216\017JE\355\325\022\017\217\003\f\253|/\305*}\000\350~\t\260\211\361\033\222s", 142);
-	syscall(__NR_memfd_create, 0x20000040ul, 0ul);
+				intptr_t res = 0;
+memcpy((void*)0x20000040, "cgroup2\000", 8);
+	res = syscall(__NR_fsopen, 0x20000040ul, 0ul);
+	if (res != -1)
+		r[0] = res;
+	syscall(__NR_fsconfig, r[0], 6ul, 0ul, 0ul, 0ul);
+	res = syscall(__NR_fsmount, r[0], 0ul, 0ul);
+	if (res != -1)
+		r[1] = res;
+memcpy((void*)0x20000000, "cgroup.subtree_control\000", 23);
+	res = syscall(__NR_openat, r[1], 0x20000000ul, 2ul, 0ul);
+	if (res != -1)
+		r[2] = res;
+	res = syscall(__NR_dup, r[2]);
+	if (res != -1)
+		r[3] = res;
+	syscall(__NR_read, r[3], 0x20000080ul, 0xc5ul);
 	return 0;
 }

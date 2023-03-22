@@ -11,16 +11,27 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifndef __NR_seccomp
+#define __NR_seccomp 317
+#endif
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 
-memcpy((void*)0x20000000, "./file0\000", 8);
-	syscall(__NR_creat, 0x20000000ul, 0ul);
-memcpy((void*)0x20000040, "./file0\000", 8);
-memcpy((void*)0x20000080, "user.incfs.metadata\000", 20);
-	syscall(__NR_setxattr, 0x20000040ul, 0x20000080ul, 0ul, 0ul, 0ul);
+*(uint16_t*)0x20000000 = 2;
+*(uint64_t*)0x20000008 = 0x20000040;
+*(uint16_t*)0x20000040 = 0x84;
+*(uint8_t*)0x20000042 = 0;
+*(uint8_t*)0x20000043 = 0;
+*(uint32_t*)0x20000044 = 0;
+*(uint16_t*)0x20000048 = 6;
+*(uint8_t*)0x2000004a = 0;
+*(uint8_t*)0x2000004b = 0;
+*(uint32_t*)0x2000004c = 0;
+	syscall(__NR_seccomp, 1ul, 0ul, 0x20000000ul);
+	syscall(__NR_ioctl, -1, 0x4b65, 0ul);
 	return 0;
 }

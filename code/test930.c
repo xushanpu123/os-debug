@@ -11,19 +11,20 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+#ifndef __NR_mount_setattr
+#define __NR_mount_setattr 442
+#endif
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-	res = syscall(__NR_socket, 2ul, 2ul, 0);
-	if (res != -1)
-		r[0] = res;
-memcpy((void*)0x20000000, "lo\000\000\000\000\000\000\000\000\000\000\000\000\000\000", 16);
-memcpy((void*)0x20000010, "\xa4\x25\x77\x06\x50\xc2", 6);
-	syscall(__NR_ioctl, r[0], 0x8931, 0x20000000ul);
+
+*(uint64_t*)0x20000040 = 0x100075;
+*(uint64_t*)0x20000048 = 0x75;
+*(uint64_t*)0x20000050 = 0;
+*(uint32_t*)0x20000058 = -1;
+	syscall(__NR_mount_setattr, -1, 0ul, 0ul, 0x20000040ul, 0x20ul);
 	return 0;
 }

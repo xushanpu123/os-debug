@@ -11,7 +11,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+#ifndef __NR_memfd_create
+#define __NR_memfd_create 319
+#endif
+
+uint64_t r[3] = {0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff};
 
 int main(void)
 {
@@ -19,10 +23,19 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000040, "./file1\000", 8);
-	res = syscall(__NR_openat, 0xffffff9c, 0x20000040ul, 0x42ul, 0ul);
+memcpy((void*)0x200000c0, "\352\347\322\244\317\227\317\246\tt\300T=\313\203\366\251\031#JV\325\265Rs{\354z\242\'\261\322\271t!\367q\317(w-\347b\300\372y\343\244M\242*h$\202\bRe\232\260\374z%\017\006\272\246\004\216\346\244$]\215\220m\317s\253\240|nK\210\034\327\251\324\315\355\351\231\263\027\026\204\321\254\213\006\220", 100);
+	res = syscall(__NR_memfd_create, 0x200000c0ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_ioctl, r[0], 0x6611, 0);
+	syscall(__NR_ftruncate, r[0], 0x2ffffcul);
+	res = syscall(__NR_socket, 0xaul, 1ul, 0);
+	if (res != -1)
+		r[1] = res;
+memcpy((void*)0x20000400, "/dev/ptmx\000", 10);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000400ul, 0x8841ul, 0ul);
+	if (res != -1)
+		r[2] = res;
+	syscall(__NR_dup3, r[2], r[1], 0ul);
+	syscall(__NR_sendfile, r[1], r[0], 0ul, 0x2000007ul);
 	return 0;
 }

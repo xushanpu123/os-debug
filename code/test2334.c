@@ -17,6 +17,12 @@
 #ifndef __NR_clone3
 #define __NR_clone3 435
 #endif
+#ifndef __NR_pidfd_open
+#define __NR_pidfd_open 434
+#endif
+#ifndef __NR_process_madvise
+#define __NR_process_madvise 440
+#endif
 
 #define USLEEP_FORKED_CHILD (3 * 50 *1000)
 
@@ -29,6 +35,14 @@ static long handle_clone_ret(long ret)
 	syscall(__NR_exit, 0);
 	while (1) {
 	}
+}
+
+static long syz_clone(volatile long flags, volatile long stack, volatile long stack_len,
+		      volatile long ptid, volatile long ctid, volatile long tls)
+{
+	long sp = (stack + stack_len) & ~15;
+	long ret = (long)syscall(__NR_clone, flags & ~CLONE_VM, sp, ptid, ctid, tls);
+	return handle_clone_ret(ret);
 }
 
 #define MAX_CLONE_ARGS_BYTES 256
@@ -44,23 +58,36 @@ static long syz_clone3(volatile long a0, volatile long a1)
 	return handle_clone_ret((long)syscall(__NR_clone3, &clone_args, copy_size));
 }
 
+uint64_t r[2] = {0x0, 0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-*(uint64_t*)0x2000d880 = 0x40121000;
-*(uint64_t*)0x2000d888 = 0;
-*(uint64_t*)0x2000d890 = 0;
-*(uint64_t*)0x2000d898 = 0x2000d600;
-*(uint32_t*)0x2000d8a0 = 0;
-*(uint64_t*)0x2000d8a8 = 0;
-*(uint64_t*)0x2000d8b0 = 0;
-*(uint64_t*)0x2000d8b8 = 0;
-*(uint64_t*)0x2000d8c0 = 0;
-*(uint64_t*)0x2000d8c8 = 0;
-*(uint32_t*)0x2000d8d0 = -1;
-syz_clone3(0x2000d880, 0x58);
+				intptr_t res = 0;
+syz_clone3(0, 0);
+	res = -1;
+res = syz_clone(0, 0x20000100, 0, 0x20000000, 0x20000040, 0);
+	if (res != -1)
+		r[0] = res;
+*(uint64_t*)0x200004c0 = 0;
+*(uint64_t*)0x200004c8 = 0;
+*(uint64_t*)0x200004d0 = 0;
+*(uint64_t*)0x200004d8 = 0x20000300;
+*(uint32_t*)0x200004e0 = 0x31;
+*(uint64_t*)0x200004e8 = 0;
+*(uint64_t*)0x200004f0 = 0;
+*(uint64_t*)0x200004f8 = 0;
+*(uint64_t*)0x20000500 = 0x20000480;
+*(uint32_t*)0x20000480 = 0;
+*(uint32_t*)0x20000484 = 0;
+*(uint64_t*)0x20000508 = 2;
+*(uint32_t*)0x20000510 = -1;
+syz_clone3(0x200004c0, 0x58);
+	res = syscall(__NR_pidfd_open, r[0], 0ul);
+	if (res != -1)
+		r[1] = res;
+	syscall(__NR_process_madvise, r[1], 0ul, 0ul, 0x14ul, 0ul);
 	return 0;
 }

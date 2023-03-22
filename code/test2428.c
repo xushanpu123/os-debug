@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0x0};
+uint64_t r[3] = {0x0, 0xffffffffffffffff, 0xffffffffffffffff};
 
 int main(void)
 {
@@ -19,9 +19,31 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_shmget, 0ul, 0x4000ul, 0ul, 0x20ffa000ul);
+	res = syscall(__NR_io_setup, 2, 0x20000000ul);
 	if (res != -1)
-		r[0] = res;
-	syscall(__NR_shmat, r[0], 0x20ffd000ul, 0x5000ul);
+r[0] = *(uint64_t*)0x20000000;
+	res = syscall(__NR_pipe, 0x2000d700ul);
+	if (res != -1) {
+r[1] = *(uint32_t*)0x2000d700;
+r[2] = *(uint32_t*)0x2000d704;
+	}
+*(uint64_t*)0x20000b80 = 0x20000240;
+*(uint64_t*)0x20000240 = 0;
+*(uint32_t*)0x20000248 = 0;
+*(uint32_t*)0x2000024c = 0;
+*(uint16_t*)0x20000250 = 5;
+*(uint16_t*)0x20000252 = 0;
+*(uint32_t*)0x20000254 = r[1];
+*(uint64_t*)0x20000258 = 0;
+*(uint64_t*)0x20000260 = 0;
+*(uint64_t*)0x20000268 = 0;
+*(uint64_t*)0x20000270 = 0;
+*(uint32_t*)0x20000278 = 0;
+*(uint32_t*)0x2000027c = -1;
+	syscall(__NR_io_submit, r[0], 1ul, 0x20000b80ul);
+*(uint64_t*)0x20000400 = 0x20000bc0;
+memset((void*)0x20000bc0, 36, 1);
+*(uint64_t*)0x20000408 = 1;
+	syscall(__NR_vmsplice, r[2], 0x20000400ul, 1ul, 0ul);
 	return 0;
 }

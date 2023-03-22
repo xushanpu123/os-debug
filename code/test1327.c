@@ -19,16 +19,10 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000180, "./file0\000", 8);
-	res = syscall(__NR_creat, 0x20000180ul, 0ul);
+	res = syscall(__NR_socket, 0xaul, 2ul, 0x88);
 	if (res != -1)
 		r[0] = res;
-memcpy((void*)0x20000000, "security.ima\000", 13);
-*(uint8_t*)0x20000040 = 0;
-*(uint8_t*)0x20000041 = 0;
-*(uint8_t*)0x20000042 = 0;
-*(uint32_t*)0x20000043 = htobe32(0);
-*(uint16_t*)0x20000047 = htobe16(0);
-	syscall(__NR_fsetxattr, r[0], 0x20000000ul, 0x20000040ul, 9ul, 0ul);
+*(uint32_t*)0x200000c0 = 0x4d;
+	syscall(__NR_setsockopt, r[0], 0x11, 0xa, 0x200000c0ul, 4ul);
 	return 0;
 }

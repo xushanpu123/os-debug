@@ -3,40 +3,47 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
-#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-static long syz_open_procfs(volatile long a0, volatile long a1)
-{
-	char buf[128];
-	memset(buf, 0, sizeof(buf));
-	if (a0 == 0) {
-		snprintf(buf, sizeof(buf), "/proc/self/%s", (char*)a1);
-	} else if (a0 == -1) {
-		snprintf(buf, sizeof(buf), "/proc/thread-self/%s", (char*)a1);
-	} else {
-		snprintf(buf, sizeof(buf), "/proc/self/task/%d/%s", (int)a0, (char*)a1);
-	}
-	int fd = open(buf, O_RDWR);
-	if (fd == -1)
-		fd = open(buf, O_RDONLY);
-	return fd;
-}
+uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-memcpy((void*)0x20000040, "wchan\000", 6);
-syz_open_procfs(-1, 0x20000040);
+				intptr_t res = 0;
+	res = syscall(__NR_socketpair, 1ul, 1ul, 0, 0x20000040ul);
+	if (res != -1)
+r[0] = *(uint32_t*)0x20000040;
+	syscall(__NR_socket, 0x10ul, 3ul, 0x10);
+	syscall(__NR_socket, 0x10ul, 3ul, 0x10);
+	syscall(__NR_socket, 0x10ul, 3ul, 0x10);
+	syscall(__NR_socket, 0x10ul, 3ul, 0x10);
+	syscall(__NR_socket, 0x10ul, 3ul, 0x10);
+	syscall(__NR_socket, 0x10ul, 3ul, 0x10);
+	syscall(__NR_epoll_create1, 0ul);
+*(uint64_t*)0x200028c0 = 0;
+*(uint32_t*)0x200028c8 = 0;
+*(uint64_t*)0x200028d0 = 0x20002600;
+*(uint64_t*)0x20002600 = 0x200001c0;
+memset((void*)0x200001c0, 127, 1);
+*(uint64_t*)0x20002608 = 1;
+*(uint64_t*)0x200028d8 = 1;
+*(uint64_t*)0x200028e0 = 0x20002900;
+*(uint64_t*)0x20002900 = 0x14;
+*(uint32_t*)0x20002908 = 1;
+*(uint32_t*)0x2000290c = 1;
+*(uint32_t*)0x20002910 = r[0];
+*(uint64_t*)0x200028e8 = 0x18;
+*(uint32_t*)0x200028f0 = 0;
+*(uint32_t*)0x200028f8 = 0;
+	syscall(__NR_sendmmsg, r[0], 0x200028c0ul, 1ul, 0ul);
 	return 0;
 }

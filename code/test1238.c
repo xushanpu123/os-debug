@@ -22,7 +22,7 @@ int main(void)
 	res = syscall(__NR_socket, 0x10ul, 3ul, 0x10);
 	if (res != -1)
 		r[0] = res;
-*(uint32_t*)0x200001c0 = 4;
-	syscall(__NR_setsockopt, r[0], 0x10e, 3, 0x200001c0ul, 4ul);
+*(uint32_t*)0x20000040 = 0;
+	syscall(__NR_getsockopt, r[0], 1, 0x1f, 0ul, 0x20000040ul);
 	return 0;
 }

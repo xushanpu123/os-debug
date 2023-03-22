@@ -11,11 +11,37 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[1] = {0x0};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				syscall(__NR_semctl, 0, 0ul, 2ul, 0x20000180ul);
+				intptr_t res = 0;
+	res = syscall(__NR_msgget, 0x798e2635ul, 0ul);
+	if (res != -1)
+		r[0] = res;
+	syscall(__NR_msgrcv, r[0], 0ul, 0xb2ul, 0ul, 0ul);
+*(uint32_t*)0x20000180 = 0x798e2636;
+*(uint32_t*)0x20000184 = 0xee00;
+*(uint32_t*)0x20000188 = 0;
+*(uint32_t*)0x2000018c = 0;
+*(uint32_t*)0x20000190 = 0;
+*(uint32_t*)0x20000194 = 0;
+*(uint16_t*)0x20000198 = 0;
+*(uint64_t*)0x200001a0 = 0;
+*(uint64_t*)0x200001a8 = 0;
+*(uint64_t*)0x200001b0 = 0;
+*(uint64_t*)0x200001b8 = 0;
+*(uint64_t*)0x200001c0 = 0;
+*(uint64_t*)0x200001c8 = 0;
+*(uint64_t*)0x200001d0 = 0;
+*(uint16_t*)0x200001d8 = 0;
+*(uint16_t*)0x200001da = 0;
+*(uint16_t*)0x200001dc = 0;
+*(uint32_t*)0x200001e0 = 0;
+*(uint32_t*)0x200001e4 = 0;
+	syscall(__NR_msgctl, r[0], 1ul, 0x20000180ul);
 	return 0;
 }

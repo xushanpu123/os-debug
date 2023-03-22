@@ -11,13 +11,21 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[2] = {0x0, 0x0};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-*(uint64_t*)0x200002c0 = 0;
-	syscall(__NR_sigaltstack, 0ul, 0x200002c0ul);
+				intptr_t res = 0;
+	res = syscall(__NR_io_setup, 0x200, 0x20000040ul);
+	if (res != -1)
+r[0] = *(uint64_t*)0x20000040;
+	res = syscall(__NR_io_setup, 0xc000, 0x200000c0ul);
+	if (res != -1)
+r[1] = *(uint64_t*)0x200000c0;
+	syscall(__NR_io_submit, r[0], 0x4ful, 0x200000c0ul);
+	syscall(__NR_io_destroy, r[1]);
 	return 0;
 }

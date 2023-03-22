@@ -11,6 +11,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#define BITMASK(bf_off,bf_len) (((1ull << (bf_len)) - 1) << (bf_off))
+#define STORE_BY_BITMASK(type,htobe,addr,val,bf_off,bf_len) *(type*)(addr) = htobe((htobe(*(type*)(addr)) & ~BITMASK((bf_off), (bf_len))) | (((type)(val) << (bf_off)) & BITMASK((bf_off), (bf_len))))
+
 uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
@@ -19,28 +22,28 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 0x10ul, 3ul, 4);
+	res = syscall(__NR_socket, 0x10ul, 3ul, 0);
 	if (res != -1)
 		r[0] = res;
-*(uint64_t*)0x20007bc0 = 0;
-*(uint32_t*)0x20007bc8 = 0;
-*(uint64_t*)0x20007bd0 = 0x20001e00;
-*(uint64_t*)0x20001e00 = 0x20001d80;
-memcpy((void*)0x20001d80, "\x97\xa4\x46\xd9\xec\x9a\xd1\x3f\x12\x19\xfb\xa7\x8c\x11\x42\xaa", 16);
-*(uint64_t*)0x20001e08 = 0x10;
-*(uint64_t*)0x20007bd8 = 1;
-*(uint64_t*)0x20007be0 = 0;
-*(uint64_t*)0x20007be8 = 0;
-*(uint32_t*)0x20007bf0 = 0;
-*(uint32_t*)0x20007bf8 = 0;
-*(uint64_t*)0x20007c00 = 0;
-*(uint32_t*)0x20007c08 = 0;
-*(uint64_t*)0x20007c10 = 0;
-*(uint64_t*)0x20007c18 = 0;
-*(uint64_t*)0x20007c20 = 0;
-*(uint64_t*)0x20007c28 = 0;
-*(uint32_t*)0x20007c30 = 0;
-*(uint32_t*)0x20007c38 = 0;
-	syscall(__NR_sendmmsg, r[0], 0x20007bc0ul, 2ul, 0ul);
+*(uint64_t*)0x20000040 = 0;
+*(uint32_t*)0x20000048 = 0;
+*(uint64_t*)0x20000050 = 0x20000300;
+*(uint64_t*)0x20000300 = 0x20000000;
+*(uint32_t*)0x20000000 = 0x18;
+*(uint16_t*)0x20000004 = 0x6a;
+*(uint16_t*)0x20000006 = 3;
+*(uint32_t*)0x20000008 = 0;
+*(uint32_t*)0x2000000c = 0;
+*(uint16_t*)0x20000010 = 8;
+STORE_BY_BITMASK(uint16_t, , 0x20000012, 0, 0, 14);
+STORE_BY_BITMASK(uint16_t, , 0x20000013, 0, 6, 1);
+STORE_BY_BITMASK(uint16_t, , 0x20000013, 0, 7, 1);
+*(uint32_t*)0x20000014 = htobe32(0xe0000002);
+*(uint64_t*)0x20000308 = 0x18;
+*(uint64_t*)0x20000058 = 1;
+*(uint64_t*)0x20000060 = 0;
+*(uint64_t*)0x20000068 = 0;
+*(uint32_t*)0x20000070 = 0;
+	syscall(__NR_sendmsg, r[0], 0x20000040ul, 0ul);
 	return 0;
 }

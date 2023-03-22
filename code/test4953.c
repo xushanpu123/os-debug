@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+uint64_t r[2] = {0x0, 0x0};
 
 int main(void)
 {
@@ -19,11 +19,15 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	syscall(__NR_mmap, 0x20000000ul, 0x1000ul, 3ul, 0x32ul, -1, 0ul);
-memcpy((void*)0x20000080, "/proc/self/exe\000", 15);
-	res = syscall(__NR_openat, 0xffffff9c, 0x20000080ul, 0ul, 0ul);
+	syscall(__NR_msgrcv, 0, 0x20000080ul, 0xcaul, 2ul, 0x3000ul);
+	res = syscall(__NR_msgget, 0x798e2636ul, 0x200ul);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_read, r[0], 0x20000000ul, 0x2000ul);
+	res = syscall(__NR_msgget, 0x798e2636ul, 0x440ul);
+	if (res != -1)
+		r[1] = res;
+	syscall(__NR_msgrcv, r[1], 0x20000240ul, 0x8ful, 3ul, 0x3000ul);
+*(uint64_t*)0x20000180 = 2;
+	syscall(__NR_msgsnd, r[0], 0x20000180ul, 8ul, 0ul);
 	return 0;
 }

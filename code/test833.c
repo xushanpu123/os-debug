@@ -11,11 +11,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#ifndef __NR_fsconfig
-#define __NR_fsconfig 431
+#ifndef __NR_finit_module
+#define __NR_finit_module 313
 #endif
-#ifndef __NR_fsopen
-#define __NR_fsopen 430
+#ifndef __NR_memfd_create
+#define __NR_memfd_create 319
 #endif
 
 uint64_t r[1] = {0xffffffffffffffff};
@@ -26,11 +26,41 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000040, "nfs4\000", 5);
-	res = syscall(__NR_fsopen, 0x20000040ul, 0ul);
+memcpy((void*)0x20000040, "-*$\312\'+!@\'&)\325.%{{\000", 17);
+	res = syscall(__NR_memfd_create, 0x20000040ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-memcpy((void*)0x20000000, "bdev\000", 5);
-	syscall(__NR_fsconfig, r[0], 5ul, 0x20000000ul, 0ul, r[0]);
+*(uint8_t*)0x200000c0 = 0x7f;
+*(uint8_t*)0x200000c1 = 0x45;
+*(uint8_t*)0x200000c2 = 0x4c;
+*(uint8_t*)0x200000c3 = 0x46;
+*(uint8_t*)0x200000c4 = 0;
+*(uint8_t*)0x200000c5 = 0;
+*(uint8_t*)0x200000c6 = 0;
+*(uint8_t*)0x200000c7 = 0;
+*(uint64_t*)0x200000c8 = 0;
+*(uint16_t*)0x200000d0 = 0;
+*(uint16_t*)0x200000d2 = 0;
+*(uint32_t*)0x200000d4 = 0;
+*(uint32_t*)0x200000d8 = 0;
+*(uint32_t*)0x200000dc = 0x38;
+*(uint32_t*)0x200000e0 = 0;
+*(uint32_t*)0x200000e4 = 0;
+*(uint16_t*)0x200000e8 = 0;
+*(uint16_t*)0x200000ea = 0x20;
+*(uint16_t*)0x200000ec = 0;
+*(uint16_t*)0x200000ee = 0;
+*(uint16_t*)0x200000f0 = 0;
+*(uint16_t*)0x200000f2 = 0;
+*(uint32_t*)0x200000f8 = 0;
+*(uint32_t*)0x200000fc = 0;
+*(uint32_t*)0x20000100 = 0;
+*(uint32_t*)0x20000104 = 0;
+*(uint32_t*)0x20000108 = 0;
+*(uint32_t*)0x2000010c = 0;
+*(uint32_t*)0x20000110 = 0;
+*(uint32_t*)0x20000114 = 0;
+	syscall(__NR_write, r[0], 0x200000c0ul, 0x58ul);
+	syscall(__NR_finit_module, r[0], 0ul, 0ul);
 	return 0;
 }

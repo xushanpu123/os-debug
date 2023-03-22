@@ -11,10 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define BITMASK(bf_off,bf_len) (((1ull << (bf_len)) - 1) << (bf_off))
-#define STORE_BY_BITMASK(type,htobe,addr,val,bf_off,bf_len) *(type*)(addr) = htobe((htobe(*(type*)(addr)) & ~BITMASK((bf_off), (bf_len))) | (((type)(val) << (bf_off)) & BITMASK((bf_off), (bf_len))))
-
-uint64_t r[1] = {0xffffffffffffffff};
+uint64_t r[3] = {0xffffffffffffffff, 0xffffffffffffffff, 0x0};
 
 int main(void)
 {
@@ -22,31 +19,18 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 2ul, 2ul, 0);
+memcpy((void*)0x20000080, "./cgroup.cpu/syz1\000", 18);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000080ul, 0x200002ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-*(uint64_t*)0x20006280 = 0x20000080;
-*(uint16_t*)0x20000080 = 2;
-*(uint16_t*)0x20000082 = htobe16(0x4e22);
-*(uint32_t*)0x20000084 = htobe32(0x7f000001);
-*(uint32_t*)0x20006288 = 0x10;
-*(uint64_t*)0x20006290 = 0;
-*(uint64_t*)0x20006298 = 0;
-*(uint64_t*)0x200062a0 = 0x20000200;
-*(uint64_t*)0x20000200 = 0x18;
-*(uint32_t*)0x20000208 = 0;
-*(uint32_t*)0x2000020c = 7;
-*(uint8_t*)0x20000210 = 0x44;
-*(uint8_t*)0x20000211 = 4;
-*(uint8_t*)0x20000212 = 0x63;
-STORE_BY_BITMASK(uint8_t, , 0x20000213, 0, 0, 4);
-STORE_BY_BITMASK(uint8_t, , 0x20000213, 0, 4, 4);
-*(uint8_t*)0x20000214 = 0x94;
-*(uint8_t*)0x20000215 = 4;
-*(uint16_t*)0x20000216 = 0;
-*(uint64_t*)0x200062a8 = 0x18;
-*(uint32_t*)0x200062b0 = 0;
-*(uint32_t*)0x200062b8 = 0;
-	syscall(__NR_sendmmsg, r[0], 0x20006280ul, 1ul, 0ul);
+memcpy((void*)0x20000000, "tasks\000", 6);
+	res = syscall(__NR_openat, r[0], 0x20000000ul, 2ul, 0ul);
+	if (res != -1)
+		r[1] = res;
+	res = syscall(__NR_gettid);
+	if (res != -1)
+		r[2] = res;
+sprintf((char*)0x20000040, "0x%016llx", (long long)r[2]);
+	syscall(__NR_write, r[1], 0x20000040ul, 0x12ul);
 	return 0;
 }

@@ -11,25 +11,14 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#ifndef __NR_pwritev2
-#define __NR_pwritev2 328
-#endif
-
-uint64_t r[1] = {0xffffffffffffffff};
-
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-memcpy((void*)0x20000100, "./file1\000", 8);
-	res = syscall(__NR_openat, 0xffffff9c, 0x20000100ul, 0x42ul, 0ul);
-	if (res != -1)
-		r[0] = res;
-*(uint64_t*)0x20000800 = 0x20000000;
-memset((void*)0x20000000, 79, 1);
-*(uint64_t*)0x20000808 = 1;
-	syscall(__NR_pwritev2, r[0], 0x20000800ul, 1ul, 0, 0, 4ul);
+
+memcpy((void*)0x20000000, "/dev/bsg\000", 9);
+	syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000000ul, 0ul, 0ul);
+	syscall(__NR_mremap, 0x20ffd000ul, 0x1000ul, 0x1000ul, 7ul, 0x20fff000ul);
 	return 0;
 }

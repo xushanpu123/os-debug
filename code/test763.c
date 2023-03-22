@@ -11,23 +11,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0x0};
-
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-memcpy((void*)0x20000000, "keyring\000", 8);
-memcpy((void*)0x20000040, "syz", 3);
-*(uint8_t*)0x20000043 = 0x20;
-*(uint8_t*)0x20000044 = 0;
-	res = syscall(__NR_add_key, 0x20000000ul, 0x20000040ul, 0ul, 0ul, -1);
-	if (res != -1)
-		r[0] = res;
-memcpy((void*)0x20000000, "id_resolver\000", 12);
-memcpy((void*)0x20000040, "@\000", 2);
-	syscall(__NR_keyctl, 0x1dul, r[0], 0x20000000ul, 0x20000040ul, 0);
+				syscall(__NR_io_setup, 9, 0x200021c0ul);
 	return 0;
 }

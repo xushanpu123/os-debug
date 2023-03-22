@@ -11,11 +11,23 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[1] = {0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				syscall(__NR_setresgid, 0, 0, 0xee01);
+				intptr_t res = 0;
+	syscall(__NR_socket, 2ul, 2ul, 0);
+	res = syscall(__NR_socket, 2ul, 2ul, 0);
+	if (res != -1)
+		r[0] = res;
+memcpy((void*)0x200002c0, "syztnl0\000\000\000\000\000\000\000\000\000", 16);
+*(uint64_t*)0x200002d0 = 0x20000200;
+memcpy((void*)0x20000200, "stnl0\000\000\000\000\000\000\000\000\000\000\000", 16);
+*(uint32_t*)0x20000210 = 0;
+memcpy((void*)0x20000214, "\x00\x08\x00\x01\x00\x00\x09\xba\x00\x00\x00\x00\x4f\x02\x00\x3c\x00\x68\x00\x00\x00\x04\x90\x78\xe0\x00\x00\x02\x7f\x00\x00\x01\x94\x04\x00\x00\x83\x07\x00\xe0\x00\x00\x02\x07\x1b\x00\x0a\x01\x01\x02\xac\x14\x14\x19\x7f\x00\x00\x01\xe0\x00\x00\x02\x0a\x01\x01\x01\xe0\x00\x00\x01\x00\x00", 72);
+	syscall(__NR_ioctl, r[0], 0x89f2, 0x200002c0ul);
 	return 0;
 }

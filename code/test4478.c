@@ -11,15 +11,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#ifndef __NR_move_mount
-#define __NR_move_mount 429
-#endif
-
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				syscall(__NR_move_mount, -1, 0ul, -1, 0ul, 0xd4ul);
+				syscall(__NR_prctl, 0x29ul, 0ul, 0, 0, 0);
 	return 0;
 }

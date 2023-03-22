@@ -19,13 +19,12 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 0xaul, 2ul, 0x88);
+memcpy((void*)0x20000000, "/proc/self\000", 11);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000000ul, 0ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-memcpy((void*)0x20000300, "caif0\000\000\000\000\000\000\000\000\000\000\000", 16);
-*(uint32_t*)0x20000310 = 0x8001;
-*(uint32_t*)0x20000314 = 0;
-*(uint64_t*)0x20000318 = 0;
-	syscall(__NR_ioctl, r[0], 0x8916, 0x20000300ul);
+*(uint64_t*)0x20000340 = 0x20000100;
+*(uint64_t*)0x20000348 = 0x90;
+	syscall(__NR_readv, r[0], 0x20000340ul, 1ul);
 	return 0;
 }

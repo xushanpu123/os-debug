@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+uint64_t r[1] = {0x0};
 
 int main(void)
 {
@@ -19,9 +19,23 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 2ul, 2ul, 0);
+memcpy((void*)0x20000080, "keyring\000", 8);
+memcpy((void*)0x200000c0, "syz", 3);
+*(uint8_t*)0x200000c3 = 0x20;
+*(uint8_t*)0x200000c4 = 0;
+	res = syscall(__NR_add_key, 0x20000080ul, 0x200000c0ul, 0ul, 0ul, 0xfffffffe);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_setsockopt, r[0], 0, 2, 0ul, 0ul);
+memcpy((void*)0x20000000, "asymmetric\000", 11);
+memcpy((void*)0x20000040, "builtin_and_secondary_trusted\000", 30);
+	syscall(__NR_keyctl, 0x1dul, r[0], 0x20000000ul, 0x20000040ul, 0);
+memcpy((void*)0x200001c0, "logon\000", 6);
+memcpy((void*)0x20000200, "fscrypt:", 8);
+memcpy((void*)0x20000208, "0000111122223333", 16);
+*(uint8_t*)0x20000218 = 0;
+*(uint32_t*)0x20000240 = 0;
+memcpy((void*)0x20000244, "\x5e\xc9\x1a\xbd\xf7\x7d\xc8\x74\x98\x42\xaa\x72\x39\x45\xe7\x43\x02\x65\x08\x9f\x18\x9c\xc2\x0d\xc2\x59\x92\xa5\xac\x40\xef\xe7\x36\x5d\xdd\xd5\x1e\xc4\xd6\x61\xfe\xd6\xaf\x3c\xe9\x83\xe5\x85\x0d\x99\x46\x4c\xbd\xaa\x51\xe1\x22\xb0\xf4\x81\xbb\x77\x1a\xe2", 64);
+*(uint32_t*)0x20000284 = 0;
+	syscall(__NR_add_key, 0x200001c0ul, 0x20000200ul, 0x20000240ul, 0x48ul, r[0]);
 	return 0;
 }

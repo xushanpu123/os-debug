@@ -19,10 +19,18 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 2ul, 2ul, 0);
+memcpy((void*)0x20000000, "/dev/cdrom\000", 11);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000000ul, 0x800ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-*(uint32_t*)0x20000080 = 0;
-	syscall(__NR_getsockopt, r[0], 0, 9, 0ul, 0x20000080ul);
+*(uint8_t*)0x20000040 = 0;
+*(uint8_t*)0x20000041 = 6;
+*(uint8_t*)0x20000042 = 0;
+*(uint8_t*)0x20000043 = 0;
+*(uint8_t*)0x20000044 = 0x7f;
+*(uint8_t*)0x20000045 = 0;
+memset((void*)0x20000046, 0, 2640);
+	syscall(__NR_ioctl, -1, 0x5314, 0x20000040ul);
+	syscall(__NR_ioctl, r[0], 0x5321, 0ul);
 	return 0;
 }

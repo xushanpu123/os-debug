@@ -11,13 +11,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#ifndef __NR_memfd_create
-#define __NR_memfd_create 319
-#endif
-#ifndef __NR_pwritev2
-#define __NR_pwritev2 328
-#endif
-
 uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
@@ -26,16 +19,10 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memset((void*)0x20000040, 0, 1);
-	res = syscall(__NR_memfd_create, 0x20000040ul, 0ul);
+memcpy((void*)0x20000080, "/dev/vcsu\000", 10);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000080ul, 0ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-*(uint64_t*)0x20000300 = 0x20000080;
-memset((void*)0x20000080, 83, 1);
-*(uint64_t*)0x20000308 = 1;
-*(uint64_t*)0x20000310 = 0x20000180;
-memset((void*)0x20000180, 6, 1);
-*(uint64_t*)0x20000318 = 1;
-	syscall(__NR_pwritev2, r[0], 0x20000300ul, 2ul, 0, 0, 0ul);
+	syscall(__NR_read, r[0], 0ul, 0ul);
 	return 0;
 }

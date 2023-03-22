@@ -11,17 +11,22 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+#ifndef __NR_io_uring_setup
+#define __NR_io_uring_setup 425
+#endif
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-	res = syscall(__NR_socket, 2ul, 2ul, 0);
-	if (res != -1)
-		r[0] = res;
-	syscall(__NR_vmsplice, r[0], 0ul, 0ul, 0ul);
+
+*(uint32_t*)0x20000184 = 0;
+*(uint32_t*)0x20000188 = 0x18;
+*(uint32_t*)0x2000018c = 0;
+*(uint32_t*)0x20000190 = 0;
+*(uint32_t*)0x20000198 = -1;
+memset((void*)0x2000019c, 0, 12);
+	syscall(__NR_io_uring_setup, 0xfffffffd, 0x20000180ul);
 	return 0;
 }

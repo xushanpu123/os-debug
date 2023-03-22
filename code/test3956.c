@@ -11,23 +11,27 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+#ifndef __NR_seccomp
+#define __NR_seccomp 317
+#endif
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-memcpy((void*)0x20000040, "./file1\000", 8);
-	res = syscall(__NR_openat, 0xffffff9c, 0x20000040ul, 0x42ul, 0ul);
-	if (res != -1)
-		r[0] = res;
-*(uint64_t*)0x20000600 = 0;
-*(uint64_t*)0x20000608 = 0x80000000ffffffff;
-*(uint32_t*)0x20000610 = 0;
-*(uint32_t*)0x20000614 = 0;
-*(uint32_t*)0x20000618 = 0;
-	syscall(__NR_ioctl, r[0], 0xc020660b, 0x20000600ul);
+
+*(uint16_t*)0x20000840 = 2;
+*(uint64_t*)0x20000848 = 0x20000800;
+*(uint16_t*)0x20000800 = 0x7c;
+*(uint8_t*)0x20000802 = 0;
+*(uint8_t*)0x20000803 = 0;
+*(uint32_t*)0x20000804 = 0;
+*(uint16_t*)0x20000808 = 6;
+*(uint8_t*)0x2000080a = 0;
+*(uint8_t*)0x2000080b = 0;
+*(uint32_t*)0x2000080c = 0;
+	syscall(__NR_seccomp, 1ul, 0ul, 0x20000840ul);
+	syscall(__NR_write, -1, 0ul, 0ul);
 	return 0;
 }

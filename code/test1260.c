@@ -3,7 +3,6 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
-#include <sched.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,28 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define USLEEP_FORKED_CHILD (3 * 50 *1000)
-
-static long handle_clone_ret(long ret)
-{
-	if (ret != 0) {
-		return ret;
-	}
-	usleep(USLEEP_FORKED_CHILD);
-	syscall(__NR_exit, 0);
-	while (1) {
-	}
-}
-
-static long syz_clone(volatile long flags, volatile long stack, volatile long stack_len,
-		      volatile long ptid, volatile long ctid, volatile long tls)
-{
-	long sp = (stack + stack_len) & ~15;
-	long ret = (long)syscall(__NR_clone, flags & ~CLONE_VM, sp, ptid, ctid, tls);
-	return handle_clone_ret(ret);
-}
-
-uint64_t r[1] = {0x0};
+uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
 {
@@ -41,10 +19,39 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = -1;
-res = syz_clone(0, 0, 0, 0, 0, 0);
+*(uint64_t*)0x200001c0 = 0;
+*(uint32_t*)0x200001c8 = 0;
+*(uint32_t*)0x200001cc = 0;
+*(uint16_t*)0x200001d0 = 7;
+*(uint16_t*)0x200001d2 = 0;
+*(uint32_t*)0x200001d4 = -1;
+*(uint64_t*)0x200001d8 = 0x20000140;
+memcpy((void*)0x20000140, "\x24\x80\xf2\xae\x3c\x5c\x24\xb5\x52\xf8\xc0\xda\xd9\xf0\x56\x7c\x9d\x33\x7e\x07\x85\x3f\x17\x04\x3c", 25);
+*(uint64_t*)0x200001e0 = 0x19;
+*(uint64_t*)0x200001e8 = 0;
+*(uint64_t*)0x200001f0 = 0;
+*(uint32_t*)0x200001f8 = 0;
+*(uint32_t*)0x200001fc = -1;
+	syscall(__NR_io_cancel, 0ul, 0x200001c0ul, 0x20000200ul);
+memcpy((void*)0x200000c0, "/dev/loop-control\000", 18);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x200000c0ul, 0ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_getpriority, 1ul, r[0]);
+	syscall(__NR_ioctl, r[0], 0x4c81, 0ul);
+*(uint64_t*)0x20000040 = 0x800;
+*(uint64_t*)0x20000048 = 4;
+*(uint64_t*)0x20000050 = 7;
+	syscall(__NR_ioctl, r[0], 0xc0185879, 0x20000040ul);
+	syscall(__NR_socket, 0xaul, 1ul, 0);
+	syscall(__NR_ioctl, -1, 0x4c82, 0);
+*(uint16_t*)0x20000000 = 0xa;
+*(uint16_t*)0x20000002 = htobe16(0);
+*(uint32_t*)0x20000004 = htobe32(0);
+memset((void*)0x20000008, 0, 16);
+*(uint32_t*)0x20000018 = 0;
+	syscall(__NR_connect, -1, 0x20000000ul, 0x1cul);
+	syscall(__NR_setsockopt, -1, 6, 0x16, 0ul, 0ul);
+	syscall(__NR_connect, -1, 0ul, 0ul);
+	syscall(__NR_ioctl, r[0], 0x4c80, 0ul);
 	return 0;
 }

@@ -19,11 +19,10 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000040, "/dev/rfkill\000", 12);
-	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000040ul, 0ul, 0ul);
+	res = syscall(__NR_socket, 2ul, 1ul, 0);
 	if (res != -1)
 		r[0] = res;
-memcpy((void*)0x20000000, "security.selinux\000", 17);
-	syscall(__NR_fsetxattr, r[0], 0x20000000ul, 0ul, 0ul, 0ul);
+*(uint32_t*)0x20000080 = 0;
+	syscall(__NR_getsockopt, r[0], 6, 2, 0ul, 0x20000080ul);
 	return 0;
 }

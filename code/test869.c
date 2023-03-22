@@ -16,6 +16,12 @@ int main(void)
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				syscall(__NR_mlockall, 6ul);
+
+memcpy((void*)0x20001180, "./file0\000", 8);
+	syscall(__NR_mkdir, 0x20001180ul, 0ul);
+memcpy((void*)0x20000080, "./file0\000", 8);
+memcpy((void*)0x200000c0, "security.selinux\000", 17);
+memcpy((void*)0x20000100, "/usr/sbin/ntpd\000", 15);
+	syscall(__NR_lsetxattr, 0x20000080ul, 0x200000c0ul, 0x20000100ul, 0xfda4ul, 0ul);
 	return 0;
 }

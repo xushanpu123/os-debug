@@ -11,6 +11,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#define BITMASK(bf_off,bf_len) (((1ull << (bf_len)) - 1) << (bf_off))
+#define STORE_BY_BITMASK(type,htobe,addr,val,bf_off,bf_len) *(type*)(addr) = htobe((htobe(*(type*)(addr)) & ~BITMASK((bf_off), (bf_len))) | (((type)(val) << (bf_off)) & BITMASK((bf_off), (bf_len))))
+
 uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
@@ -19,10 +22,17 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000000, "/proc/asound/timers\000", 20);
-	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000000ul, 0ul, 0ul);
+	res = syscall(__NR_socket, 0xaul, 3ul, 6);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_pread64, r[0], 0x20000280ul, 0x9aul, 0ul);
+*(uint8_t*)0x20000000 = 0;
+*(uint8_t*)0x20000001 = 0;
+*(uint8_t*)0x20000002 = 0;
+STORE_BY_BITMASK(uint8_t, , 0x20000003, 0, 0, 1);
+STORE_BY_BITMASK(uint8_t, , 0x20000003, 0, 1, 2);
+STORE_BY_BITMASK(uint8_t, , 0x20000003, 0, 3, 5);
+*(uint32_t*)0x20000004 = 0;
+	syscall(__NR_setsockopt, r[0], 0x29, 0x3b, 0x20000000ul, 8ul);
+	syscall(__NR_setsockopt, r[0], 0x29, 0x36, 0ul, 0ul);
 	return 0;
 }

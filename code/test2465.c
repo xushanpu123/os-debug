@@ -3,205 +3,184 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/ioctl.h>
-#include <sys/mount.h>
-#include <sys/stat.h>
+#include <sys/mman.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <linux/loop.h>
-
-#ifndef __NR_memfd_create
-#define __NR_memfd_create 319
+#ifndef __NR_io_uring_enter
+#define __NR_io_uring_enter 426
+#endif
+#ifndef __NR_io_uring_setup
+#define __NR_io_uring_setup 425
 #endif
 
-static unsigned long long procid;
+#define SIZEOF_IO_URING_SQE 64
+#define SIZEOF_IO_URING_CQE 16
+#define SQ_HEAD_OFFSET 0
+#define SQ_TAIL_OFFSET 64
+#define SQ_RING_MASK_OFFSET 256
+#define SQ_RING_ENTRIES_OFFSET 264
+#define SQ_FLAGS_OFFSET 276
+#define SQ_DROPPED_OFFSET 272
+#define CQ_HEAD_OFFSET 128
+#define CQ_TAIL_OFFSET 192
+#define CQ_RING_MASK_OFFSET 260
+#define CQ_RING_ENTRIES_OFFSET 268
+#define CQ_RING_OVERFLOW_OFFSET 284
+#define CQ_FLAGS_OFFSET 280
+#define CQ_CQES_OFFSET 320
 
-struct fs_image_segment {
-	void* data;
-	uintptr_t size;
-	uintptr_t offset;
+struct io_sqring_offsets {
+	uint32_t head;
+	uint32_t tail;
+	uint32_t ring_mask;
+	uint32_t ring_entries;
+	uint32_t flags;
+	uint32_t dropped;
+	uint32_t array;
+	uint32_t resv1;
+	uint64_t resv2;
 };
-static int setup_loop_device(long unsigned size, long unsigned nsegs, struct fs_image_segment* segs, const char* loopname, int* memfd_p, int* loopfd_p)
+
+struct io_cqring_offsets {
+	uint32_t head;
+	uint32_t tail;
+	uint32_t ring_mask;
+	uint32_t ring_entries;
+	uint32_t overflow;
+	uint32_t cqes;
+	uint64_t resv[2];
+};
+
+struct io_uring_params {
+	uint32_t sq_entries;
+	uint32_t cq_entries;
+	uint32_t flags;
+	uint32_t sq_thread_cpu;
+	uint32_t sq_thread_idle;
+	uint32_t features;
+	uint32_t resv[4];
+	struct io_sqring_offsets sq_off;
+	struct io_cqring_offsets cq_off;
+};
+
+#define IORING_OFF_SQ_RING 0
+#define IORING_OFF_SQES 0x10000000ULL
+
+static long syz_io_uring_setup(volatile long a0, volatile long a1, volatile long a2, volatile long a3, volatile long a4, volatile long a5)
 {
-	int err = 0, loopfd = -1;
-	int memfd = syscall(__NR_memfd_create, "syzkaller", 0);
-	if (memfd == -1) {
-		err = errno;
-		goto error;
-	}
-	if (ftruncate(memfd, size)) {
-		err = errno;
-		goto error_close_memfd;
-	}
-	for (size_t i = 0; i < nsegs; i++) {
-		if (pwrite(memfd, segs[i].data, segs[i].size, segs[i].offset) < 0) {
-		}
-	}
-	loopfd = open(loopname, O_RDWR);
-	if (loopfd == -1) {
-		err = errno;
-		goto error_close_memfd;
-	}
-	if (ioctl(loopfd, LOOP_SET_FD, memfd)) {
-		if (errno != EBUSY) {
-			err = errno;
-			goto error_close_loop;
-		}
-		ioctl(loopfd, LOOP_CLR_FD, 0);
-		usleep(1000);
-		if (ioctl(loopfd, LOOP_SET_FD, memfd)) {
-			err = errno;
-			goto error_close_loop;
-		}
-	}
-	*memfd_p = memfd;
-	*loopfd_p = loopfd;
+	uint32_t entries = (uint32_t)a0;
+	struct io_uring_params* setup_params = (struct io_uring_params*)a1;
+	void* vma1 = (void*)a2;
+	void* vma2 = (void*)a3;
+	void** ring_ptr_out = (void**)a4;
+	void** sqes_ptr_out = (void**)a5;
+	uint32_t fd_io_uring = syscall(__NR_io_uring_setup, entries, setup_params);
+	uint32_t sq_ring_sz = setup_params->sq_off.array + setup_params->sq_entries * sizeof(uint32_t);
+	uint32_t cq_ring_sz = setup_params->cq_off.cqes + setup_params->cq_entries * SIZEOF_IO_URING_CQE;
+	uint32_t ring_sz = sq_ring_sz > cq_ring_sz ? sq_ring_sz : cq_ring_sz;
+	*ring_ptr_out = mmap(vma1, ring_sz, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_POPULATE | MAP_FIXED, fd_io_uring, IORING_OFF_SQ_RING);
+	uint32_t sqes_sz = setup_params->sq_entries * SIZEOF_IO_URING_SQE;
+	*sqes_ptr_out = mmap(vma2, sqes_sz, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_POPULATE | MAP_FIXED, fd_io_uring, IORING_OFF_SQES);
+	return fd_io_uring;
+}
+
+static long syz_io_uring_submit(volatile long a0, volatile long a1, volatile long a2, volatile long a3)
+{
+	char* ring_ptr = (char*)a0;
+	char* sqes_ptr = (char*)a1;
+	char* sqe = (char*)a2;
+	uint32_t sqes_index = (uint32_t)a3;
+	uint32_t sq_ring_entries = *(uint32_t*)(ring_ptr + SQ_RING_ENTRIES_OFFSET);
+	uint32_t cq_ring_entries = *(uint32_t*)(ring_ptr + CQ_RING_ENTRIES_OFFSET);
+	uint32_t sq_array_off = (CQ_CQES_OFFSET + cq_ring_entries * SIZEOF_IO_URING_CQE + 63) & ~63;
+	if (sq_ring_entries)
+		sqes_index %= sq_ring_entries;
+	char* sqe_dest = sqes_ptr + sqes_index * SIZEOF_IO_URING_SQE;
+	memcpy(sqe_dest, sqe, SIZEOF_IO_URING_SQE);
+	uint32_t sq_ring_mask = *(uint32_t*)(ring_ptr + SQ_RING_MASK_OFFSET);
+	uint32_t* sq_tail_ptr = (uint32_t*)(ring_ptr + SQ_TAIL_OFFSET);
+	uint32_t sq_tail = *sq_tail_ptr & sq_ring_mask;
+	uint32_t sq_tail_next = *sq_tail_ptr + 1;
+	uint32_t* sq_array = (uint32_t*)(ring_ptr + sq_array_off);
+	*(sq_array + sq_tail) = sqes_index;
+	__atomic_store_n(sq_tail_ptr, sq_tail_next, __ATOMIC_RELEASE);
 	return 0;
-
-error_close_loop:
-	close(loopfd);
-error_close_memfd:
-	close(memfd);
-error:
-	errno = err;
-	return -1;
 }
 
-static long syz_mount_image(volatile long fsarg, volatile long dir, volatile unsigned long size, volatile unsigned long nsegs, volatile long segments, volatile long flags, volatile long optsarg, volatile long change_dir)
-{
-	struct fs_image_segment* segs = (struct fs_image_segment*)segments;
-	int res = -1, err = 0, loopfd = -1, memfd = -1, need_loop_device = !!segs;
-	char* mount_opts = (char*)optsarg;
-	char* target = (char*)dir;
-	char* fs = (char*)fsarg;
-	char* source = NULL;
-	char loopname[64];
-	if (need_loop_device) {
-		memset(loopname, 0, sizeof(loopname));
-		snprintf(loopname, sizeof(loopname), "/dev/loop%llu", procid);
-		if (setup_loop_device(size, nsegs, segs, loopname, &memfd, &loopfd) == -1)
-			return -1;
-		source = loopname;
-	}
-	mkdir(target, 0777);
-	char opts[256];
-	memset(opts, 0, sizeof(opts));
-	if (strlen(mount_opts) > (sizeof(opts) - 32)) {
-	}
-	strncpy(opts, mount_opts, sizeof(opts) - 32);
-	if (strcmp(fs, "iso9660") == 0) {
-		flags |= MS_RDONLY;
-	} else if (strncmp(fs, "ext", 3) == 0) {
-		if (strstr(opts, "errors=panic") || strstr(opts, "errors=remount-ro") == 0)
-			strcat(opts, ",errors=continue");
-	} else if (strcmp(fs, "xfs") == 0) {
-		strcat(opts, ",nouuid");
-	}
-	res = mount(source, target, fs, flags, opts);
-	if (res == -1) {
-		err = errno;
-		goto error_clear_loop;
-	}
-	res = open(target, O_RDONLY | O_DIRECTORY);
-	if (res == -1) {
-		err = errno;
-		goto error_clear_loop;
-	}
-	if (change_dir) {
-		res = chdir(target);
-		if (res == -1) {
-			err = errno;
-		}
-	}
-
-error_clear_loop:
-	if (need_loop_device) {
-		ioctl(loopfd, LOOP_CLR_FD, 0);
-		close(loopfd);
-		close(memfd);
-	}
-	errno = err;
-	return res;
-}
+uint64_t r[5] = {0xffffffffffffffff, 0x0, 0x0, 0x0, 0xffffffffffffffff};
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-memcpy((void*)0x20000000, "vfat\000", 5);
-memcpy((void*)0x20000100, "./file0\000", 8);
-*(uint64_t*)0x20000200 = 0x20010000;
-memcpy((void*)0x20010000, "\x60\x1c\x6d\x6b\x64\x6f\x73\x66\x99\xa6\xa6\x00\x08\x01\x20\x00\x04\x00\x00\x40\x00\xf8\x00\x00\x10\x00\x02\x00\x03\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x01\x00\x06\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 96);
-*(uint64_t*)0x20000208 = 0x60;
-*(uint64_t*)0x20000210 = 0;
-*(uint64_t*)0x20000218 = 0x20010060;
-memcpy((void*)0x20010060, "RRaA\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000", 32);
-*(uint64_t*)0x20000220 = 0x20;
-*(uint64_t*)0x20000228 = 0x800;
-*(uint64_t*)0x20000230 = 0x20010080;
-memcpy((void*)0x20010080, "\x00\x00\x00\x00\x72\x72\x41\x61\x12\x00\x00\x00\x0b\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x55\xaa", 32);
-*(uint64_t*)0x20000238 = 0x20;
-*(uint64_t*)0x20000240 = 0x9e0;
-*(uint64_t*)0x20000248 = 0x200100a0;
-memcpy((void*)0x200100a0, "\x60\x1c\x6d\x6b\x64\x6f\x73\x66\x99\xa6\xa6\x00\x08\x01\x20\x00\x04\x00\x00\x40\x00\xf8\x00\x00\x10\x00\x02\x00\x03\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x01\x00\x06\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 96);
-*(uint64_t*)0x20000250 = 0x60;
-*(uint64_t*)0x20000258 = 0x3000;
-*(uint64_t*)0x20000260 = 0x20010100;
-memcpy((void*)0x20010100, "RRaA\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000", 32);
-*(uint64_t*)0x20000268 = 0x20;
-*(uint64_t*)0x20000270 = 0x3800;
-*(uint64_t*)0x20000278 = 0x20010120;
-memcpy((void*)0x20010120, "\x00\x00\x00\x00\x72\x72\x41\x61\x1b\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x55\xaa", 32);
-*(uint64_t*)0x20000280 = 0x20;
-*(uint64_t*)0x20000288 = 0x39e0;
-*(uint64_t*)0x20000290 = 0x20010140;
-memcpy((void*)0x20010140, "\xf8\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\x07\x00\x00\x00\x08\x00\x00\x00\x09\x00\x00\x00\x0a\x00\x00\x00\xff\xff\xff\x0f\xff\xff\xff\x0f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 64);
-*(uint64_t*)0x20000298 = 0x40;
-*(uint64_t*)0x200002a0 = 0x10000;
-*(uint64_t*)0x200002a8 = 0x20010180;
-memcpy((void*)0x20010180, "\xf8\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\x07\x00\x00\x00\x08\x00\x00\x00\x09\x00\x00\x00\x0a\x00\x00\x00\xff\xff\xff\x0f\xff\xff\xff\x0f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 64);
-*(uint64_t*)0x200002b0 = 0x40;
-*(uint64_t*)0x200002b8 = 0x10800;
-*(uint64_t*)0x200002c0 = 0x200101c0;
-memcpy((void*)0x200101c0, "\xf8\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\x07\x00\x00\x00\x08\x00\x00\x00\x09\x00\x00\x00\x0a\x00\x00\x00\xff\xff\xff\x0f\xff\xff\xff\x0f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 64);
-*(uint64_t*)0x200002c8 = 0x40;
-*(uint64_t*)0x200002d0 = 0x11000;
-*(uint64_t*)0x200002d8 = 0x20010200;
-memcpy((void*)0x20010200, "\xf8\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\x07\x00\x00\x00\x08\x00\x00\x00\x09\x00\x00\x00\x0a\x00\x00\x00\xff\xff\xff\x0f\xff\xff\xff\x0f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 64);
-*(uint64_t*)0x200002e0 = 0x40;
-*(uint64_t*)0x200002e8 = 0x11800;
-*(uint64_t*)0x200002f0 = 0x20010240;
-memcpy((void*)0x20010240, "\x53\x59\x5a\x4b\x41\x4c\x4c\x45\x52\x20\x20\x08\x00\x00\x15\x60\x2c\x55\x2c\x55\x00\x00\x15\x60\x2c\x55\x00\x00\x00\x00\x00\x00\x41\x66\x00\x69\x00\x6c\x00\x65\x00\x30\x00\x0f\x00\xfc\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x00\xff\xff\xff\xff\x46\x49\x4c\x45\x30\x20\x20\x20\x20\x20\x20\x10\x00\x38\x15\x60\x2c\x55\x2c\x55\x00\x00\x15\x60\x2c\x55\x03\x00\x00\x00\x00\x00\x41\x66\x00\x69\x00\x6c\x00\x65\x00\x31\x00\x0f\x00\x10\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x00\xff\xff\xff\xff\x46\x49\x4c\x45\x31\x20\x20\x20\x20\x20\x20\x20\x00\x38\x15\x60\x2c\x55\x2c\x55\x00\x00\x15\x60\x2c\x55\x05\x00\x0a\x00\x00\x00\x41\x66\x00\x69\x00\x6c\x00\x65\x00\x32\x00\x0f\x00\x14\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x00\xff\xff\xff\xff\x46\x49\x4c\x45\x32\x20\x20\x20\x20\x20\x20\x20\x00\x38\x15\x60\x2c\x55\x2c\x55\x00\x00\x15\x60\x2c\x55\x06\x00\x28\x23\x00\x00\x41\x66\x00\x69\x00\x6c\x00\x65\x00\x2e\x00\x0f\x00\xd2\x63\x00\x6f\x00\x6c\x00\x64\x00\x00\x00\xff\xff\x00\x00\xff\xff\xff\xff\x46\x49\x4c\x45\x7e\x31\x20\x20\x43\x4f\x4c\x20\x00\x38\x15\x60\x2c\x55\x2c\x55\x00\x00\x15\x60\x2c\x55\x0b\x00\x64\x00\x00\x00", 288);
-*(uint64_t*)0x200002f8 = 0x120;
-*(uint64_t*)0x20000300 = 0x12000;
-*(uint64_t*)0x20000308 = 0x20010360;
-memcpy((void*)0x20010360, "\x2e\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x10\x00\x38\x15\x60\x2c\x55\x2c\x55\x00\x00\x15\x60\x2c\x55\x03\x00\x00\x00\x00\x00\x2e\x2e\x20\x20\x20\x20\x20\x20\x20\x20\x20\x10\x00\x38\x15\x60\x2c\x55\x2c\x55\x00\x00\x15\x60\x2c\x55\x00\x00\x00\x00\x00\x00\x41\x66\x00\x69\x00\x6c\x00\x65\x00\x30\x00\x0f\x00\xfc\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x00\xff\xff\xff\xff\x46\x49\x4c\x45\x30\x20\x20\x20\x20\x20\x20\x20\x00\x38\x15\x60\x2c\x55\x2c\x55\x00\x00\x15\x60\x2c\x55\x04\x00\x1a\x04\x00\x00", 128);
-*(uint64_t*)0x20000310 = 0x80;
-*(uint64_t*)0x20000318 = 0x12800;
-*(uint64_t*)0x20000320 = 0x200103e0;
-memcpy((void*)0x200103e0, "syzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkal\000\000\000\000\000\000", 1056);
-*(uint64_t*)0x20000328 = 0x420;
-*(uint64_t*)0x20000330 = 0x13000;
-*(uint64_t*)0x20000338 = 0x20010800;
-memcpy((void*)0x20010800, "syzkallers\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000", 32);
-*(uint64_t*)0x20000340 = 0x20;
-*(uint64_t*)0x20000348 = 0x13800;
-*(uint64_t*)0x20000350 = 0x20010820;
-memcpy((void*)0x20010820, "syzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallers\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000", 128);
-*(uint64_t*)0x20000358 = 0x80;
-*(uint64_t*)0x20000360 = 0x16800;
-*(uint8_t*)0x200108a0 = 0;
-syz_mount_image(0x20000000, 0x20000100, 0x20000, 0xf, 0x20000200, 0, 0x200108a0, 1);
+				intptr_t res = 0;
+*(uint32_t*)0x20000184 = 0;
+*(uint32_t*)0x20000188 = 0;
+*(uint32_t*)0x2000018c = 0;
+*(uint32_t*)0x20000190 = 0;
+*(uint32_t*)0x20000198 = -1;
+memset((void*)0x2000019c, 0, 12);
+	res = -1;
+res = syz_io_uring_setup(5, 0x20000180, 0x20ffa000, 0x20ffb000, 0x20000040, 0x20000140);
+	if (res != -1) {
+		r[0] = res;
+r[1] = *(uint64_t*)0x20000040;
+r[2] = *(uint64_t*)0x20000140;
+	}
+*(uint32_t*)0x20000084 = 0;
+*(uint32_t*)0x20000088 = 0;
+*(uint32_t*)0x2000008c = 0;
+*(uint32_t*)0x20000090 = 0;
+*(uint32_t*)0x20000098 = 0;
+memset((void*)0x2000009c, 0, 12);
+	res = -1;
+res = syz_io_uring_setup(1, 0x20000080, 0x200a0000, 0x200b0000, 0x20000100, 0x20000240);
+	if (res != -1)
+r[3] = *(uint64_t*)0x20000100;
+	res = syscall(__NR_socket, 0x10ul, 3ul, 0x10);
+	if (res != -1)
+		r[4] = res;
+*(uint8_t*)0x20000400 = 0x1a;
+*(uint8_t*)0x20000401 = 0;
+*(uint16_t*)0x20000402 = 0;
+*(uint32_t*)0x20000404 = r[4];
+*(uint64_t*)0x20000408 = 0;
+*(uint64_t*)0x20000410 = 0;
+*(uint32_t*)0x20000418 = 0;
+*(uint32_t*)0x2000041c = 0x20004100;
+*(uint64_t*)0x20000420 = 0;
+*(uint16_t*)0x20000428 = 0;
+*(uint16_t*)0x2000042a = 0;
+memset((void*)0x2000042c, 0, 20);
+syz_io_uring_submit(r[3], r[2], 0x20000400, 0);
+*(uint32_t*)0x20000084 = 0;
+*(uint32_t*)0x20000088 = 0;
+*(uint32_t*)0x2000008c = 0;
+*(uint32_t*)0x20000090 = 0;
+*(uint32_t*)0x20000098 = -1;
+memset((void*)0x2000009c, 0, 12);
+syz_io_uring_setup(0xa5, 0x20000080, 0x20ffc000, 0x20ffb000, 0x20000100, 0);
+*(uint8_t*)0x200003c0 = 6;
+*(uint8_t*)0x200003c1 = 0;
+*(uint16_t*)0x200003c2 = 0;
+*(uint32_t*)0x200003c4 = 0;
+*(uint64_t*)0x200003c8 = 0;
+*(uint64_t*)0x200003d0 = 0;
+*(uint32_t*)0x200003d8 = 0;
+*(uint16_t*)0x200003dc = 0;
+*(uint16_t*)0x200003de = 0;
+*(uint64_t*)0x200003e0 = 0;
+*(uint16_t*)0x200003e8 = 0;
+*(uint16_t*)0x200003ea = 0;
+memset((void*)0x200003ec, 0, 20);
+syz_io_uring_submit(r[1], r[2], 0x200003c0, 0);
+	syscall(__NR_io_uring_enter, r[0], 0x56b0, 0, 0ul, 0ul, 0ul);
 	return 0;
 }

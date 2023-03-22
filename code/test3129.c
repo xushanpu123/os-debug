@@ -11,23 +11,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
-
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-memcpy((void*)0x20000040, "./file1\000", 8);
-	res = syscall(__NR_openat, 0xffffff9c, 0x20000040ul, 0x42ul, 0ul);
-	if (res != -1)
-		r[0] = res;
-*(uint16_t*)0x20000180 = 0;
-*(uint16_t*)0x20000182 = 3;
-*(uint64_t*)0x20000188 = 0;
-*(uint64_t*)0x20000190 = 0;
-*(uint32_t*)0x20000198 = -1;
-	syscall(__NR_fcntl, r[0], 5ul, 0x20000180ul);
+				syscall(__NR_mlockall, 6ul);
 	return 0;
 }

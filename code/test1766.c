@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[2] = {0x0, 0xffffffffffffffff};
+uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
 {
@@ -19,12 +19,11 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_getpid);
+memcpy((void*)0x200000c0, "/dev/vga_arbiter\000", 17);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x200000c0ul, 0x281ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-	res = syscall(__NR_pipe2, 0x20000000ul, 0ul);
-	if (res != -1)
-r[1] = *(uint32_t*)0x20000004;
-	syscall(__NR_fcntl, r[1], 8ul, r[0]);
+memcpy((void*)0x20000000, "unlock all\000", 11);
+	syscall(__NR_write, r[0], 0x20000000ul, 0xbul);
 	return 0;
 }

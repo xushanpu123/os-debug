@@ -19,11 +19,10 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000040, "/dev/rfkill\000", 12);
-	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000040ul, 0ul, 0ul);
+	res = syscall(__NR_socket, 0xaul, 1ul, 0);
 	if (res != -1)
 		r[0] = res;
-memcpy((void*)0x20000200, "system.advise\000", 14);
-	syscall(__NR_fsetxattr, r[0], 0x20000200ul, 0ul, 0ul, 0ul);
+memcpy((void*)0x20000040, "\x61\xb5\x00\x00", 4);
+	syscall(__NR_setsockopt, r[0], 6, 0xe, 0x20000040ul, 0x5bul);
 	return 0;
 }

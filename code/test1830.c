@@ -11,6 +11,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#define BITMASK(bf_off,bf_len) (((1ull << (bf_len)) - 1) << (bf_off))
+#define STORE_BY_BITMASK(type,htobe,addr,val,bf_off,bf_len) *(type*)(addr) = htobe((htobe(*(type*)(addr)) & ~BITMASK((bf_off), (bf_len))) | (((type)(val) << (bf_off)) & BITMASK((bf_off), (bf_len))))
+
 uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
@@ -19,9 +22,47 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_inotify_init1, 0ul);
+	res = syscall(__NR_socket, 0xaul, 2ul, 0);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_close, r[0]);
+*(uint64_t*)0x20000540 = 0x20000000;
+*(uint16_t*)0x20000000 = 2;
+*(uint16_t*)0x20000002 = htobe16(0x4e21);
+*(uint8_t*)0x20000004 = 0xac;
+*(uint8_t*)0x20000005 = 0x14;
+*(uint8_t*)0x20000006 = 0x14;
+*(uint8_t*)0x20000007 = 0xbb;
+*(uint32_t*)0x20000548 = 0x10;
+*(uint64_t*)0x20000550 = 0;
+*(uint64_t*)0x20000558 = 0;
+*(uint64_t*)0x20000560 = 0x200003c0;
+*(uint64_t*)0x200003c0 = 0x34;
+*(uint32_t*)0x200003c8 = 0;
+*(uint32_t*)0x200003cc = 7;
+*(uint8_t*)0x200003d0 = 0x44;
+*(uint8_t*)0x200003d1 = 0x24;
+*(uint8_t*)0x200003d2 = 0x19;
+STORE_BY_BITMASK(uint8_t, , 0x200003d3, 3, 0, 4);
+STORE_BY_BITMASK(uint8_t, , 0x200003d3, 0, 4, 4);
+*(uint8_t*)0x200003d4 = 0xac;
+*(uint8_t*)0x200003d5 = 0x14;
+*(uint8_t*)0x200003d6 = 0x14;
+*(uint8_t*)0x200003d7 = 0xaa;
+*(uint32_t*)0x200003d8 = htobe32(0);
+*(uint32_t*)0x200003dc = htobe32(0xe0000001);
+*(uint32_t*)0x200003e0 = htobe32(0);
+*(uint8_t*)0x200003e4 = 0xac;
+*(uint8_t*)0x200003e5 = 0x14;
+*(uint8_t*)0x200003e6 = 0x14;
+*(uint8_t*)0x200003e7 = 0xaa;
+*(uint32_t*)0x200003e8 = htobe32(0);
+*(uint8_t*)0x200003ec = 0xac;
+*(uint8_t*)0x200003ed = 0x14;
+*(uint8_t*)0x200003ee = 0x14;
+*(uint8_t*)0x200003ef = 0xaa;
+*(uint32_t*)0x200003f0 = htobe32(0);
+*(uint64_t*)0x20000568 = 0x38;
+*(uint32_t*)0x20000570 = 0;
+	syscall(__NR_sendmsg, r[0], 0x20000540ul, 0ul);
 	return 0;
 }

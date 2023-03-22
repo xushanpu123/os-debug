@@ -11,24 +11,34 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+#ifndef __NR_fsopen
+#define __NR_fsopen 430
+#endif
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-	res = syscall(__NR_socket, 2ul, 2ul, 0);
-	if (res != -1)
-		r[0] = res;
-*(uint32_t*)0x20000140 = 0;
-*(uint16_t*)0x20000148 = 2;
-*(uint16_t*)0x2000014a = htobe16(0);
-*(uint32_t*)0x2000014c = htobe32(-1);
-*(uint16_t*)0x200001c8 = 2;
-*(uint16_t*)0x200001ca = htobe16(0);
-*(uint32_t*)0x200001cc = htobe32(-1);
-	syscall(__NR_setsockopt, r[0], 0, 0x2e, 0x20000140ul, 0x108ul);
+
+memcpy((void*)0x20000040, "cgroup2\000", 8);
+	syscall(__NR_fsopen, 0x20000040ul, 0ul);
+*(uint64_t*)0x200000c0 = 0;
+*(uint64_t*)0x200000c8 = 0;
+*(uint64_t*)0x200000d0 = 0;
+*(uint64_t*)0x200000d8 = 0;
+*(uint64_t*)0x200000e0 = 0;
+*(uint64_t*)0x200000e8 = 0;
+*(uint64_t*)0x200000f0 = 0;
+*(uint64_t*)0x200000f8 = 0;
+*(uint64_t*)0x20000100 = 9;
+*(uint64_t*)0x20000108 = 0;
+*(uint64_t*)0x20000110 = 0;
+*(uint64_t*)0x20000118 = 0;
+*(uint64_t*)0x20000120 = 0;
+*(uint64_t*)0x20000128 = 0;
+*(uint64_t*)0x20000130 = 0;
+*(uint64_t*)0x20000138 = 0;
+	syscall(__NR_select, 0x40ul, 0x200000c0ul, 0x20000100ul, 0ul, 0ul);
 	return 0;
 }

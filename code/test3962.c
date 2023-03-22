@@ -11,19 +11,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#ifndef __NR_openat2
-#define __NR_openat2 437
-#endif
-
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-*(uint64_t*)0x20000080 = 0xa4243;
-*(uint64_t*)0x20000088 = 0;
-*(uint64_t*)0x20000090 = 0x21;
-	syscall(__NR_openat2, -1, 0ul, 0x20000080ul, 0x18ul);
+				syscall(__NR_clock_gettime, 0xaul, 0ul);
 	return 0;
 }

@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+uint64_t r[2] = {0xffffffffffffffff, 0x0};
 
 int main(void)
 {
@@ -19,29 +19,27 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 0xaul, 3ul, 0x3a);
+memcpy((void*)0x20000040, "/proc/cgroups\000", 14);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000040ul, 0ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-*(uint8_t*)0x20000040 = 0;
-*(uint8_t*)0x20000041 = 7;
-memset((void*)0x20000042, 0, 6);
-*(uint8_t*)0x20000048 = 7;
-*(uint8_t*)0x20000049 = 0x28;
-*(uint32_t*)0x2000004a = htobe32(0);
-*(uint8_t*)0x2000004e = 8;
-*(uint8_t*)0x2000004f = 0;
-*(uint16_t*)0x20000050 = 0;
-*(uint64_t*)0x20000052 = 0;
-*(uint64_t*)0x2000005a = 0;
-*(uint64_t*)0x20000062 = 0;
-*(uint64_t*)0x2000006a = 0;
-*(uint8_t*)0x20000072 = 0xc9;
-*(uint8_t*)0x20000073 = 0x10;
-*(uint8_t*)0x20000074 = 0xfe;
-*(uint8_t*)0x20000075 = 0x80;
-memset((void*)0x20000076, 0, 13);
-*(uint8_t*)0x20000083 = 0;
-	syscall(__NR_setsockopt, r[0], 0x29, 0x36, 0x20000040ul, 0x48ul);
-	syscall(__NR_setsockopt, r[0], 0x29, 0x36, 0ul, 0ul);
+	res = syscall(__NR_io_setup, 7, 0x20000840ul);
+	if (res != -1)
+r[1] = *(uint64_t*)0x20000840;
+*(uint64_t*)0x20000880 = 0x20000000;
+*(uint64_t*)0x20000000 = 0;
+*(uint32_t*)0x20000008 = 0;
+*(uint32_t*)0x2000000c = 0;
+*(uint16_t*)0x20000010 = 0;
+*(uint16_t*)0x20000012 = 0;
+*(uint32_t*)0x20000014 = r[0];
+*(uint64_t*)0x20000018 = 0x20000080;
+memset((void*)0x20000080, 1, 1);
+*(uint64_t*)0x20000020 = 1;
+*(uint64_t*)0x20000028 = 7;
+*(uint64_t*)0x20000030 = 0;
+*(uint32_t*)0x20000038 = 0;
+*(uint32_t*)0x2000003c = -1;
+	syscall(__NR_io_submit, r[1], 1ul, 0x20000880ul);
 	return 0;
 }

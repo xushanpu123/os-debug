@@ -11,11 +11,17 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifndef __NR_pkey_mprotect
+#define __NR_pkey_mprotect 329
+#endif
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				syscall(__NR_semctl, 0, 0ul, 3ul, 0x20000040ul);
+				syscall(__NR_mremap, 0x20ffe000ul, 0x2000ul, 0x4000ul, 3ul, 0x20ff9000ul);
+	syscall(__NR_pkey_mprotect, 0x20ffd000ul, 0x2000ul, 4ul, -1);
+	syscall(__NR_mremap, 0x20ffd000ul, 0x1000ul, 0x2000ul, 0ul, 0x20ff7000ul);
 	return 0;
 }

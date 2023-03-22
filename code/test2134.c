@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+uint64_t r[1] = {0x0};
 
 int main(void)
 {
@@ -19,10 +19,15 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000340, "./file0\000", 8);
-	res = syscall(__NR_openat, 0xffffff9c, 0x20000340ul, 0x42ul, 0ul);
+memcpy((void*)0x20000000, "keyring\000", 8);
+memcpy((void*)0x20000040, "syz", 3);
+*(uint8_t*)0x20000043 = 0x20;
+*(uint8_t*)0x20000044 = 0;
+	res = syscall(__NR_add_key, 0x20000000ul, 0x20000040ul, 0ul, 0ul, 0xfffffffe);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_ioctl, r[0], 0x4008662c, 0ul);
+memcpy((void*)0x200000c0, "asymmetric\000", 11);
+memcpy((void*)0x20000300, "4X", 2);
+	syscall(__NR_add_key, 0x200000c0ul, 0ul, 0x20000300ul, 2ul, r[0]);
 	return 0;
 }

@@ -16,6 +16,6 @@ int main(void)
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				syscall(__NR_lstat, 0ul, 0ul);
+				syscall(__NR_prctl, 0x39ul, 0x2000001ul, 0, 0, 0);
 	return 0;
 }

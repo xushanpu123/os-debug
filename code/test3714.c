@@ -11,28 +11,17 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
-
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-	res = syscall(__NR_socket, 0xaul, 2ul, 0);
-	if (res != -1)
-		r[0] = res;
-*(uint64_t*)0x20002b40 = 0x20000000;
-*(uint16_t*)0x20000000 = 0;
-*(uint8_t*)0x20000002 = 0;
-*(uint32_t*)0x20000004 = 0;
-*(uint32_t*)0x20002b48 = 0x80;
-*(uint64_t*)0x20002b50 = 0;
-*(uint64_t*)0x20002b58 = 0;
-*(uint64_t*)0x20002b60 = 0;
-*(uint64_t*)0x20002b68 = 0;
-*(uint32_t*)0x20002b70 = 0;
-*(uint32_t*)0x20002b78 = 0;
-	syscall(__NR_sendmmsg, r[0], 0x20002b40ul, 1ul, 0ul);
+
+memcpy((void*)0x20000000, ".\000", 2);
+memcpy((void*)0x20000200, "./file0\000", 8);
+	syscall(__NR_symlink, 0x20000000ul, 0x20000200ul);
+memcpy((void*)0x20000040, "./file0\000", 8);
+memcpy((void*)0x200000c0, "system.posix_acl_access\000", 24);
+	syscall(__NR_lgetxattr, 0x20000040ul, 0x200000c0ul, 0ul, 0ul);
 	return 0;
 }

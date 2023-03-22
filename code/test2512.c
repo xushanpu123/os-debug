@@ -32,7 +32,7 @@ static long syz_open_dev(volatile long a0, volatile long a1, volatile long a2)
 	}
 }
 
-uint64_t r[1] = {0xffffffffffffffff};
+uint64_t r[3] = {0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff};
 
 int main(void)
 {
@@ -40,11 +40,24 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000000, "/dev/loop#\000", 11);
+memcpy((void*)0x200000c0, "/dev/sg#\000", 9);
 	res = -1;
-res = syz_open_dev(0x20000000, 0, 0);
+res = syz_open_dev(0x200000c0, 0, 0);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_ioctl, r[0], 0x1269, 0ul);
+	res = syscall(__NR_epoll_create, 0x28);
+	if (res != -1)
+		r[1] = res;
+memcpy((void*)0x20000d00, "/proc/timer_list\000", 17);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000d00ul, 0ul, 0ul);
+	if (res != -1)
+		r[2] = res;
+*(uint32_t*)0x20000040 = 0;
+*(uint64_t*)0x20000044 = 0;
+	syscall(__NR_epoll_ctl, r[1], 1ul, r[2], 0x20000040ul);
+*(uint32_t*)0x20000300 = 0;
+*(uint64_t*)0x20000304 = 0;
+	syscall(__NR_epoll_ctl, r[1], 1ul, r[0], 0x20000300ul);
+	syscall(__NR_epoll_ctl, r[1], 2ul, r[0], 0);
 	return 0;
 }

@@ -11,37 +11,30 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[2] = {0xffffffffffffffff, 0xffffffffffffffff};
+#ifndef __NR_rseq
+#define __NR_rseq 334
+#endif
+#ifndef __NR_seccomp
+#define __NR_seccomp 317
+#endif
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-	res = syscall(__NR_socket, 0xaul, 3ul, 0x3a);
-	if (res != -1)
-		r[0] = res;
-	res = syscall(__NR_dup, r[0]);
-	if (res != -1)
-		r[1] = res;
-*(uint32_t*)0x20000240 = 0;
-*(uint16_t*)0x20000248 = 0xa;
-*(uint16_t*)0x2000024a = htobe16(0);
-*(uint32_t*)0x2000024c = htobe32(0);
-*(uint8_t*)0x20000250 = 0xfc;
-*(uint8_t*)0x20000251 = 0;
-memset((void*)0x20000252, 0, 13);
-*(uint8_t*)0x2000025f = 0;
-*(uint32_t*)0x20000260 = 0;
-*(uint16_t*)0x200002c8 = 0xa;
-*(uint16_t*)0x200002ca = htobe16(0);
-*(uint32_t*)0x200002cc = htobe32(0);
-*(uint8_t*)0x200002d0 = 0xfc;
-*(uint8_t*)0x200002d1 = 1;
-memset((void*)0x200002d2, 0, 13);
-*(uint8_t*)0x200002df = 0;
-*(uint32_t*)0x200002e0 = 0;
-	syscall(__NR_setsockopt, r[1], 0x29, 0x2f, 0x20000240ul, 0x108ul);
+
+*(uint32_t*)0x20000080 = 0;
+*(uint32_t*)0x20000084 = 0;
+*(uint64_t*)0x20000088 = 0;
+*(uint32_t*)0x20000090 = 0;
+	syscall(__NR_rseq, 0x20000080ul, 0x20ul, 0ul, 0ul);
+*(uint16_t*)0x200000c0 = 1;
+*(uint64_t*)0x200000c8 = 0x20000040;
+*(uint16_t*)0x20000040 = 0;
+*(uint8_t*)0x20000042 = 0;
+*(uint8_t*)0x20000043 = 0;
+*(uint32_t*)0x20000044 = 0;
+	syscall(__NR_seccomp, 1ul, 0ul, 0x200000c0ul);
 	return 0;
 }

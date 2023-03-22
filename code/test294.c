@@ -11,14 +11,106 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#define BITMASK(bf_off,bf_len) (((1ull << (bf_len)) - 1) << (bf_off))
+#define STORE_BY_BITMASK(type,htobe,addr,val,bf_off,bf_len) *(type*)(addr) = htobe((htobe(*(type*)(addr)) & ~BITMASK((bf_off), (bf_len))) | (((type)(val) << (bf_off)) & BITMASK((bf_off), (bf_len))))
+
+uint64_t r[3] = {0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-*(uint32_t*)0x20000040 = 0;
-*(uint32_t*)0x20000000 = 0;
-	syscall(__NR_futex, 0x20000040ul, 3ul, 0, 0ul, 0x20000000ul, 0);
+				intptr_t res = 0;
+*(uint32_t*)0x20000000 = 1;
+*(uint32_t*)0x20000004 = 0x80;
+*(uint8_t*)0x20000008 = 6;
+*(uint8_t*)0x20000009 = 0;
+*(uint8_t*)0x2000000a = 0;
+*(uint8_t*)0x2000000b = 0;
+*(uint32_t*)0x2000000c = 0;
+*(uint64_t*)0x20000010 = 0;
+*(uint64_t*)0x20000018 = 0;
+*(uint64_t*)0x20000020 = 0;
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 0, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 1, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 2, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 3, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 4, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 5, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 6, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 7, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 8, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 9, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 10, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 11, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 12, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 13, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 14, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 15, 2);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 17, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 18, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 19, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 20, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 21, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 22, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 23, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 24, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 25, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 26, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 27, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 28, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 29, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 30, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 31, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 32, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 33, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 34, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 35, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 36, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 37, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000028, 0, 38, 26);
+*(uint32_t*)0x20000030 = 0;
+*(uint32_t*)0x20000034 = 0;
+*(uint64_t*)0x20000038 = 0;
+*(uint64_t*)0x20000040 = 0;
+*(uint64_t*)0x20000048 = 0;
+*(uint64_t*)0x20000050 = 2;
+*(uint32_t*)0x20000058 = 0;
+*(uint32_t*)0x2000005c = 0;
+*(uint64_t*)0x20000060 = 0x8000000000000;
+*(uint32_t*)0x20000068 = 0;
+*(uint16_t*)0x2000006c = 0;
+*(uint16_t*)0x2000006e = 0;
+*(uint32_t*)0x20000070 = 0;
+*(uint32_t*)0x20000074 = 0;
+*(uint64_t*)0x20000078 = 0;
+	syscall(__NR_perf_event_open, 0x20000000ul, 0, 0ul, -1, 0ul);
+	syscall(__NR_ioctl, -1, 0x3312, 0x3ful);
+	syscall(__NR_geteuid);
+	syscall(__NR_geteuid);
+memcpy((void*)0x20000580, "/dev/zero\000", 10);
+	syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000580ul, 0ul, 0ul);
+memcpy((void*)0x20000240, "/dev/snapshot\000", 14);
+	syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000240ul, 0x2140ul, 0ul);
+memcpy((void*)0x200002c0, "/dev/snapshot\000", 14);
+	syscall(__NR_openat, 0xffffffffffffff9cul, 0x200002c0ul, 0x400100ul, 0ul);
+memcpy((void*)0x20000580, "/dev/zero\000", 10);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000580ul, 0ul, 0ul);
+	if (res != -1)
+		r[0] = res;
+memcpy((void*)0x20000580, "/dev/zero\000", 10);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000580ul, 0ul, 0ul);
+	if (res != -1)
+		r[1] = res;
+	syscall(__NR_ioctl, r[1], 0x400c330d, 0ul);
+memcpy((void*)0x20000300, "/dev/snapshot\000", 14);
+	syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000300ul, 0x400000ul, 0ul);
+	syscall(__NR_ioctl, r[0], 0x400c330d, 0ul);
+memcpy((void*)0x20000280, "/dev/loop-control\000", 18);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000280ul, 0ul, 0ul);
+	if (res != -1)
+		r[2] = res;
+	syscall(__NR_ioctl, r[2], 0x4c82, 0);
 	return 0;
 }

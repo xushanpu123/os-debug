@@ -16,6 +16,6 @@ int main(void)
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				syscall(__NR_socket, 0xaul, 1ul, 0);
+				syscall(__NR_get_mempolicy, 0x20000000ul, 0ul, 0ul, 0x20ffd000ul, 4ul);
 	return 0;
 }

@@ -11,13 +11,18 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[1] = {0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-*(uint32_t*)0x20000000 = 0;
-	syscall(__NR_futex, 0x20000000ul, 0ul, 0, 0ul, 0ul, 0);
+				intptr_t res = 0;
+memcpy((void*)0x20000000, "/dev/full\000", 10);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000000ul, 0ul, 0ul);
+	if (res != -1)
+		r[0] = res;
+	syscall(__NR_fcntl, r[0], 0x409ul, 0x355090faa1a9e2e7ul);
 	return 0;
 }

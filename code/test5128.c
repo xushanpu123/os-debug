@@ -11,18 +11,29 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
-
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-memcpy((void*)0x20000640, "/dev/rfkill\000", 12);
-	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000640ul, 0ul, 0ul);
-	if (res != -1)
-		r[0] = res;
-	syscall(__NR_fcntl, r[0], 0x400ul, 0xa541b8da678e3288ul);
+
+memcpy((void*)0x20000000, "./file0\000", 8);
+	syscall(__NR_mknod, 0x20000000ul, 0ul, 0);
+memcpy((void*)0x20000200, "./file0\000", 8);
+memcpy((void*)0x20000240, "system.posix_acl_access\000", 24);
+*(uint32_t*)0x20000a00 = 2;
+*(uint16_t*)0x20000a04 = 1;
+*(uint16_t*)0x20000a06 = 0;
+*(uint32_t*)0x20000a08 = 0;
+*(uint16_t*)0x20000a0c = 4;
+*(uint16_t*)0x20000a0e = 0;
+*(uint32_t*)0x20000a10 = 0;
+*(uint16_t*)0x20000a14 = 0x10;
+*(uint16_t*)0x20000a16 = 0;
+*(uint32_t*)0x20000a18 = 0;
+*(uint16_t*)0x20000a1c = 0x20;
+*(uint16_t*)0x20000a1e = 0;
+*(uint32_t*)0x20000a20 = 0;
+	syscall(__NR_setxattr, 0x20000200ul, 0x20000240ul, 0x20000a00ul, 0x24ul, 0ul);
 	return 0;
 }

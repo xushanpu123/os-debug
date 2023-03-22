@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+uint64_t r[2] = {0xffffffffffffffff, 0xffffffffffffffff};
 
 int main(void)
 {
@@ -19,19 +19,18 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000100, "./file1\000", 8);
-	res = syscall(__NR_openat, 0xffffff9c, 0x20000100ul, 0x42ul, 0ul);
+memcpy((void*)0x20000240, "./file0\000", 8);
+	res = syscall(__NR_creat, 0x20000240ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_truncate, 0ul, 0ul);
-	syscall(__NR_openat, 0xffffff9c, 0ul, 0ul, 0ul);
-*(uint32_t*)0x20000680 = 0xffffff3d;
-*(uint64_t*)0x20000688 = 0;
-*(uint64_t*)0x20000690 = 0;
-*(uint64_t*)0x20000698 = 0;
-*(uint32_t*)0x200006a0 = 0;
-*(uint16_t*)0x200006a4 = 0;
-*(uint16_t*)0x200006a6 = 0;
-	syscall(__NR_ioctl, r[0], 0x40286608, 0x20000680ul);
+*(uint64_t*)0x20000340 = 0x200000c0;
+memcpy((void*)0x200000c0, "\xaf\x0b", 2);
+*(uint64_t*)0x20000348 = 2;
+	syscall(__NR_pwritev, r[0], 0x20000340ul, 1ul, 0x200005, 0);
+memcpy((void*)0x20000000, "./file0\000", 8);
+	res = syscall(__NR_open, 0x20000000ul, 0x4802ul, 0ul);
+	if (res != -1)
+		r[1] = res;
+	syscall(__NR_sendfile, r[1], r[1], 0ul, 0x100000001ul);
 	return 0;
 }

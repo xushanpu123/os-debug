@@ -2,21 +2,380 @@
 
 #define _GNU_SOURCE 
 
+#include <arpa/inet.h>
 #include <endian.h>
+#include <errno.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+#include <linux/genetlink.h>
+#include <linux/if_addr.h>
+#include <linux/if_link.h>
+#include <linux/in6.h>
+#include <linux/neighbour.h>
+#include <linux/net.h>
+#include <linux/netlink.h>
+#include <linux/rtnetlink.h>
+#include <linux/veth.h>
+
+#define BITMASK(bf_off,bf_len) (((1ull << (bf_len)) - 1) << (bf_off))
+#define STORE_BY_BITMASK(type,htobe,addr,val,bf_off,bf_len) *(type*)(addr) = htobe((htobe(*(type*)(addr)) & ~BITMASK((bf_off), (bf_len))) | (((type)(val) << (bf_off)) & BITMASK((bf_off), (bf_len))))
+
+struct csum_inet {
+	uint32_t acc;
+};
+
+static void csum_inet_init(struct csum_inet* csum)
+{
+	csum->acc = 0;
+}
+
+static void csum_inet_update(struct csum_inet* csum, const uint8_t* data, size_t length)
+{
+	if (length == 0)
+		return;
+	size_t i = 0;
+	for (; i < length - 1; i += 2)
+		csum->acc += *(uint16_t*)&data[i];
+	if (length & 1)
+		csum->acc += le16toh((uint16_t)data[length - 1]);
+	while (csum->acc > 0xffff)
+		csum->acc = (csum->acc & 0xffff) + (csum->acc >> 16);
+}
+
+static uint16_t csum_inet_digest(struct csum_inet* csum)
+{
+	return ~csum->acc;
+}
+
+struct nlmsg {
+	char* pos;
+	int nesting;
+	struct nlattr* nested[8];
+	char buf[4096];
+};
+
+static void netlink_init(struct nlmsg* nlmsg, int typ, int flags,
+			 const void* data, int size)
+{
+	memset(nlmsg, 0, sizeof(*nlmsg));
+	struct nlmsghdr* hdr = (struct nlmsghdr*)nlmsg->buf;
+	hdr->nlmsg_type = typ;
+	hdr->nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK | flags;
+	memcpy(hdr + 1, data, size);
+	nlmsg->pos = (char*)(hdr + 1) + NLMSG_ALIGN(size);
+}
+
+static void netlink_attr(struct nlmsg* nlmsg, int typ,
+			 const void* data, int size)
+{
+	struct nlattr* attr = (struct nlattr*)nlmsg->pos;
+	attr->nla_len = sizeof(*attr) + size;
+	attr->nla_type = typ;
+	if (size > 0)
+		memcpy(attr + 1, data, size);
+	nlmsg->pos += NLMSG_ALIGN(attr->nla_len);
+}
+
+static int netlink_send_ext(struct nlmsg* nlmsg, int sock,
+			    uint16_t reply_type, int* reply_len, bool dofail)
+{
+	if (nlmsg->pos > nlmsg->buf + sizeof(nlmsg->buf) || nlmsg->nesting)
+	exit(1);
+	struct nlmsghdr* hdr = (struct nlmsghdr*)nlmsg->buf;
+	hdr->nlmsg_len = nlmsg->pos - nlmsg->buf;
+	struct sockaddr_nl addr;
+	memset(&addr, 0, sizeof(addr));
+	addr.nl_family = AF_NETLINK;
+	ssize_t n = sendto(sock, nlmsg->buf, hdr->nlmsg_len, 0, (struct sockaddr*)&addr, sizeof(addr));
+	if (n != (ssize_t)hdr->nlmsg_len) {
+		if (dofail)
+	exit(1);
+		return -1;
+	}
+	n = recv(sock, nlmsg->buf, sizeof(nlmsg->buf), 0);
+	if (reply_len)
+		*reply_len = 0;
+	if (n < 0) {
+		if (dofail)
+	exit(1);
+		return -1;
+	}
+	if (n < (ssize_t)sizeof(struct nlmsghdr)) {
+		errno = EINVAL;
+		if (dofail)
+	exit(1);
+		return -1;
+	}
+	if (hdr->nlmsg_type == NLMSG_DONE)
+		return 0;
+	if (reply_len && hdr->nlmsg_type == reply_type) {
+		*reply_len = n;
+		return 0;
+	}
+	if (n < (ssize_t)(sizeof(struct nlmsghdr) + sizeof(struct nlmsgerr))) {
+		errno = EINVAL;
+		if (dofail)
+	exit(1);
+		return -1;
+	}
+	if (hdr->nlmsg_type != NLMSG_ERROR) {
+		errno = EINVAL;
+		if (dofail)
+	exit(1);
+		return -1;
+	}
+	errno = -((struct nlmsgerr*)(hdr + 1))->error;
+	return -errno;
+}
+
+static int netlink_query_family_id(struct nlmsg* nlmsg, int sock, const char* family_name, bool dofail)
+{
+	struct genlmsghdr genlhdr;
+	memset(&genlhdr, 0, sizeof(genlhdr));
+	genlhdr.cmd = CTRL_CMD_GETFAMILY;
+	netlink_init(nlmsg, GENL_ID_CTRL, 0, &genlhdr, sizeof(genlhdr));
+	netlink_attr(nlmsg, CTRL_ATTR_FAMILY_NAME, family_name, strnlen(family_name, GENL_NAMSIZ - 1) + 1);
+	int n = 0;
+	int err = netlink_send_ext(nlmsg, sock, GENL_ID_CTRL, &n, dofail);
+	if (err < 0) {
+		return -1;
+	}
+	uint16_t id = 0;
+	struct nlattr* attr = (struct nlattr*)(nlmsg->buf + NLMSG_HDRLEN + NLMSG_ALIGN(sizeof(genlhdr)));
+	for (; (char*)attr < nlmsg->buf + n; attr = (struct nlattr*)((char*)attr + NLMSG_ALIGN(attr->nla_len))) {
+		if (attr->nla_type == CTRL_ATTR_FAMILY_ID) {
+			id = *(uint16_t*)(attr + 1);
+			break;
+		}
+	}
+	if (!id) {
+		errno = EINVAL;
+		return -1;
+	}
+	recv(sock, nlmsg->buf, sizeof(nlmsg->buf), 0);
+	return id;
+}
+
+static long syz_genetlink_get_family_id(volatile long name, volatile long sock_arg)
+{
+	int fd = sock_arg;
+	if (fd < 0) {
+		fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_GENERIC);
+		if (fd == -1) {
+			return -1;
+		}
+	}
+	struct nlmsg nlmsg_tmp;
+	int ret = netlink_query_family_id(&nlmsg_tmp, fd, (char*)name, false);
+	if ((int)sock_arg < 0)
+		close(fd);
+	if (ret < 0) {
+		return -1;
+	}
+	return ret;
+}
+
+uint64_t r[2] = {0xffffffffffffffff, 0x0};
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				syscall(__NR_setuid, 0xee01);
-	syscall(__NR_ioprio_set, 3ul, 0, 0ul);
+				intptr_t res = 0;
+memcpy((void*)0x20000000, "/dev/loop-control\000", 18);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000000ul, 0ul, 0ul);
+	if (res != -1)
+		r[0] = res;
+	res = syscall(__NR_ioctl, r[0], 0x4c82, 0);
+	if (res != -1)
+		r[1] = res;
+memcpy((void*)0x20000040, "ethtool\000", 8);
+syz_genetlink_get_family_id(0x20000040, -1);
+	syscall(__NR_sendmsg, -1, 0ul, 0ul);
+memcpy((void*)0x20001180, "gretap0\000\000\000\000\000\000\000\000\000", 16);
+*(uint64_t*)0x20001190 = 0x200010c0;
+memcpy((void*)0x200010c0, "gretap0\000\000\000\000\000\000\000\000\000", 16);
+*(uint32_t*)0x200010d0 = 0;
+*(uint16_t*)0x200010d4 = htobe16(0);
+*(uint16_t*)0x200010d6 = htobe16(0x7800);
+*(uint32_t*)0x200010d8 = htobe32(0x274);
+*(uint32_t*)0x200010dc = htobe32(0x1ff);
+STORE_BY_BITMASK(uint8_t, , 0x200010e0, 0x1e, 0, 4);
+STORE_BY_BITMASK(uint8_t, , 0x200010e0, 4, 4, 4);
+STORE_BY_BITMASK(uint8_t, , 0x200010e1, 0, 0, 2);
+STORE_BY_BITMASK(uint8_t, , 0x200010e1, 6, 2, 6);
+*(uint16_t*)0x200010e2 = htobe16(0x78);
+*(uint16_t*)0x200010e4 = htobe16(0x66);
+*(uint16_t*)0x200010e6 = htobe16(0);
+*(uint8_t*)0x200010e8 = 6;
+*(uint8_t*)0x200010e9 = 0;
+*(uint16_t*)0x200010ea = htobe16(0);
+*(uint32_t*)0x200010ec = htobe32(0xe0000001);
+*(uint32_t*)0x200010f0 = htobe32(0);
+*(uint8_t*)0x200010f4 = 0x94;
+*(uint8_t*)0x200010f5 = 4;
+*(uint16_t*)0x200010f6 = 0;
+*(uint8_t*)0x200010f8 = 0x89;
+*(uint8_t*)0x200010f9 = 0x13;
+*(uint8_t*)0x200010fa = 0;
+*(uint32_t*)0x200010fb = htobe32(0x64010100);
+*(uint32_t*)0x200010ff = htobe32(-1);
+*(uint32_t*)0x20001103 = htobe32(0);
+*(uint32_t*)0x20001107 = htobe32(0xe0000001);
+*(uint8_t*)0x2000110b = 0x44;
+*(uint8_t*)0x2000110c = 0x3c;
+*(uint8_t*)0x2000110d = 0xae;
+STORE_BY_BITMASK(uint8_t, , 0x2000110e, 1, 0, 4);
+STORE_BY_BITMASK(uint8_t, , 0x2000110e, 0, 4, 4);
+*(uint32_t*)0x2000110f = htobe32(0x64010100);
+*(uint32_t*)0x20001113 = htobe32(5);
+*(uint8_t*)0x20001117 = 0xac;
+*(uint8_t*)0x20001118 = 0x14;
+*(uint8_t*)0x20001119 = 0x14;
+*(uint8_t*)0x2000111a = 0xaa;
+*(uint32_t*)0x2000111b = htobe32(0);
+*(uint32_t*)0x2000111f = htobe32(0x7f000001);
+*(uint32_t*)0x20001123 = htobe32(0xfffff001);
+*(uint32_t*)0x20001127 = htobe32(-1);
+*(uint32_t*)0x2000112b = htobe32(8);
+*(uint32_t*)0x2000112f = htobe32(0xe0000001);
+*(uint32_t*)0x20001133 = htobe32(2);
+*(uint32_t*)0x20001137 = htobe32(0xa010100);
+*(uint32_t*)0x2000113b = htobe32(0x80);
+*(uint8_t*)0x2000113f = 0xac;
+*(uint8_t*)0x20001140 = 0x14;
+*(uint8_t*)0x20001141 = 0x14;
+*(uint8_t*)0x20001142 = 0x2d;
+*(uint32_t*)0x20001143 = htobe32(4);
+*(uint8_t*)0x20001147 = 0x86;
+*(uint8_t*)0x20001148 = 0xf;
+*(uint32_t*)0x20001149 = htobe32(3);
+*(uint8_t*)0x2000114d = 0;
+*(uint8_t*)0x2000114e = 2;
+*(uint8_t*)0x2000114f = 0;
+*(uint8_t*)0x20001150 = 7;
+memcpy((void*)0x20001151, "\x74\x60\x99\xca\x44", 5);
+	struct csum_inet csum_1;
+	csum_inet_init(&csum_1);
+csum_inet_update(&csum_1, (const uint8_t*)0x200010e0, 120);
+*(uint16_t*)0x200010ea = csum_inet_digest(&csum_1);
+	syscall(__NR_ioctl, -1, 0x89f2, 0x20001180ul);
+	syscall(__NR_ioctl, -1, 0x8933, 0ul);
+memcpy((void*)0x200012c0, "vxcan1\000\000\000\000\000\000\000\000\000\000", 16);
+	syscall(__NR_ioctl, -1, 0x8933, 0x200012c0ul);
+memcpy((void*)0x20001400, "erspan0\000\000\000\000\000\000\000\000\000", 16);
+*(uint64_t*)0x20001410 = 0x20001300;
+memcpy((void*)0x20001300, "gretap0\000\000\000\000\000\000\000\000\000", 16);
+*(uint32_t*)0x20001310 = 0;
+*(uint16_t*)0x20001314 = htobe16(0x20);
+*(uint16_t*)0x20001316 = htobe16(0x7800);
+*(uint32_t*)0x20001318 = htobe32(0xfffffffe);
+*(uint32_t*)0x2000131c = htobe32(0);
+STORE_BY_BITMASK(uint8_t, , 0x20001320, 0x31, 0, 4);
+STORE_BY_BITMASK(uint8_t, , 0x20001320, 4, 4, 4);
+STORE_BY_BITMASK(uint8_t, , 0x20001321, 1, 0, 2);
+STORE_BY_BITMASK(uint8_t, , 0x20001321, 2, 2, 6);
+*(uint16_t*)0x20001322 = htobe16(0xc4);
+*(uint16_t*)0x20001324 = htobe16(0x67);
+*(uint16_t*)0x20001326 = htobe16(0);
+*(uint8_t*)0x20001328 = 2;
+*(uint8_t*)0x20001329 = 0x29;
+*(uint16_t*)0x2000132a = htobe16(0);
+*(uint32_t*)0x2000132c = htobe32(0xe0000001);
+*(uint32_t*)0x20001330 = htobe32(0xe0000001);
+*(uint8_t*)0x20001334 = 0x94;
+*(uint8_t*)0x20001335 = 4;
+*(uint16_t*)0x20001336 = 0;
+*(uint8_t*)0x20001338 = 0x44;
+*(uint8_t*)0x20001339 = 0x14;
+*(uint8_t*)0x2000133a = 0;
+STORE_BY_BITMASK(uint8_t, , 0x2000133b, 0, 0, 4);
+STORE_BY_BITMASK(uint8_t, , 0x2000133b, 8, 4, 4);
+*(uint32_t*)0x2000133c = htobe32(0xfffffff8);
+*(uint32_t*)0x20001340 = htobe32(4);
+*(uint32_t*)0x20001344 = htobe32(0);
+*(uint32_t*)0x20001348 = htobe32(0x728);
+*(uint8_t*)0x2000134c = 7;
+*(uint8_t*)0x2000134d = 0xb;
+*(uint8_t*)0x2000134e = 0x8f;
+*(uint32_t*)0x2000134f = htobe32(0x7f000001);
+*(uint32_t*)0x20001353 = htobe32(0xa010102);
+*(uint8_t*)0x20001357 = 0x44;
+*(uint8_t*)0x20001358 = 0xc;
+*(uint8_t*)0x20001359 = 0x89;
+STORE_BY_BITMASK(uint8_t, , 0x2000135a, 1, 0, 4);
+STORE_BY_BITMASK(uint8_t, , 0x2000135a, 1, 4, 4);
+*(uint8_t*)0x2000135b = 0xac;
+*(uint8_t*)0x2000135c = 0x14;
+*(uint8_t*)0x2000135d = 0x14;
+*(uint8_t*)0x2000135e = 0xaa;
+*(uint32_t*)0x2000135f = htobe32(0xfffffff9);
+*(uint8_t*)0x20001363 = 0x94;
+*(uint8_t*)0x20001364 = 4;
+*(uint16_t*)0x20001365 = 0;
+*(uint8_t*)0x20001367 = 0x86;
+*(uint8_t*)0x20001368 = 0x52;
+*(uint32_t*)0x20001369 = htobe32(3);
+*(uint8_t*)0x2000136d = 2;
+*(uint8_t*)0x2000136e = 0xa;
+memcpy((void*)0x2000136f, "\x58\x63\xd0\xe2\x86\xe1\xb7\xa8", 8);
+*(uint8_t*)0x20001377 = 7;
+*(uint8_t*)0x20001378 = 3;
+memset((void*)0x20001379, 158, 1);
+*(uint8_t*)0x2000137a = 0;
+*(uint8_t*)0x2000137b = 7;
+memcpy((void*)0x2000137c, "\x89\x13\x98\x69\xbf", 5);
+*(uint8_t*)0x20001381 = 5;
+*(uint8_t*)0x20001382 = 0xa;
+memcpy((void*)0x20001383, "\x31\x2c\xad\x33\xfb\xed\x56\x2e", 8);
+*(uint8_t*)0x2000138b = 0;
+*(uint8_t*)0x2000138c = 0xc;
+memcpy((void*)0x2000138d, "\xd9\xc8\xcf\x96\x17\x9b\x94\x7d\xb7\x7c", 10);
+*(uint8_t*)0x20001397 = 1;
+*(uint8_t*)0x20001398 = 0xf;
+memcpy((void*)0x20001399, "\x23\xed\x56\x16\xe6\xc5\x39\xe5\xac\xfc\xb1\xdb\xa6", 13);
+*(uint8_t*)0x200013a6 = 3;
+*(uint8_t*)0x200013a7 = 3;
+memset((void*)0x200013a8, 101, 1);
+*(uint8_t*)0x200013a9 = 1;
+*(uint8_t*)0x200013aa = 0x10;
+memcpy((void*)0x200013ab, "\x18\x29\x69\xed\x8a\x8d\x11\x30\xbb\x15\xda\x0e\x01\x96", 14);
+*(uint8_t*)0x200013b9 = 7;
+*(uint8_t*)0x200013ba = 7;
+*(uint8_t*)0x200013bb = 0x86;
+*(uint32_t*)0x200013bc = htobe32(0);
+*(uint8_t*)0x200013c0 = 0x44;
+*(uint8_t*)0x200013c1 = 0x1c;
+*(uint8_t*)0x200013c2 = 0;
+STORE_BY_BITMASK(uint8_t, , 0x200013c3, 0, 0, 4);
+STORE_BY_BITMASK(uint8_t, , 0x200013c3, 0xa, 4, 4);
+*(uint32_t*)0x200013c4 = htobe32(6);
+*(uint32_t*)0x200013c8 = htobe32(0xffffffe0);
+*(uint32_t*)0x200013cc = htobe32(5);
+*(uint32_t*)0x200013d0 = htobe32(0xff);
+*(uint32_t*)0x200013d4 = htobe32(0x20);
+*(uint32_t*)0x200013d8 = htobe32(9);
+*(uint8_t*)0x200013dc = 0x94;
+*(uint8_t*)0x200013dd = 4;
+*(uint16_t*)0x200013de = 1;
+*(uint8_t*)0x200013e0 = 1;
+	struct csum_inet csum_2;
+	csum_inet_init(&csum_2);
+csum_inet_update(&csum_2, (const uint8_t*)0x20001320, 196);
+*(uint16_t*)0x2000132a = csum_inet_digest(&csum_2);
+	syscall(__NR_ioctl, -1, 0x89f2, 0x20001400ul);
+	syscall(__NR_sendmsg, -1, 0ul, 0x4004ul);
+	syscall(__NR_ioctl, r[0], 0x4c81, r[1]);
 	return 0;
 }

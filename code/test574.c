@@ -19,10 +19,16 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000040, "./cgroup/cgroup.procs\000", 22);
-	res = syscall(__NR_openat, 0xffffff9c, 0x20000040ul, 2ul, 0ul);
+	res = syscall(__NR_socket, 0xaul, 2ul, 0);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_write, r[0], 0ul, 0ul);
+*(uint16_t*)0x20000000 = 0xa;
+*(uint16_t*)0x20000002 = htobe16(0);
+*(uint32_t*)0x20000004 = htobe32(0);
+memset((void*)0x20000008, 0, 10);
+memset((void*)0x20000012, 255, 2);
+*(uint32_t*)0x20000014 = htobe32(0xe0000001);
+*(uint32_t*)0x20000018 = 0;
+	syscall(__NR_bind, r[0], 0x20000000ul, 0x80ul);
 	return 0;
 }

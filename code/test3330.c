@@ -11,7 +11,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+#ifndef __NR_memfd_create
+#define __NR_memfd_create 319
+#endif
+
+uint64_t r[4] = {0x0, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff};
 
 int main(void)
 {
@@ -19,9 +23,26 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 2ul, 2ul, 0);
+	res = syscall(__NR_getpgrp, 0);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_getsockopt, r[0], 0, 0, 0ul, 0ul);
+*(uint64_t*)0x20000040 = 5;
+	syscall(__NR_sched_setaffinity, r[0], 8ul, 0x20000040ul);
+memcpy((void*)0x200000c0, "\352\347\322\244\317\227\317\246\tt\300T=\313\203\366\251\031#JV\325\265Rs{\354z\242\'\261\322\271t!\367q\317(w-\347b\300\372y\343\244M\242*h$\202\bRe\232\260\374z%\017\006\272\246\004\216\346\244$]\215\220m\317s\253\240|nK\210\034\327\251\324\315\355\351\231\263\027\026\204\321\254\213\006\220", 100);
+	res = syscall(__NR_memfd_create, 0x200000c0ul, 0ul);
+	if (res != -1)
+		r[1] = res;
+	syscall(__NR_ftruncate, r[1], 0x2ffffcul);
+	res = syscall(__NR_pipe, 0x20000340ul);
+	if (res != -1) {
+r[2] = *(uint32_t*)0x20000340;
+r[3] = *(uint32_t*)0x20000344;
+	}
+*(uint32_t*)0x20002880 = r[2];
+*(uint16_t*)0x20002884 = 0;
+*(uint16_t*)0x20002886 = 0;
+	syscall(__NR_poll, 0x20002880ul, 1ul, 0xfffff801);
+	syscall(__NR_read, r[2], 0x20000380ul, 0x1000ul);
+	syscall(__NR_sendfile, r[3], r[1], 0ul, 0x2000007ul);
 	return 0;
 }

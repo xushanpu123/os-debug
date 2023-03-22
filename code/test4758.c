@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+uint64_t r[3] = {0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff};
 
 int main(void)
 {
@@ -19,13 +19,24 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 2ul, 2ul, 0);
+memcpy((void*)0x20000240, "./file0\000", 8);
+	res = syscall(__NR_creat, 0x20000240ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_sendto, r[0], 0ul, 0ul, 0ul, 0ul, 0ul);
-*(uint16_t*)0x20000000 = 2;
-*(uint16_t*)0x20000002 = htobe16(0);
-*(uint32_t*)0x20000004 = htobe32(0);
-	syscall(__NR_bind, r[0], 0x20000000ul, 0x10ul);
+*(uint64_t*)0x20000340 = 0x200000c0;
+memset((void*)0x200000c0, 175, 1);
+*(uint64_t*)0x20000348 = 1;
+	syscall(__NR_pwritev, r[0], 0x20000340ul, 1ul, 0x7ffe, 0);
+memcpy((void*)0x20000000, "./file0\000", 8);
+	res = syscall(__NR_open, 0x20000000ul, 0x4802ul, 0ul);
+	if (res != -1)
+		r[1] = res;
+memcpy((void*)0x20000080, "./file0\000", 8);
+	res = syscall(__NR_open, 0x20000080ul, 0ul, 0ul);
+	if (res != -1)
+		r[2] = res;
+*(uint32_t*)0x20000040 = 8;
+	syscall(__NR_ioctl, r[1], 0x40086602, 0x20000040ul);
+	syscall(__NR_sendfile, r[1], r[2], 0ul, 8ul);
 	return 0;
 }

@@ -3,24 +3,49 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
+#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+static long syz_open_dev(volatile long a0, volatile long a1, volatile long a2)
+{
+	if (a0 == 0xc || a0 == 0xb) {
+		char buf[128];
+		sprintf(buf, "/dev/%s/%d:%d", a0 == 0xc ? "char" : "block", (uint8_t)a1, (uint8_t)a2);
+		return open(buf, O_RDWR, 0);
+	} else {
+		char buf[1024];
+		char* hash;
+		strncpy(buf, (char*)a0, sizeof(buf) - 1);
+		buf[sizeof(buf) - 1] = 0;
+		while ((hash = strchr(buf, '#'))) {
+			*hash = '0' + (char)(a1 % 10);
+			a1 /= 10;
+		}
+		return open(buf, a2, 0);
+	}
+}
+
+uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-*(uint64_t*)0x200000c0 = 0;
-*(uint64_t*)0x200000c8 = 0;
-*(uint64_t*)0x200000d0 = 0;
-*(uint64_t*)0x200000d8 = 0;
-	syscall(__NR_kexec_load, 0ul, 1ul, 0x200000c0ul, 0x3e0000ul);
+				intptr_t res = 0;
+memcpy((void*)0x20000300, "/dev/vcsa#\000", 11);
+	res = -1;
+res = syz_open_dev(0x20000300, 0xb, 0x48441);
+	if (res != -1)
+		r[0] = res;
+memcpy((void*)0x200000c0, "\xf8\xb1\x9c\x7f\xb3\x20\x34\xbf\xbe\x5d\x80\xcc\xbe\xdd\x43\xcb\x00\xe8\xca\x1c\x58\x40\xd9\x3e\x80\x91\x67\x99\x0c\xbe\x50\x4a\xbd\x08\xe9\x0b\x38\x2e\x61\x19\x81\x32\x5f\x4b\x55\x38\xfe\x2f\x0a\x75\x5e\xe4\x11\xdb\x7b\xfb\xbf\x3c\x19\xf1\x9d\x84\x36\xed\xcb\x08\x2b\x04\xb4\xd6\x6a\x65\x65\x90\x98\xcc\x0b\xf0\x66\x9d\x67\x77\xa7\x78\xf4\x77\x82\x1d\xe7\x51\x8b\x49\xda\x51\xb8\x37\xa5\xff\x5d\xa9\x8b\x58\x63\xc3\xf2\x68\xa5\x18\x77\x5e\x2c\x8e\x6f\x8b\x8c\xd8\x41\xc6\x3e\x5f\xf6\xe9\x2b\x8b\x7c\x86\xce\xf7\x89\x17\x9d\x73\x2d\x91\x5a\xf4\xee\xa7\x52\x0e\xad\x5b\x1a\x87\x5d\x14\x7a\x30\x90\x03\x95\x33\x3d\x1b\x19\x8e\xa9\xbc\xc4\xc3\xe6\x29\x03\x90", 164);
+	syscall(__NR_write, r[0], 0x200000c0ul, 0xa4ul);
 	return 0;
 }

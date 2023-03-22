@@ -11,17 +11,21 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#ifndef __NR_fsopen
-#define __NR_fsopen 430
-#endif
+uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-memcpy((void*)0x20000100, "selinuxfs\000", 10);
-	syscall(__NR_fsopen, 0x20000100ul, 0ul);
+				intptr_t res = 0;
+	res = syscall(__NR_socket, 0x11ul, 3ul, 0x300);
+	if (res != -1)
+		r[0] = res;
+memcpy((void*)0x200000c0, "sit0\000\000\000\000\000\000\000\000\000\000\000\000", 16);
+*(uint16_t*)0x200000d0 = 2;
+*(uint16_t*)0x200000d2 = htobe16(0);
+*(uint32_t*)0x200000d4 = htobe32(0x7f000001);
+	syscall(__NR_ioctl, r[0], 0x8918, 0x200000c0ul);
 	return 0;
 }

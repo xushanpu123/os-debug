@@ -3,7 +3,6 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
-#include <sched.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,28 +11,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define USLEEP_FORKED_CHILD (3 * 50 *1000)
+#define BITMASK(bf_off,bf_len) (((1ull << (bf_len)) - 1) << (bf_off))
+#define STORE_BY_BITMASK(type,htobe,addr,val,bf_off,bf_len) *(type*)(addr) = htobe((htobe(*(type*)(addr)) & ~BITMASK((bf_off), (bf_len))) | (((type)(val) << (bf_off)) & BITMASK((bf_off), (bf_len))))
 
-static long handle_clone_ret(long ret)
-{
-	if (ret != 0) {
-		return ret;
-	}
-	usleep(USLEEP_FORKED_CHILD);
-	syscall(__NR_exit, 0);
-	while (1) {
-	}
-}
-
-static long syz_clone(volatile long flags, volatile long stack, volatile long stack_len,
-		      volatile long ptid, volatile long ctid, volatile long tls)
-{
-	long sp = (stack + stack_len) & ~15;
-	long ret = (long)syscall(__NR_clone, flags & ~CLONE_VM, sp, ptid, ctid, tls);
-	return handle_clone_ret(ret);
-}
-
-uint64_t r[1] = {0x0};
+uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
 {
@@ -41,10 +22,73 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = -1;
-res = syz_clone(0, 0, 0, 0, 0, 0);
+*(uint32_t*)0x20000040 = 2;
+*(uint32_t*)0x20000044 = 0x80;
+*(uint8_t*)0x20000048 = 0x5b;
+*(uint8_t*)0x20000049 = 0;
+*(uint8_t*)0x2000004a = 0;
+*(uint8_t*)0x2000004b = 0;
+*(uint32_t*)0x2000004c = 0;
+*(uint64_t*)0x20000050 = 0;
+*(uint64_t*)0x20000058 = 0;
+*(uint64_t*)0x20000060 = 0;
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 0, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 1, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 2, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 3, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 4, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 5, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 6, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 7, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 8, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 9, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 10, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 11, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 12, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 13, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 14, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 15, 2);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 17, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 18, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 19, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 20, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 21, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 22, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 23, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 24, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 25, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 26, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 27, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 28, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 29, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 30, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 31, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 32, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 33, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 34, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 35, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 36, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 37, 1);
+STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 38, 26);
+*(uint32_t*)0x20000070 = 0;
+*(uint32_t*)0x20000074 = 0;
+*(uint64_t*)0x20000078 = 0;
+*(uint64_t*)0x20000080 = 0;
+*(uint64_t*)0x20000088 = 0;
+*(uint64_t*)0x20000090 = 0;
+*(uint32_t*)0x20000098 = 0;
+*(uint32_t*)0x2000009c = 0;
+*(uint64_t*)0x200000a0 = 0;
+*(uint32_t*)0x200000a8 = 0;
+*(uint16_t*)0x200000ac = 0;
+*(uint16_t*)0x200000ae = 0;
+*(uint32_t*)0x200000b0 = 0;
+*(uint32_t*)0x200000b4 = 0;
+*(uint64_t*)0x200000b8 = 0;
+	res = syscall(__NR_perf_event_open, 0x20000040ul, 0, 0ul, -1, 0ul);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_tgkill, r[0], r[0], 0);
+memset((void*)0x20000000, 0, 1);
+	syscall(__NR_ioctl, r[0], 0x40082406, 0x20000000ul);
 	return 0;
 }

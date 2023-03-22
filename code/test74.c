@@ -11,15 +11,17 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[1] = {0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-memcpy((void*)0x20000280, "syz", 3);
-*(uint8_t*)0x20000283 = 0x20;
-*(uint8_t*)0x20000284 = 0;
-	syscall(__NR_keyctl, 1ul, 0x20000280ul, 0, 0, 0);
+				intptr_t res = 0;
+	res = syscall(__NR_socketpair, 1ul, 1ul, 0, 0x20000000ul);
+	if (res != -1)
+r[0] = *(uint32_t*)0x20000004;
+	syscall(__NR_write, r[0], 0x20000f80ul, 0xec1ul);
 	return 0;
 }

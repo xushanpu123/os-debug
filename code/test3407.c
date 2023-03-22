@@ -11,11 +11,50 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[1] = {0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				syscall(__NR_syslog, 9ul, 0ul, 0ul);
+				intptr_t res = 0;
+	res = syscall(__NR_socket, 0x10ul, 3ul, 4);
+	if (res != -1)
+		r[0] = res;
+*(uint64_t*)0x200015c0 = 0;
+*(uint32_t*)0x200015c8 = 0;
+*(uint64_t*)0x200015d0 = 0x20001580;
+*(uint64_t*)0x20001580 = 0x200016c0;
+*(uint32_t*)0x200016c0 = 0x4c;
+*(uint16_t*)0x200016c4 = 0x12;
+*(uint16_t*)0x200016c6 = 1;
+*(uint32_t*)0x200016c8 = 0;
+*(uint32_t*)0x200016cc = 0;
+*(uint8_t*)0x200016d0 = 0;
+*(uint8_t*)0x200016d1 = 0;
+*(uint8_t*)0x200016d2 = 0;
+*(uint8_t*)0x200016d3 = 0;
+*(uint16_t*)0x200016d4 = htobe16(0);
+*(uint16_t*)0x200016d6 = htobe16(0);
+*(uint32_t*)0x200016d8 = 0;
+*(uint32_t*)0x200016dc = 0;
+*(uint32_t*)0x200016e0 = 0;
+*(uint32_t*)0x200016e4 = 0;
+*(uint32_t*)0x200016e8 = 0;
+*(uint32_t*)0x200016ec = 0;
+*(uint32_t*)0x200016f0 = 0;
+*(uint32_t*)0x200016f4 = 0;
+*(uint32_t*)0x200016f8 = 0;
+*(uint32_t*)0x200016fc = 0;
+*(uint32_t*)0x20001700 = 0;
+*(uint32_t*)0x20001704 = 0;
+*(uint32_t*)0x20001708 = 0;
+*(uint64_t*)0x20001588 = 0x4c;
+*(uint64_t*)0x200015d8 = 1;
+*(uint64_t*)0x200015e0 = 0;
+*(uint64_t*)0x200015e8 = 0;
+*(uint32_t*)0x200015f0 = 0;
+	syscall(__NR_sendmsg, r[0], 0x200015c0ul, 0ul);
 	return 0;
 }

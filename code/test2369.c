@@ -19,11 +19,11 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000000, "./file0\000", 8);
-	res = syscall(__NR_creat, 0x20000000ul, 0ul);
+	syscall(__NR_unshare, 0x4040600ul);
+memcpy((void*)0x20000080, "/proc/bus/input/handlers\000", 25);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000080ul, 0ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-*(uint64_t*)0x20000180 = -1;
-	syscall(__NR_ioctl, r[0], 0x40086607, 0x20000180ul);
+	syscall(__NR_read, r[0], 0ul, 0ul);
 	return 0;
 }

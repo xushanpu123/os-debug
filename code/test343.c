@@ -16,8 +16,6 @@ int main(void)
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-memcpy((void*)0x200000c0, ",/@]:%$&$\000", 10);
-	syscall(__NR_prctl, 0xful, 0x200000c0ul, 0, 0, 0);
+				syscall(__NR_clock_getres, 0xfe3fc8d632f223e6ul, 0ul);
 	return 0;
 }

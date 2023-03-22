@@ -11,19 +11,23 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+#ifndef __NR_seccomp
+#define __NR_seccomp 317
+#endif
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-	res = syscall(__NR_pipe2, 0x20000000ul, 0ul);
-	if (res != -1)
-r[0] = *(uint32_t*)0x20000004;
-	syscall(__NR_close, r[0]);
-	syscall(__NR_socket, 0x10ul, 3ul, 6);
-	syscall(__NR_recvmmsg, r[0], 0ul, 0ul, 0ul, 0ul);
+
+*(uint16_t*)0x20000340 = 1;
+*(uint64_t*)0x20000348 = 0x20000300;
+*(uint16_t*)0x20000300 = 6;
+*(uint8_t*)0x20000302 = 0;
+*(uint8_t*)0x20000303 = 0;
+*(uint32_t*)0x20000304 = 0x7fffffff;
+	syscall(__NR_seccomp, 1ul, 0ul, 0x20000340ul);
+	syscall(__NR_setpriority, 0ul, 0, 0ul);
 	return 0;
 }

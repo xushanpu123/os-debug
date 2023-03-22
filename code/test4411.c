@@ -11,17 +11,25 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+#define BITMASK(bf_off,bf_len) (((1ull << (bf_len)) - 1) << (bf_off))
+#define STORE_BY_BITMASK(type,htobe,addr,val,bf_off,bf_len) *(type*)(addr) = htobe((htobe(*(type*)(addr)) & ~BITMASK((bf_off), (bf_len))) | (((type)(val) << (bf_off)) & BITMASK((bf_off), (bf_len))))
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-	res = syscall(__NR_socket, 0x10ul, 3ul, 6);
-	if (res != -1)
-		r[0] = res;
-	syscall(__NR_setsockopt, r[0], 0x10e, 1, 0ul, 0ul);
+
+*(uint32_t*)0x20000040 = 0xffe;
+*(uint32_t*)0x20000044 = 0;
+*(uint32_t*)0x20000048 = 0;
+STORE_BY_BITMASK(uint32_t, , 0x2000004c, 0, 0, 1);
+STORE_BY_BITMASK(uint32_t, , 0x2000004c, 0, 1, 2);
+STORE_BY_BITMASK(uint32_t, , 0x2000004c, 0, 3, 1);
+STORE_BY_BITMASK(uint32_t, , 0x2000004c, 0, 4, 1);
+STORE_BY_BITMASK(uint32_t, , 0x2000004c, 0, 5, 1);
+STORE_BY_BITMASK(uint32_t, , 0x2000004c, 0, 6, 1);
+STORE_BY_BITMASK(uint32_t, , 0x2000004c, 0, 7, 1);
+	syscall(__NR_modify_ldt, 1ul, 0x20000040ul, 0x10ul);
 	return 0;
 }

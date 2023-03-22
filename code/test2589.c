@@ -11,15 +11,26 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifndef __NR_seccomp
+#define __NR_seccomp 317
+#endif
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 
-*(uint64_t*)0x200000c0 = 0;
-*(uint32_t*)0x200000c8 = 2;
-*(uint64_t*)0x200000d0 = 0;
-	syscall(__NR_sigaltstack, 0x200000c0ul, 0ul);
+*(uint16_t*)0x20000180 = 2;
+*(uint64_t*)0x20000188 = 0x20000040;
+*(uint16_t*)0x20000040 = 0x61;
+*(uint8_t*)0x20000042 = 0;
+*(uint8_t*)0x20000043 = 0;
+*(uint32_t*)0x20000044 = 0;
+*(uint16_t*)0x20000048 = 6;
+*(uint8_t*)0x2000004a = 0;
+*(uint8_t*)0x2000004b = 0;
+*(uint32_t*)0x2000004c = 0;
+	syscall(__NR_seccomp, 1ul, 0ul, 0x20000180ul);
 	return 0;
 }

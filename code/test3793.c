@@ -2,23 +2,334 @@
 
 #define _GNU_SOURCE 
 
+#include <arpa/inet.h>
 #include <endian.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+#include <linux/genetlink.h>
+#include <linux/if_addr.h>
+#include <linux/if_link.h>
+#include <linux/in6.h>
+#include <linux/neighbour.h>
+#include <linux/net.h>
+#include <linux/netlink.h>
+#include <linux/rtnetlink.h>
+#include <linux/veth.h>
+
+struct nlmsg {
+	char* pos;
+	int nesting;
+	struct nlattr* nested[8];
+	char buf[4096];
+};
+
+static void netlink_init(struct nlmsg* nlmsg, int typ, int flags,
+			 const void* data, int size)
+{
+	memset(nlmsg, 0, sizeof(*nlmsg));
+	struct nlmsghdr* hdr = (struct nlmsghdr*)nlmsg->buf;
+	hdr->nlmsg_type = typ;
+	hdr->nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK | flags;
+	memcpy(hdr + 1, data, size);
+	nlmsg->pos = (char*)(hdr + 1) + NLMSG_ALIGN(size);
+}
+
+static void netlink_attr(struct nlmsg* nlmsg, int typ,
+			 const void* data, int size)
+{
+	struct nlattr* attr = (struct nlattr*)nlmsg->pos;
+	attr->nla_len = sizeof(*attr) + size;
+	attr->nla_type = typ;
+	if (size > 0)
+		memcpy(attr + 1, data, size);
+	nlmsg->pos += NLMSG_ALIGN(attr->nla_len);
+}
+
+static int netlink_send_ext(struct nlmsg* nlmsg, int sock,
+			    uint16_t reply_type, int* reply_len, bool dofail)
+{
+	if (nlmsg->pos > nlmsg->buf + sizeof(nlmsg->buf) || nlmsg->nesting)
+	exit(1);
+	struct nlmsghdr* hdr = (struct nlmsghdr*)nlmsg->buf;
+	hdr->nlmsg_len = nlmsg->pos - nlmsg->buf;
+	struct sockaddr_nl addr;
+	memset(&addr, 0, sizeof(addr));
+	addr.nl_family = AF_NETLINK;
+	ssize_t n = sendto(sock, nlmsg->buf, hdr->nlmsg_len, 0, (struct sockaddr*)&addr, sizeof(addr));
+	if (n != (ssize_t)hdr->nlmsg_len) {
+		if (dofail)
+	exit(1);
+		return -1;
+	}
+	n = recv(sock, nlmsg->buf, sizeof(nlmsg->buf), 0);
+	if (reply_len)
+		*reply_len = 0;
+	if (n < 0) {
+		if (dofail)
+	exit(1);
+		return -1;
+	}
+	if (n < (ssize_t)sizeof(struct nlmsghdr)) {
+		errno = EINVAL;
+		if (dofail)
+	exit(1);
+		return -1;
+	}
+	if (hdr->nlmsg_type == NLMSG_DONE)
+		return 0;
+	if (reply_len && hdr->nlmsg_type == reply_type) {
+		*reply_len = n;
+		return 0;
+	}
+	if (n < (ssize_t)(sizeof(struct nlmsghdr) + sizeof(struct nlmsgerr))) {
+		errno = EINVAL;
+		if (dofail)
+	exit(1);
+		return -1;
+	}
+	if (hdr->nlmsg_type != NLMSG_ERROR) {
+		errno = EINVAL;
+		if (dofail)
+	exit(1);
+		return -1;
+	}
+	errno = -((struct nlmsgerr*)(hdr + 1))->error;
+	return -errno;
+}
+
+static int netlink_query_family_id(struct nlmsg* nlmsg, int sock, const char* family_name, bool dofail)
+{
+	struct genlmsghdr genlhdr;
+	memset(&genlhdr, 0, sizeof(genlhdr));
+	genlhdr.cmd = CTRL_CMD_GETFAMILY;
+	netlink_init(nlmsg, GENL_ID_CTRL, 0, &genlhdr, sizeof(genlhdr));
+	netlink_attr(nlmsg, CTRL_ATTR_FAMILY_NAME, family_name, strnlen(family_name, GENL_NAMSIZ - 1) + 1);
+	int n = 0;
+	int err = netlink_send_ext(nlmsg, sock, GENL_ID_CTRL, &n, dofail);
+	if (err < 0) {
+		return -1;
+	}
+	uint16_t id = 0;
+	struct nlattr* attr = (struct nlattr*)(nlmsg->buf + NLMSG_HDRLEN + NLMSG_ALIGN(sizeof(genlhdr)));
+	for (; (char*)attr < nlmsg->buf + n; attr = (struct nlattr*)((char*)attr + NLMSG_ALIGN(attr->nla_len))) {
+		if (attr->nla_type == CTRL_ATTR_FAMILY_ID) {
+			id = *(uint16_t*)(attr + 1);
+			break;
+		}
+	}
+	if (!id) {
+		errno = EINVAL;
+		return -1;
+	}
+	recv(sock, nlmsg->buf, sizeof(nlmsg->buf), 0);
+	return id;
+}
+
+static long syz_open_dev(volatile long a0, volatile long a1, volatile long a2)
+{
+	if (a0 == 0xc || a0 == 0xb) {
+		char buf[128];
+		sprintf(buf, "/dev/%s/%d:%d", a0 == 0xc ? "char" : "block", (uint8_t)a1, (uint8_t)a2);
+		return open(buf, O_RDWR, 0);
+	} else {
+		char buf[1024];
+		char* hash;
+		strncpy(buf, (char*)a0, sizeof(buf) - 1);
+		buf[sizeof(buf) - 1] = 0;
+		while ((hash = strchr(buf, '#'))) {
+			*hash = '0' + (char)(a1 % 10);
+			a1 /= 10;
+		}
+		return open(buf, a2, 0);
+	}
+}
+
+static long syz_genetlink_get_family_id(volatile long name, volatile long sock_arg)
+{
+	int fd = sock_arg;
+	if (fd < 0) {
+		fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_GENERIC);
+		if (fd == -1) {
+			return -1;
+		}
+	}
+	struct nlmsg nlmsg_tmp;
+	int ret = netlink_query_family_id(&nlmsg_tmp, fd, (char*)name, false);
+	if ((int)sock_arg < 0)
+		close(fd);
+	if (ret < 0) {
+		return -1;
+	}
+	return ret;
+}
+
+uint64_t r[7] = {0xffffffffffffffff, 0xffffffffffffffff, 0x0, 0x0, 0xffffffffffffffff, 0xffffffffffffffff, 0x0};
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-*(uint64_t*)0x200000c0 = 0;
-*(uint64_t*)0x200000c8 = 0x989680;
-	syscall(__NR_pselect6, 0ul, 0ul, 0ul, 0ul, 0x200000c0ul, 0ul);
+				intptr_t res = 0;
+memcpy((void*)0x20000040, "/dev/loop#\000", 11);
+	res = -1;
+res = syz_open_dev(0x20000040, 0, 0);
+	if (res != -1)
+		r[0] = res;
+	res = syscall(__NR_pipe2, 0x20000000ul, 0x80ul);
+	if (res != -1)
+r[1] = *(uint32_t*)0x20000004;
+memcpy((void*)0x200000c0, "batadv\000", 7);
+	res = -1;
+res = syz_genetlink_get_family_id(0x200000c0, -1);
+	if (res != -1)
+		r[2] = res;
+*(uint64_t*)0x200001c0 = 0x20000080;
+*(uint16_t*)0x20000080 = 0x10;
+*(uint16_t*)0x20000082 = 0;
+*(uint32_t*)0x20000084 = 0;
+*(uint32_t*)0x20000088 = 0x20000000;
+*(uint32_t*)0x200001c8 = 0xc;
+*(uint64_t*)0x200001d0 = 0x20000180;
+*(uint64_t*)0x20000180 = 0x20000200;
+memcpy((void*)0x20000200, "\x3b\x0c\x00\x00\x05\xba\x0a\xdc\x04\x4d\xe6\x75\x4b\xbb\xfe\x51\x31\x85\xbb\x37\x39\x90\x54\x3b\xdb\xef\xcc\x96\x95\x60\x01\x01\xe2\x30\x4b\xe7\x6d\x63\x8b\x91\x8a\x72\x36\xa6\xd8\xf3\xee\x1d\xe8\xb9\xcb\x1b\xab\xe0\x2a\xd1\x6d\x27\x49\x58\xd6\xb3\xd6\xa0\x3c\x70\x21\x95\x2f\x9c\x8c\xc1\x05\x67\xd9\x7f\x62\x4a\x4d\x33\xaf\x69\x2d\xd7\x7c\x8c\xd0\x5f\x60\xe6\x45\xb3\xb4\xff\x8a\x4d\xa9\x90\xf5\xe2\xf2\x67\xfd\x05\xc0\x0a\x9d\x4c\x0f\x40\x83\xbc\x80\xc0\xfa\xaf\x41\x9c\x06\x27\x0f\xb8\xc5\x52\xe6\xf7\xc4\x6c\x6a\x46\x7a\xa6\xd7\xa0\xc6\x0a\x1c\xc4\x66\x34\x91\x00\xbc\xdd\x6d\x8a\x4c\x19\x08\x8b\xd8\x70\xf7\xf5\x5f\xe3\xa2\x03\x28\xd8\x95\x70\x71\x60\xd4\xa2\x2f\x68\x54\xfb\x2d\x0c\x67\xc0\x2d\x2e\x37\x5f\x6a\xd5\x66\x49\xe0\x89\xc5\x37\xc9\x2a\x9e\xbf\x58\xaf\x6d\xd8\x31\xb0\x84\x8c\x0c\x1f\x83\x4f\xbb\x6d\xd9\x3d\xc0\x15\x1d\xcc\xbd\xf4\x01\xb1\xf6\x39\x33\xb3\x45\x65\xa7\xea\x3a\x3b\xb3\x05\xe5\x8d\xbe\x16\x9c\x46\xce\x1f\xd3\x48\xef\xeb\x0b\x0d\x6a\xa6\xd9\x61\x80\xca\xc2\xba\x85\xc4\xea\x32\x11\x06\x7b\xca\x6c\x66\x6a\xd8\x14\xd5\x6b\x91\xff\xa2\x0d\x94\xa0\x11\x16\xb0\xc2\xf5\x82\x83\x46\xd2\x75\xab\xeb\x29\xdc\xbb\xff\x0e\x90\x9d\xf3\x13\x50\x23\xce\xdd\x9c\x20\x39\x24\xb5\x6b\xbf\x99\x0f\xbf\x53\xf9\x13\xee\xd4\xbd\x8a\x77\x22\x9e\xf0", 315);
+*(uint16_t*)0x2000033b = r[2];
+memcpy((void*)0x2000033d, "\x00\x04\x29\xbd\x70\x00\xfd\xdb\xdf\x25\x0c\x00\x00\x00\x05\x00\x29\x00\x00\x00\x00\x00\x08\x00\x32\x00\x06\x00\x00\x00\x05\x00\x35\x00\x40\x00\x00\x00\x08\x00\x3b\x00\x01\xf0\xff\xff\x08\x00\x2b\x00\xfc\xff\xff\xff\x08\x00\x3a\x00\x00\x00\x00\x00\x05\x00\x29\x00\x01\x00\x00\x00\x08\x00\x32\x00\xb5\x00\x00\x00", 78);
+*(uint64_t*)0x20000188 = 0x54;
+*(uint64_t*)0x200001d8 = 1;
+*(uint64_t*)0x200001e0 = 0;
+*(uint64_t*)0x200001e8 = 0;
+*(uint32_t*)0x200001f0 = 0x40;
+	syscall(__NR_sendmsg, r[1], 0x200001c0ul, 0x4c000ul);
+	syscall(__NR_ioctl, r[0], 0x5000943f, 0ul);
+	res = syscall(__NR_clock_gettime, 0ul, 0x20000200ul);
+	if (res != -1)
+r[3] = *(uint64_t*)0x20000208;
+	res = syscall(__NR_socket, 0x10ul, 3ul, 9);
+	if (res != -1)
+		r[4] = res;
+*(uint32_t*)0x20000600 = 0xffff0001;
+	syscall(__NR_setsockopt, -1, 0x10e, 3, 0x20000600ul, 4ul);
+	syscall(__NR_sendmsg, r[4], 0ul, 0x20004044ul);
+	res = syscall(__NR_socket, 0x10ul, 3ul, 9);
+	if (res != -1)
+		r[5] = res;
+	syscall(__NR_sendmsg, r[5], 0ul, 0x20004044ul);
+*(uint64_t*)0x200006c0 = 0;
+*(uint32_t*)0x200006c8 = 0;
+*(uint32_t*)0x200006cc = 0;
+*(uint16_t*)0x200006d0 = 0;
+*(uint16_t*)0x200006d2 = 7;
+*(uint32_t*)0x200006d4 = r[5];
+*(uint64_t*)0x200006d8 = 0x20000640;
+memcpy((void*)0x20000640, "\xf7\xc6\x05\x07\xd9\xf7\xa8\xb3\x42\x0f\xfa\x6e\x48\xad\xfa\xb2\xaa\x00\x7f\xa8\x4d\x10\x90\x00\xd1\x95\x4c\xac\xe9\xbf\xea\x6a\x49\xb8\x10\xe4\x92\x9d\xbf\xa4\xb4\x85\xc6\x19\x21\xdf\xd0\x6a\xe6\xa6\x26\x93\x57\x9f\x2d\xf1\x4c\xa5\xe2\x8e\xb5\x61\x0a\xfc\x91\xc1\x1d\xa9\x78\x62\x17\x44\xad\x4d\x8d\xd5\xb1\xa3\xf4\x58\x8a\x0f\x1a\x95\x72\xd3\xc2\xfc\x5d\x83\x81\x28\x2f\x86\x34\x52\x51\x43\x8a\xcb\xa4\x32\x86\x40\x65\x6c\x44\xdd\x5d\xaf\x43\xe2\x32\x49\x66\xa8\x02\x41\x0d\xbb\x7c\xc3\x0b\xa7\x15\x2a", 126);
+*(uint64_t*)0x200006e0 = 0x7e;
+*(uint64_t*)0x200006e8 = 7;
+*(uint64_t*)0x200006f0 = 0;
+*(uint32_t*)0x200006f8 = 2;
+*(uint32_t*)0x200006fc = r[1];
+	syscall(__NR_io_cancel, 0ul, 0x200006c0ul, 0x20000700ul);
+*(uint64_t*)0x200005c0 = 0x20000500;
+*(uint16_t*)0x20000500 = 0x10;
+*(uint16_t*)0x20000502 = 0;
+*(uint32_t*)0x20000504 = 0;
+*(uint32_t*)0x20000508 = 0x2000000;
+*(uint32_t*)0x200005c8 = 0xc;
+*(uint64_t*)0x200005d0 = 0x20000580;
+*(uint64_t*)0x20000580 = 0x20000540;
+*(uint32_t*)0x20000540 = 0x18;
+*(uint16_t*)0x20000544 = 0x3f9;
+*(uint16_t*)0x20000546 = 0x200;
+*(uint32_t*)0x20000548 = 0x70bd29;
+*(uint32_t*)0x2000054c = 0x101;
+*(uint32_t*)0x20000550 = 0;
+*(uint32_t*)0x20000554 = 1;
+*(uint64_t*)0x20000588 = 0x18;
+*(uint64_t*)0x200005d8 = 1;
+*(uint64_t*)0x200005e0 = 0;
+*(uint64_t*)0x200005e8 = 0;
+*(uint32_t*)0x200005f0 = 0x10;
+	syscall(__NR_sendmsg, r[4], 0x200005c0ul, 0x8044ul);
+*(uint64_t*)0x20000240 = 0;
+*(uint64_t*)0x20000248 = r[3]+10000000;
+	syscall(__NR_pselect6, 0ul, 0ul, 0ul, 0ul, 0x20000240ul, 0ul);
+	res = syscall(__NR_gettid);
+	if (res != -1)
+		r[6] = res;
+*(uint32_t*)0x20000740 = 1;
+*(uint32_t*)0x20000744 = 1;
+*(uint32_t*)0x20000748 = 0x18;
+*(uint32_t*)0x2000074c = r[4];
+*(uint32_t*)0x20000750 = r[4];
+memcpy((void*)0x20000758, "./file0\000", 8);
+	syscall(__NR_ioctl, -1, 0xc0189378, 0x20000740ul);
+*(uint64_t*)0x200004c0 = 0x200003c0;
+*(uint16_t*)0x200003c0 = 0x10;
+*(uint16_t*)0x200003c2 = 0;
+*(uint32_t*)0x200003c4 = 0;
+*(uint32_t*)0x200003c8 = 0x10000000;
+*(uint32_t*)0x200004c8 = 0xc;
+*(uint64_t*)0x200004d0 = 0x20000480;
+*(uint64_t*)0x20000480 = 0x20000400;
+*(uint32_t*)0x20000400 = 0x54;
+*(uint16_t*)0x20000404 = r[2];
+*(uint16_t*)0x20000406 = 0x10;
+*(uint32_t*)0x20000408 = 0x70bd2a;
+*(uint32_t*)0x2000040c = 0x25dfdbff;
+*(uint8_t*)0x20000410 = 0xb;
+*(uint8_t*)0x20000411 = 0;
+*(uint16_t*)0x20000412 = 0;
+*(uint16_t*)0x20000414 = 8;
+*(uint16_t*)0x20000416 = 0x3a;
+*(uint32_t*)0x20000418 = 0xdd;
+*(uint16_t*)0x2000041c = 5;
+*(uint16_t*)0x2000041e = 0x37;
+*(uint8_t*)0x20000420 = 1;
+*(uint16_t*)0x20000424 = 8;
+*(uint16_t*)0x20000426 = 0xb;
+*(uint32_t*)0x20000428 = 5;
+*(uint16_t*)0x2000042c = 8;
+*(uint16_t*)0x2000042e = 6;
+*(uint32_t*)0x20000430 = 0;
+*(uint16_t*)0x20000434 = 5;
+*(uint16_t*)0x20000436 = 0x30;
+*(uint8_t*)0x20000438 = 1;
+*(uint16_t*)0x2000043c = 5;
+*(uint16_t*)0x2000043e = 0x33;
+*(uint8_t*)0x20000440 = 2;
+*(uint16_t*)0x20000444 = 8;
+*(uint16_t*)0x20000446 = 0x34;
+*(uint32_t*)0x20000448 = 0x7ff;
+*(uint16_t*)0x2000044c = 8;
+*(uint16_t*)0x2000044e = 0x32;
+*(uint32_t*)0x20000450 = 8;
+*(uint64_t*)0x20000488 = 0x54;
+*(uint64_t*)0x200004d8 = 1;
+*(uint64_t*)0x200004e0 = 0;
+*(uint64_t*)0x200004e8 = 0;
+*(uint32_t*)0x200004f0 = 0x4000080;
+	syscall(__NR_sendmsg, r[1], 0x200004c0ul, 0x4010ul);
+	syscall(__NR_ptrace, 3ul, r[6], 0ul, 0);
+memset((void*)0x20000100, 0, 32);
+*(uint16_t*)0x20000120 = 0x20;
+*(uint32_t*)0x20000124 = 0xdc;
+*(uint32_t*)0x20000128 = 3;
+*(uint64_t*)0x20000130 = 0x200;
+*(uint64_t*)0x20000138 = 0x101;
+*(uint32_t*)0x20000140 = r[6];
+	syscall(__NR_ioctl, r[0], 0xc0481273, 0x20000100ul);
 	return 0;
 }

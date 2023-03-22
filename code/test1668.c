@@ -16,8 +16,7 @@ int main(void)
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-memcpy((void*)0x20000080, "/dev/snapshot\000", 14);
-	syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000080ul, 0xa0040ul, 0ul);
+				syscall(__NR_setresuid, 0xee00, 0xee00, 0);
+	syscall(__NR_setresuid, 0xee00, 0xee00, 0xee01);
 	return 0;
 }

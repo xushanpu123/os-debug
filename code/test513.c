@@ -11,21 +11,28 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[1] = {0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-memcpy((void*)0x20000300, "./file0\000", 8);
-	syscall(__NR_mkdir, 0x20000300ul, 0ul);
-memcpy((void*)0x20000080, "./file0\000", 8);
-memcpy((void*)0x20000100, "tmpfs\000", 6);
-memcpy((void*)0x20000240, "context", 7);
-*(uint8_t*)0x20000247 = 0x3d;
-memcpy((void*)0x20000248, "system_u", 8);
-*(uint8_t*)0x20000250 = 0x2c;
-*(uint8_t*)0x20000251 = 0;
-	syscall(__NR_mount, 0ul, 0x20000080ul, 0x20000100ul, 0ul, 0x20000240ul);
+				intptr_t res = 0;
+	res = syscall(__NR_socket, 0xaul, 2ul, 0x88);
+	if (res != -1)
+		r[0] = res;
+*(uint32_t*)0x20000040 = 0x7fff;
+	syscall(__NR_setsockopt, r[0], 0x29, 0x21, 0x20000040ul, 4ul);
+*(uint16_t*)0x20000000 = 0xa;
+*(uint16_t*)0x20000002 = htobe16(0x4e23);
+*(uint32_t*)0x20000004 = htobe32(0);
+memset((void*)0x20000008, 0, 10);
+memset((void*)0x20000012, 255, 2);
+*(uint32_t*)0x20000014 = htobe32(0);
+*(uint32_t*)0x20000018 = 0;
+	syscall(__NR_connect, r[0], 0x20000000ul, 0x1cul);
+*(uint32_t*)0x200000c0 = 0;
+	syscall(__NR_getpeername, r[0], 0ul, 0x200000c0ul);
 	return 0;
 }

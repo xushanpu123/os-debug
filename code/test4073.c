@@ -11,13 +11,27 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[1] = {0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-memcpy((void*)0x20000000, "/proc/slabinfo\000", 15);
-	syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000000ul, 0ul, 0ul);
+				intptr_t res = 0;
+	res = syscall(__NR_socket, 0xaul, 2ul, 0);
+	if (res != -1)
+		r[0] = res;
+*(uint16_t*)0x20000400 = 0xa;
+*(uint16_t*)0x20000402 = htobe16(0x20);
+*(uint32_t*)0x20000404 = htobe32(0);
+memset((void*)0x20000408, 0, 10);
+memset((void*)0x20000412, 255, 2);
+*(uint8_t*)0x20000414 = 0xac;
+*(uint8_t*)0x20000415 = 0x14;
+*(uint8_t*)0x20000416 = 0x14;
+*(uint8_t*)0x20000417 = 0xaa;
+*(uint32_t*)0x20000418 = 0;
+	syscall(__NR_sendto, r[0], 0ul, 0x16ul, 0x2405887cul, 0x20000400ul, 0x1cul);
 	return 0;
 }

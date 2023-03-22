@@ -11,10 +11,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#ifndef __NR_close_range
-#define __NR_close_range 436
-#endif
-
 uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
@@ -23,10 +19,10 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	syscall(__NR_close_range, -1, -1, 2ul);
-	res = syscall(__NR_socket, 0xaul, 3ul, 0x3a);
+memcpy((void*)0x20000000, "/dev/zero\000", 10);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000000ul, 0ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_splice, r[0], 0ul, r[0], 0ul, 0x200ul, 0ul);
+	syscall(__NR_mmap, 0x20ffb000ul, 0x3000ul, 0x300000eul, 0x12ul, r[0], 0ul);
 	return 0;
 }

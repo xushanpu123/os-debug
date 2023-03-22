@@ -11,23 +11,17 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
-
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-	res = syscall(__NR_socket, 0xaul, 3ul, 0x3a);
-	if (res != -1)
-		r[0] = res;
-memcpy((void*)0x20000040, "mangle\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000", 32);
-*(uint32_t*)0x20000060 = 2;
-*(uint64_t*)0x20000068 = 0;
-*(uint64_t*)0x20000070 = 0;
-*(uint64_t*)0x20000078 = 0;
-*(uint64_t*)0x20000080 = 0;
-	syscall(__NR_setsockopt, r[0], 0x29, 0x41, 0x20000040ul, 0x48ul);
+
+memcpy((void*)0x20002b80, "./file0\000", 8);
+*(uint64_t*)0x20002bc0 = 0;
+*(uint64_t*)0x20002bc8 = 0xea60;
+*(uint64_t*)0x20002bd0 = 0;
+*(uint64_t*)0x20002bd8 = 0;
+	syscall(__NR_utimensat, -1, 0x20002b80ul, 0x20002bc0ul, 0ul);
 	return 0;
 }

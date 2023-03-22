@@ -11,17 +11,31 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
-
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-	res = syscall(__NR_socket, 2ul, 0xaul, 0);
-	if (res != -1)
-		r[0] = res;
-	syscall(__NR_setsockopt, r[0], 0, 0x41, 0ul, 0ul);
+
+*(uint32_t*)0x200001c0 = 0x798e2634;
+*(uint32_t*)0x200001c4 = 0;
+*(uint32_t*)0x200001c8 = 0;
+*(uint32_t*)0x200001cc = 0;
+*(uint32_t*)0x200001d0 = 0;
+*(uint32_t*)0x200001d4 = 0;
+*(uint16_t*)0x200001d8 = 0;
+*(uint64_t*)0x200001e0 = 0;
+*(uint64_t*)0x200001e8 = 0;
+*(uint64_t*)0x200001f0 = 0;
+*(uint64_t*)0x200001f8 = 0;
+*(uint64_t*)0x20000200 = 0;
+*(uint64_t*)0x20000208 = 0;
+*(uint64_t*)0x20000210 = 0;
+*(uint16_t*)0x20000218 = 0;
+*(uint16_t*)0x2000021a = 0x7f;
+*(uint16_t*)0x2000021c = 0;
+*(uint32_t*)0x20000220 = 0;
+*(uint32_t*)0x20000224 = 0;
+	syscall(__NR_msgctl, 0, 1ul, 0x200001c0ul);
 	return 0;
 }

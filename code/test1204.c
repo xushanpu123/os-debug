@@ -3,6 +3,7 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
+#include <sched.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,7 +12,47 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+#include <linux/sched.h>
+
+#ifndef __NR_clone3
+#define __NR_clone3 435
+#endif
+
+#define USLEEP_FORKED_CHILD (3 * 50 *1000)
+
+static long handle_clone_ret(long ret)
+{
+	if (ret != 0) {
+		return ret;
+	}
+	usleep(USLEEP_FORKED_CHILD);
+	syscall(__NR_exit, 0);
+	while (1) {
+	}
+}
+
+static long syz_clone(volatile long flags, volatile long stack, volatile long stack_len,
+		      volatile long ptid, volatile long ctid, volatile long tls)
+{
+	long sp = (stack + stack_len) & ~15;
+	long ret = (long)syscall(__NR_clone, flags & ~CLONE_VM, sp, ptid, ctid, tls);
+	return handle_clone_ret(ret);
+}
+
+#define MAX_CLONE_ARGS_BYTES 256
+static long syz_clone3(volatile long a0, volatile long a1)
+{
+	unsigned long copy_size = a1;
+	if (copy_size < sizeof(uint64_t) || copy_size > MAX_CLONE_ARGS_BYTES)
+		return -1;
+	char clone_args[MAX_CLONE_ARGS_BYTES];
+	memcpy(&clone_args, (void*)a0, copy_size);
+	uint64_t* flags = (uint64_t*)&clone_args;
+	*flags &= ~CLONE_VM;
+	return handle_clone_ret((long)syscall(__NR_clone3, &clone_args, copy_size));
+}
+
+uint64_t r[1] = {0x0};
 
 int main(void)
 {
@@ -19,9 +60,28 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 0xaul, 2ul, 0x88);
+	res = -1;
+res = syz_clone(0, 0, 0, 0, 0, 0);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_read, r[0], 0ul, 0ul);
+*(uint64_t*)0x200002c0 = 0;
+*(uint64_t*)0x200002c8 = 0;
+*(uint64_t*)0x200002d0 = 0;
+*(uint64_t*)0x200002d8 = 0;
+*(uint32_t*)0x200002e0 = 0;
+*(uint64_t*)0x200002e8 = 0;
+*(uint64_t*)0x200002f0 = 0;
+*(uint64_t*)0x200002f8 = 0;
+*(uint64_t*)0x20000300 = 0x20000280;
+*(uint32_t*)0x20000280 = r[0];
+*(uint64_t*)0x20000308 = 1;
+*(uint32_t*)0x20000310 = -1;
+syz_clone3(0x200002c0, 0x58);
+	syscall(__NR_ptrace, 0x10ul, r[0], 0, 0);
+	syscall(__NR_wait4, 0, 0ul, 0ul, 0ul);
+*(uint64_t*)0x20000000 = 0x20000080;
+memcpy((void*)0x20000080, "\xe3\x7b\x9a\x7a\x4a\x69\x7c\xd1\x91\x7b\xd9\xd0\xff\x71\xf4\xc5\xb0\x9c\xcb\xe2\x97\x42\xd3\x88\xc8\xa2\x64\xbe\x6b\xa7\x78\xfb\x5d\xbf\x01\xc3\x6e\xe6\x52\xff\x24\x9a\xb5\xd5\x0b\x9c\x32\xdf\xdc\xb0\xb0\x59\x10\x9a\x93\xac\xaa\xa2\x18\x39\x50\x97\x6f\x59\x92\xe9\x99\x3d\xba\x9c\xfb\x20\x4f\x8d\x92\x35\x87\x17\x49\x35\xee\x67\xb1\xa1\xdb\xfa\xe2\xb6\x47\x1b\xd3\x0a\x06\x8b\x67\x74\xb1\x4f\x29\xbb\xb9\xab\x48\xa2\x1c\x54\xf3\x36\xf1\x88\x86\x21\x9b\x94\x09\x93\xaa\x68\x61\x13", 120);
+*(uint64_t*)0x20000008 = 0xffffffffffffff70;
+	syscall(__NR_ptrace, 0x4205ul, r[0], 0x202ul, 0x20000000ul);
 	return 0;
 }

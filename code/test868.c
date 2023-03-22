@@ -11,11 +11,18 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[1] = {0x0};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				syscall(__NR_prctl, 0x1eul, 0, 0, 0, 0);
+				intptr_t res = 0;
+	res = syscall(__NR_shmget, 0ul, 0x5000ul, 0ul, 0x20ffb000ul);
+	if (res != -1)
+		r[0] = res;
+	syscall(__NR_shmat, r[0], 0x20ffa000ul, 0x7000ul);
+	syscall(__NR_shmctl, r[0], 0ul, 0);
 	return 0;
 }

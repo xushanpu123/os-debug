@@ -11,6 +11,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifndef __NR_seccomp
+#define __NR_seccomp 317
+#endif
+
 uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
@@ -19,10 +23,21 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 2ul, 3ul, 2);
+*(uint16_t*)0x20000340 = 1;
+*(uint64_t*)0x20000348 = 0x20000300;
+*(uint16_t*)0x20000300 = 6;
+*(uint8_t*)0x20000302 = 0;
+*(uint8_t*)0x20000303 = 0;
+*(uint32_t*)0x20000304 = 0x7fc00002;
+	res = syscall(__NR_seccomp, 1ul, 8ul, 0x20000340ul);
 	if (res != -1)
 		r[0] = res;
-*(uint32_t*)0x20000000 = 0x7fff;
-	syscall(__NR_setsockopt, r[0], 0, 6, 0x20000000ul, 4ul);
+	syscall(__NR_writev, -1, 0ul, 0ul);
+*(uint64_t*)0x200001c0 = 0;
+*(uint32_t*)0x200001c8 = 1;
+*(uint32_t*)0x200001cc = r[0];
+*(uint32_t*)0x200001d0 = 0;
+*(uint32_t*)0x200001d4 = 0;
+	syscall(__NR_ioctl, r[0], 0x40182103, 0x200001c0ul);
 	return 0;
 }

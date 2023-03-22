@@ -11,13 +11,19 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[1] = {0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-memcpy((void*)0x20000040, "/dev/nvram\000", 11);
-	syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000040ul, 0x64102ul, 0ul);
+				intptr_t res = 0;
+	res = syscall(__NR_socket, 0x11ul, 3ul, 0x300);
+	if (res != -1)
+		r[0] = res;
+*(uint16_t*)0x20000000 = 0;
+*(uint16_t*)0x20000002 = 0x1003;
+	syscall(__NR_setsockopt, r[0], 0x107, 0x12, 0x20000000ul, 4ul);
 	return 0;
 }

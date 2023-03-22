@@ -3,32 +3,16 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
-#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-static long syz_open_procfs(volatile long a0, volatile long a1)
-{
-	char buf[128];
-	memset(buf, 0, sizeof(buf));
-	if (a0 == 0) {
-		snprintf(buf, sizeof(buf), "/proc/self/%s", (char*)a1);
-	} else if (a0 == -1) {
-		snprintf(buf, sizeof(buf), "/proc/thread-self/%s", (char*)a1);
-	} else {
-		snprintf(buf, sizeof(buf), "/proc/self/task/%d/%s", (int)a0, (char*)a1);
-	}
-	int fd = open(buf, O_RDWR);
-	if (fd == -1)
-		fd = open(buf, O_RDONLY);
-	return fd;
-}
+#define BITMASK(bf_off,bf_len) (((1ull << (bf_len)) - 1) << (bf_off))
+#define STORE_BY_BITMASK(type,htobe,addr,val,bf_off,bf_len) *(type*)(addr) = htobe((htobe(*(type*)(addr)) & ~BITMASK((bf_off), (bf_len))) | (((type)(val) << (bf_off)) & BITMASK((bf_off), (bf_len))))
 
 uint64_t r[1] = {0xffffffffffffffff};
 
@@ -38,11 +22,43 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000040, "wchan\000", 6);
-	res = -1;
-res = syz_open_procfs(-1, 0x20000040);
+	res = syscall(__NR_socket, 0x10ul, 3ul, 0xc);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_close, r[0]);
+*(uint64_t*)0x20000d80 = 0;
+*(uint32_t*)0x20000d88 = 0;
+*(uint64_t*)0x20000d90 = 0x20000d40;
+*(uint64_t*)0x20000d40 = 0x20000c40;
+*(uint32_t*)0x20000c40 = 0x2c;
+*(uint8_t*)0x20000c44 = 0;
+*(uint8_t*)0x20000c45 = 2;
+*(uint16_t*)0x20000c46 = 0x301;
+*(uint32_t*)0x20000c48 = 0;
+*(uint32_t*)0x20000c4c = 0;
+*(uint8_t*)0x20000c50 = 0;
+*(uint8_t*)0x20000c51 = 0;
+*(uint16_t*)0x20000c52 = htobe16(0);
+*(uint16_t*)0x20000c54 = 8;
+STORE_BY_BITMASK(uint16_t, , 0x20000c56, 4, 0, 14);
+STORE_BY_BITMASK(uint16_t, , 0x20000c57, 1, 6, 1);
+STORE_BY_BITMASK(uint16_t, , 0x20000c57, 0, 7, 1);
+*(uint32_t*)0x20000c58 = htobe32(0);
+*(uint16_t*)0x20000c5c = 0x10;
+STORE_BY_BITMASK(uint16_t, , 0x20000c5e, 2, 0, 14);
+STORE_BY_BITMASK(uint16_t, , 0x20000c5f, 0, 6, 1);
+STORE_BY_BITMASK(uint16_t, , 0x20000c5f, 1, 7, 1);
+*(uint16_t*)0x20000c60 = 0xc;
+STORE_BY_BITMASK(uint16_t, , 0x20000c62, 2, 0, 14);
+STORE_BY_BITMASK(uint16_t, , 0x20000c63, 0, 6, 1);
+STORE_BY_BITMASK(uint16_t, , 0x20000c63, 1, 7, 1);
+*(uint16_t*)0x20000c64 = 5;
+*(uint16_t*)0x20000c66 = 1;
+*(uint8_t*)0x20000c68 = 0;
+*(uint64_t*)0x20000d48 = 0x2c;
+*(uint64_t*)0x20000d98 = 1;
+*(uint64_t*)0x20000da0 = 0;
+*(uint64_t*)0x20000da8 = 0;
+*(uint32_t*)0x20000db0 = 0;
+	syscall(__NR_sendmsg, r[0], 0x20000d80ul, 0ul);
 	return 0;
 }

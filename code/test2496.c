@@ -11,6 +11,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifndef __NR_io_uring_register
+#define __NR_io_uring_register 427
+#endif
+
 uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
@@ -19,37 +23,23 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 0xaul, 2ul, 0);
+	syscall(__NR_socketpair, 0x2dul, 5ul, 0, 0ul);
+	syscall(__NR_sendmsg, -1, 0ul, 0x40001ul);
+memcpy((void*)0x20000140, "/dev/loop-control\000", 18);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000140ul, 0ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-*(uint64_t*)0x200028c0 = 0x20000100;
-*(uint16_t*)0x20000100 = 0xa;
-*(uint16_t*)0x20000102 = htobe16(6);
-*(uint32_t*)0x20000104 = htobe32(0);
-*(uint64_t*)0x20000108 = htobe64(0);
-*(uint64_t*)0x20000110 = htobe64(1);
-*(uint32_t*)0x20000118 = 0;
-*(uint32_t*)0x200028c8 = 0x1c;
-*(uint64_t*)0x200028d0 = 0;
-*(uint64_t*)0x200028d8 = 0;
-*(uint64_t*)0x200028e0 = 0x20001180;
-*(uint64_t*)0x20001180 = 0x18;
-*(uint32_t*)0x20001188 = 0x29;
-*(uint32_t*)0x2000118c = 0x36;
-*(uint8_t*)0x20001190 = 0;
-*(uint8_t*)0x20001191 = 0;
-memset((void*)0x20001192, 0, 6);
-*(uint64_t*)0x200028e8 = 0x18;
-*(uint32_t*)0x200028f0 = 0;
-*(uint32_t*)0x200028f8 = 0;
-*(uint64_t*)0x20002900 = 0;
-*(uint32_t*)0x20002908 = 0;
-*(uint64_t*)0x20002910 = 0;
-*(uint64_t*)0x20002918 = 0;
-*(uint64_t*)0x20002920 = 0;
-*(uint64_t*)0x20002928 = 0;
-*(uint32_t*)0x20002930 = 0;
-*(uint32_t*)0x20002938 = 0;
-	syscall(__NR_sendmmsg, r[0], 0x200028c0ul, 2ul, 0x10008000ul);
+	syscall(__NR_ioctl, r[0], 0x4c80, 0xcul);
+	syscall(__NR_ioctl, r[0], 0x4c81, 0ul);
+	syscall(__NR_ioctl, r[0], 0x4c81, 0ul);
+memcpy((void*)0x20000040, "/dev/full\000", 10);
+	syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000040ul, 0x22000ul, 0ul);
+	syscall(__NR_socket, 0xaul, 0ul, 0);
+memcpy((void*)0x200005c0, "/dev/nvram\000", 11);
+	syscall(__NR_openat, 0xffffffffffffff9cul, 0x200005c0ul, 0ul, 0ul);
+memcpy((void*)0x200005c0, "/dev/nvram\000", 11);
+	syscall(__NR_openat, 0xffffffffffffff9cul, 0x200005c0ul, 0ul, 0ul);
+	syscall(__NR_io_uring_register, -1, 9ul, 0ul, 0ul);
+	syscall(__NR_io_uring_register, -1, 0xaul, 0ul, 0);
 	return 0;
 }

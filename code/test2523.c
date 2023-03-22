@@ -11,10 +11,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#ifndef __NR_pwritev2
-#define __NR_pwritev2 328
-#endif
-
 uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
@@ -23,29 +19,10 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000100, "./file1\000", 8);
-	res = syscall(__NR_openat, 0xffffff9c, 0x20000100ul, 0x42ul, 0ul);
+memcpy((void*)0x20000100, "/sys/kernel/kexec_loaded", 24);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000100ul, 0ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-*(uint64_t*)0x20000800 = 0x20000000;
-memset((void*)0x20000000, 79, 1);
-*(uint64_t*)0x20000808 = 1;
-*(uint64_t*)0x20000810 = 0;
-*(uint64_t*)0x20000818 = 0x40;
-*(uint64_t*)0x20000820 = 0;
-*(uint64_t*)0x20000828 = 0;
-*(uint64_t*)0x20000830 = 0;
-*(uint64_t*)0x20000838 = 0;
-*(uint64_t*)0x20000840 = 0;
-*(uint64_t*)0x20000848 = 0;
-*(uint64_t*)0x20000850 = 0;
-*(uint64_t*)0x20000858 = 0;
-*(uint64_t*)0x20000860 = 0;
-*(uint64_t*)0x20000868 = 0;
-*(uint64_t*)0x20000870 = 0;
-*(uint64_t*)0x20000878 = 0;
-*(uint64_t*)0x20000880 = 0;
-*(uint64_t*)0x20000888 = 0;
-	syscall(__NR_pwritev2, r[0], 0x20000800ul, 9ul, 0, 0, 4ul);
+	syscall(__NR_read, r[0], 0x20000040ul, 0x5ful);
 	return 0;
 }

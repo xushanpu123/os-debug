@@ -17,8 +17,7 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 
-*(uint64_t*)0x200000c0 = 0;
-*(uint64_t*)0x200000c8 = 0;
-	syscall(__NR_futex, 0ul, 0ul, 0, 0x200000c0ul, 0ul, 0);
+*(uint32_t*)0x20000000 = 0;
+	syscall(__NR_futex, 0x20000000ul, 0xbul, 0, 0ul, 0ul, 0);
 	return 0;
 }

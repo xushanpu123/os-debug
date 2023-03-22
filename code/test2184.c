@@ -19,12 +19,12 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 2ul, 1ul, 0);
+memcpy((void*)0x20000000, "/dev/rtc0\000", 10);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000000ul, 0ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-*(uint32_t*)0x20000180 = r[0];
-*(uint16_t*)0x20000184 = 0;
-*(uint16_t*)0x20000186 = 0;
-	syscall(__NR_poll, 0x20000180ul, 1ul, 0xfffffffa);
+	syscall(__NR_ioctl, r[0], 0x7003, 0);
+	syscall(__NR_ioctl, r[0], 0x7001, 0);
+	syscall(__NR_ioctl, r[0], 0x7002, 0);
 	return 0;
 }

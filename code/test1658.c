@@ -11,38 +11,20 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+#ifndef __NR_mount_setattr
+#define __NR_mount_setattr 442
+#endif
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-	res = syscall(__NR_socket, 2ul, 2ul, 0);
-	if (res != -1)
-		r[0] = res;
-*(uint64_t*)0x20000040 = 0;
-*(uint16_t*)0x20000048 = 0;
-memcpy((void*)0x2000004a, "\x2e\xae\x38\xd3\x28\x58\xc0\x25\x8d\xb9\x42\x44\xc0\x10", 14);
-*(uint16_t*)0x20000058 = 0x22;
-*(uint8_t*)0x2000005a = 0;
-*(uint8_t*)0x2000005b = 0;
-*(uint8_t*)0x2000005c = 0;
-*(uint8_t*)0x2000005d = 0;
-*(uint16_t*)0x20000068 = 0x1f;
-memset((void*)0x2000006a, 170, 5);
-*(uint8_t*)0x2000006f = 0;
-*(uint8_t*)0x20000070 = 0;
-*(uint16_t*)0x20000078 = 0;
-*(uint16_t*)0x2000007a = 0;
-*(uint64_t*)0x20000080 = 0;
-*(uint64_t*)0x20000088 = 0;
-*(uint16_t*)0x20000090 = 0;
-*(uint64_t*)0x20000098 = 0;
-*(uint64_t*)0x200000a0 = 0;
-*(uint64_t*)0x200000a8 = 0;
-*(uint16_t*)0x200000b0 = 0;
-	syscall(__NR_ioctl, r[0], 0x890c, 0x20000040ul);
+
+*(uint64_t*)0x20000600 = 0x176;
+*(uint64_t*)0x20000608 = 0;
+*(uint64_t*)0x20000610 = 0;
+*(uint32_t*)0x20000618 = -1;
+	syscall(__NR_mount_setattr, -1, 0ul, 0ul, 0x20000600ul, 0x20ul);
 	return 0;
 }

@@ -11,11 +11,32 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[2] = {0xffffffffffffffff, 0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				syscall(__NR_keyctl, 0x11ul, 0, 0ul, 0ul, 0);
+				intptr_t res = 0;
+	res = syscall(__NR_pipe, 0x20000080ul);
+	if (res != -1)
+r[0] = *(uint32_t*)0x20000080;
+	res = syscall(__NR_socket, 0x10ul, 3ul, 0x10);
+	if (res != -1)
+		r[1] = res;
+memcpy((void*)0x20000000, ".\000", 2);
+memcpy((void*)0x20000040, "9p\000", 3);
+memcpy((void*)0x200000c0, "trans=fd,", 9);
+memcpy((void*)0x200000c9, "rfdno", 5);
+*(uint8_t*)0x200000ce = 0x3d;
+sprintf((char*)0x200000cf, "0x%016llx", (long long)r[0]);
+*(uint8_t*)0x200000e1 = 0x2c;
+memcpy((void*)0x200000e2, "wfdno", 5);
+*(uint8_t*)0x200000e7 = 0x3d;
+sprintf((char*)0x200000e8, "0x%016llx", (long long)r[1]);
+*(uint8_t*)0x200000fa = 0x2c;
+*(uint8_t*)0x200000fb = 0;
+	syscall(__NR_mount, 0ul, 0x20000000ul, 0x20000040ul, 0ul, 0x200000c0ul);
 	return 0;
 }

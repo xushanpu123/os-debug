@@ -11,14 +11,28 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[2] = {0x0, 0x0};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-*(uint64_t*)0x20000900 = 0x77359400;
-*(uint64_t*)0x20000908 = 0;
-	syscall(__NR_recvmmsg, -1, 0ul, 0ul, 0ul, 0x20000900ul);
+				intptr_t res = 0;
+memcpy((void*)0x200001c0, "keyring\000", 8);
+memcpy((void*)0x20000200, "syz", 3);
+*(uint8_t*)0x20000203 = 0x20;
+*(uint8_t*)0x20000204 = 0;
+	res = syscall(__NR_add_key, 0x200001c0ul, 0x20000200ul, 0ul, 0ul, -1);
+	if (res != -1)
+		r[0] = res;
+memcpy((void*)0x20000240, "keyring\000", 8);
+memcpy((void*)0x20000280, "syz", 3);
+*(uint8_t*)0x20000283 = 0x20;
+*(uint8_t*)0x20000284 = 0;
+	res = syscall(__NR_add_key, 0x20000240ul, 0x20000280ul, 0ul, 0ul, 0xfffffffd);
+	if (res != -1)
+		r[1] = res;
+	syscall(__NR_keyctl, 0x1eul, r[0], 0xfffffffd, r[1], 0ul);
 	return 0;
 }

@@ -16,6 +16,11 @@ int main(void)
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				syscall(__NR_prctl, 0x35ul, 0ul, 0, 0, 0);
+
+memcpy((void*)0x20000340, "keyring\000", 8);
+memcpy((void*)0x20000380, "syz", 3);
+*(uint8_t*)0x20000383 = 0x21;
+*(uint8_t*)0x20000384 = 0;
+	syscall(__NR_add_key, 0x20000340ul, 0x20000380ul, 0ul, 0ul, 0xfffffffb);
 	return 0;
 }

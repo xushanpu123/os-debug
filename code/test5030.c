@@ -11,16 +11,22 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifndef __NR_seccomp
+#define __NR_seccomp 317
+#endif
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 
-*(uint64_t*)0x20000180 = 0;
-*(uint64_t*)0x20000188 = 0;
-*(uint64_t*)0x20000190 = 0;
-*(uint64_t*)0x20000198 = 0;
-	syscall(__NR_kexec_load, 1ul, 1ul, 0x20000180ul, 1ul);
+*(uint16_t*)0x200000c0 = 1;
+*(uint64_t*)0x200000c8 = 0x20000040;
+*(uint16_t*)0x20000040 = 0x64;
+*(uint8_t*)0x20000042 = 0;
+*(uint8_t*)0x20000043 = 0;
+*(uint32_t*)0x20000044 = 0;
+	syscall(__NR_seccomp, 1ul, 0ul, 0x200000c0ul);
 	return 0;
 }

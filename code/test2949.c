@@ -3,7 +3,6 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
-#include <sched.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,33 +11,43 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define USLEEP_FORKED_CHILD (3 * 50 *1000)
-
-static long handle_clone_ret(long ret)
-{
-	if (ret != 0) {
-		return ret;
-	}
-	usleep(USLEEP_FORKED_CHILD);
-	syscall(__NR_exit, 0);
-	while (1) {
-	}
-}
-
-static long syz_clone(volatile long flags, volatile long stack, volatile long stack_len,
-		      volatile long ptid, volatile long ctid, volatile long tls)
-{
-	long sp = (stack + stack_len) & ~15;
-	long ret = (long)syscall(__NR_clone, flags & ~CLONE_VM, sp, ptid, ctid, tls);
-	return handle_clone_ret(ret);
-}
+uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-syz_clone(0x40800000, 0, 0, 0, 0x20005300, 0);
+				intptr_t res = 0;
+	res = syscall(__NR_socket, 0x10ul, 3ul, 0);
+	if (res != -1)
+		r[0] = res;
+*(uint64_t*)0x20000000 = 0;
+*(uint32_t*)0x20000008 = 0;
+*(uint64_t*)0x20000010 = 0x20000940;
+*(uint64_t*)0x20000940 = 0x20000040;
+*(uint32_t*)0x20000040 = 0x14;
+*(uint16_t*)0x20000044 = 0x52;
+*(uint16_t*)0x20000046 = 0xa1f;
+*(uint32_t*)0x20000048 = 0;
+*(uint32_t*)0x2000004c = 0;
+*(uint8_t*)0x20000050 = 0xa;
+*(uint8_t*)0x20000051 = 0;
+*(uint16_t*)0x20000052 = 0;
+*(uint64_t*)0x20000948 = 0x14;
+*(uint64_t*)0x20000018 = 1;
+*(uint64_t*)0x20000020 = 0;
+*(uint64_t*)0x20000028 = 0;
+*(uint32_t*)0x20000030 = 0;
+	syscall(__NR_sendmsg, r[0], 0x20000000ul, 0ul);
+*(uint64_t*)0x200020c0 = 0;
+*(uint32_t*)0x200020c8 = 0;
+*(uint64_t*)0x200020d0 = 0;
+*(uint64_t*)0x200020d8 = 0;
+*(uint64_t*)0x200020e0 = 0;
+*(uint64_t*)0x200020e8 = 0;
+*(uint32_t*)0x200020f0 = 0;
+*(uint32_t*)0x200020f8 = 0;
+	syscall(__NR_recvmmsg, r[0], 0x200020c0ul, 1ul, 0ul, 0ul);
 	return 0;
 }

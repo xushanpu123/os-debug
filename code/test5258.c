@@ -2,193 +2,201 @@
 
 #define _GNU_SOURCE 
 
+#include <arpa/inet.h>
 #include <endian.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <stddef.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/ioctl.h>
-#include <sys/mount.h>
-#include <sys/stat.h>
+#include <sys/socket.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <linux/loop.h>
+#include <linux/genetlink.h>
+#include <linux/if_addr.h>
+#include <linux/if_link.h>
+#include <linux/in6.h>
+#include <linux/neighbour.h>
+#include <linux/net.h>
+#include <linux/netlink.h>
+#include <linux/rtnetlink.h>
+#include <linux/veth.h>
 
-#ifndef __NR_memfd_create
-#define __NR_memfd_create 319
-#endif
-
-static unsigned long long procid;
-
-struct fs_image_segment {
-	void* data;
-	uintptr_t size;
-	uintptr_t offset;
+struct nlmsg {
+	char* pos;
+	int nesting;
+	struct nlattr* nested[8];
+	char buf[4096];
 };
-static int setup_loop_device(long unsigned size, long unsigned nsegs, struct fs_image_segment* segs, const char* loopname, int* memfd_p, int* loopfd_p)
-{
-	int err = 0, loopfd = -1;
-	int memfd = syscall(__NR_memfd_create, "syzkaller", 0);
-	if (memfd == -1) {
-		err = errno;
-		goto error;
-	}
-	if (ftruncate(memfd, size)) {
-		err = errno;
-		goto error_close_memfd;
-	}
-	for (size_t i = 0; i < nsegs; i++) {
-		if (pwrite(memfd, segs[i].data, segs[i].size, segs[i].offset) < 0) {
-		}
-	}
-	loopfd = open(loopname, O_RDWR);
-	if (loopfd == -1) {
-		err = errno;
-		goto error_close_memfd;
-	}
-	if (ioctl(loopfd, LOOP_SET_FD, memfd)) {
-		if (errno != EBUSY) {
-			err = errno;
-			goto error_close_loop;
-		}
-		ioctl(loopfd, LOOP_CLR_FD, 0);
-		usleep(1000);
-		if (ioctl(loopfd, LOOP_SET_FD, memfd)) {
-			err = errno;
-			goto error_close_loop;
-		}
-	}
-	*memfd_p = memfd;
-	*loopfd_p = loopfd;
-	return 0;
 
-error_close_loop:
-	close(loopfd);
-error_close_memfd:
-	close(memfd);
-error:
-	errno = err;
-	return -1;
+static void netlink_init(struct nlmsg* nlmsg, int typ, int flags,
+			 const void* data, int size)
+{
+	memset(nlmsg, 0, sizeof(*nlmsg));
+	struct nlmsghdr* hdr = (struct nlmsghdr*)nlmsg->buf;
+	hdr->nlmsg_type = typ;
+	hdr->nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK | flags;
+	memcpy(hdr + 1, data, size);
+	nlmsg->pos = (char*)(hdr + 1) + NLMSG_ALIGN(size);
 }
 
-static long syz_mount_image(volatile long fsarg, volatile long dir, volatile unsigned long size, volatile unsigned long nsegs, volatile long segments, volatile long flags, volatile long optsarg, volatile long change_dir)
+static void netlink_attr(struct nlmsg* nlmsg, int typ,
+			 const void* data, int size)
 {
-	struct fs_image_segment* segs = (struct fs_image_segment*)segments;
-	int res = -1, err = 0, loopfd = -1, memfd = -1, need_loop_device = !!segs;
-	char* mount_opts = (char*)optsarg;
-	char* target = (char*)dir;
-	char* fs = (char*)fsarg;
-	char* source = NULL;
-	char loopname[64];
-	if (need_loop_device) {
-		memset(loopname, 0, sizeof(loopname));
-		snprintf(loopname, sizeof(loopname), "/dev/loop%llu", procid);
-		if (setup_loop_device(size, nsegs, segs, loopname, &memfd, &loopfd) == -1)
+	struct nlattr* attr = (struct nlattr*)nlmsg->pos;
+	attr->nla_len = sizeof(*attr) + size;
+	attr->nla_type = typ;
+	if (size > 0)
+		memcpy(attr + 1, data, size);
+	nlmsg->pos += NLMSG_ALIGN(attr->nla_len);
+}
+
+static int netlink_send_ext(struct nlmsg* nlmsg, int sock,
+			    uint16_t reply_type, int* reply_len, bool dofail)
+{
+	if (nlmsg->pos > nlmsg->buf + sizeof(nlmsg->buf) || nlmsg->nesting)
+	exit(1);
+	struct nlmsghdr* hdr = (struct nlmsghdr*)nlmsg->buf;
+	hdr->nlmsg_len = nlmsg->pos - nlmsg->buf;
+	struct sockaddr_nl addr;
+	memset(&addr, 0, sizeof(addr));
+	addr.nl_family = AF_NETLINK;
+	ssize_t n = sendto(sock, nlmsg->buf, hdr->nlmsg_len, 0, (struct sockaddr*)&addr, sizeof(addr));
+	if (n != (ssize_t)hdr->nlmsg_len) {
+		if (dofail)
+	exit(1);
+		return -1;
+	}
+	n = recv(sock, nlmsg->buf, sizeof(nlmsg->buf), 0);
+	if (reply_len)
+		*reply_len = 0;
+	if (n < 0) {
+		if (dofail)
+	exit(1);
+		return -1;
+	}
+	if (n < (ssize_t)sizeof(struct nlmsghdr)) {
+		errno = EINVAL;
+		if (dofail)
+	exit(1);
+		return -1;
+	}
+	if (hdr->nlmsg_type == NLMSG_DONE)
+		return 0;
+	if (reply_len && hdr->nlmsg_type == reply_type) {
+		*reply_len = n;
+		return 0;
+	}
+	if (n < (ssize_t)(sizeof(struct nlmsghdr) + sizeof(struct nlmsgerr))) {
+		errno = EINVAL;
+		if (dofail)
+	exit(1);
+		return -1;
+	}
+	if (hdr->nlmsg_type != NLMSG_ERROR) {
+		errno = EINVAL;
+		if (dofail)
+	exit(1);
+		return -1;
+	}
+	errno = -((struct nlmsgerr*)(hdr + 1))->error;
+	return -errno;
+}
+
+static int netlink_query_family_id(struct nlmsg* nlmsg, int sock, const char* family_name, bool dofail)
+{
+	struct genlmsghdr genlhdr;
+	memset(&genlhdr, 0, sizeof(genlhdr));
+	genlhdr.cmd = CTRL_CMD_GETFAMILY;
+	netlink_init(nlmsg, GENL_ID_CTRL, 0, &genlhdr, sizeof(genlhdr));
+	netlink_attr(nlmsg, CTRL_ATTR_FAMILY_NAME, family_name, strnlen(family_name, GENL_NAMSIZ - 1) + 1);
+	int n = 0;
+	int err = netlink_send_ext(nlmsg, sock, GENL_ID_CTRL, &n, dofail);
+	if (err < 0) {
+		return -1;
+	}
+	uint16_t id = 0;
+	struct nlattr* attr = (struct nlattr*)(nlmsg->buf + NLMSG_HDRLEN + NLMSG_ALIGN(sizeof(genlhdr)));
+	for (; (char*)attr < nlmsg->buf + n; attr = (struct nlattr*)((char*)attr + NLMSG_ALIGN(attr->nla_len))) {
+		if (attr->nla_type == CTRL_ATTR_FAMILY_ID) {
+			id = *(uint16_t*)(attr + 1);
+			break;
+		}
+	}
+	if (!id) {
+		errno = EINVAL;
+		return -1;
+	}
+	recv(sock, nlmsg->buf, sizeof(nlmsg->buf), 0);
+	return id;
+}
+
+static long syz_genetlink_get_family_id(volatile long name, volatile long sock_arg)
+{
+	int fd = sock_arg;
+	if (fd < 0) {
+		fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_GENERIC);
+		if (fd == -1) {
 			return -1;
-		source = loopname;
-	}
-	mkdir(target, 0777);
-	char opts[256];
-	memset(opts, 0, sizeof(opts));
-	if (strlen(mount_opts) > (sizeof(opts) - 32)) {
-	}
-	strncpy(opts, mount_opts, sizeof(opts) - 32);
-	if (strcmp(fs, "iso9660") == 0) {
-		flags |= MS_RDONLY;
-	} else if (strncmp(fs, "ext", 3) == 0) {
-		if (strstr(opts, "errors=panic") || strstr(opts, "errors=remount-ro") == 0)
-			strcat(opts, ",errors=continue");
-	} else if (strcmp(fs, "xfs") == 0) {
-		strcat(opts, ",nouuid");
-	}
-	res = mount(source, target, fs, flags, opts);
-	if (res == -1) {
-		err = errno;
-		goto error_clear_loop;
-	}
-	res = open(target, O_RDONLY | O_DIRECTORY);
-	if (res == -1) {
-		err = errno;
-		goto error_clear_loop;
-	}
-	if (change_dir) {
-		res = chdir(target);
-		if (res == -1) {
-			err = errno;
 		}
 	}
-
-error_clear_loop:
-	if (need_loop_device) {
-		ioctl(loopfd, LOOP_CLR_FD, 0);
-		close(loopfd);
-		close(memfd);
+	struct nlmsg nlmsg_tmp;
+	int ret = netlink_query_family_id(&nlmsg_tmp, fd, (char*)name, false);
+	if ((int)sock_arg < 0)
+		close(fd);
+	if (ret < 0) {
+		return -1;
 	}
-	errno = err;
-	return res;
+	return ret;
 }
+
+uint64_t r[2] = {0xffffffffffffffff, 0x0};
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-memcpy((void*)0x20000000, "vfat\000", 5);
-memcpy((void*)0x20000100, "./file0\000", 8);
-*(uint64_t*)0x20000200 = 0x20000080;
-memcpy((void*)0x20000080, "\x60\x1c\x6d\x6b\x64\x6f\x73\x66\x89\x62\x06\x00\x08\x40\x20\x00\x02\x00\x00\x00\x02\xf8\x00\x00\x10\x00\x02\x00\x00\x00\x00", 31);
-*(uint64_t*)0x20000208 = 0x1f;
-*(uint64_t*)0x20000210 = 0;
-*(uint64_t*)0x20000218 = 0x200009c0;
-memcpy((void*)0x200009c0, "\xf8\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\x00\x00\x00\x00\x00\x00\x07\x44\xff\xa1\xff\xff\xff\x0f\x29\x40\xb6\x40\x90\xdc\xc3\x0e\xe6\x27\xb8\x77\xe9\xb9\xae\xb1\x33\x8e\xed\x5b\xb9\x81\xe6\x35\xa6\x18\xe2\x5c\x94\x7a\x7d\x28\x43\x2e\xd6\xa5\x03\x00\x00\x00\x00\x00\x00\x00\x9b\xcb\x0f\x30\xfe\xd4\x3c\x56\x96\x0b\x70\x1d\x25\xf0\x6b\xa4\xef\xc0\x8a\xc4\x5f\xfe\x57\x44\x2d\x7c\x8c\xa4\x85\xdd\xfb\xbc\x21\x98\xa6\x79\xe0\x9d\xc5\xc7\x80\x9e\x32\xf7\x8b\xbe\x6e\x0b\xe3\xda\xd4\x86\x2a\x03\x08\x0f\xf4\xe4\xe4\x8c\x03\xff\x5e\x7d\x2d\x01\x80\x7d\x78\xae\xb2\xa3\x09\x26\xf5\xa6\xdb\x8f\x77\x61\x76\xee\x93\xc4\x27\xdc\xa7\x49\xd3\xef\x1c\x2b\xbe\xb6\xba\x23\x4a\xcd\x8c\xeb\x25\x6b\xa6\x99\xd0\x41\xbe\x6f\x88\x92\x3c\x71\xda\x05\x37\x4a\xb9\x0e\x21\xf8\xd4\x0f\xaf\x3e\x79\x38\x97\xdc\x84\xf8\xd1\xd6\xf2\xa4\x4e\x32\x28\xc2\xe4\xdc\x72\x2b\x20\x8c\xb7\x59\xff\xd6\x8e\xd1\xe1\x92\x3d\x9b\x73\x78\x7c\xba\xbf\xd1\x66\x63\x19\xe5\x07\x8f\x6b\xe2\x6f\xa7\xf5\xab\xcc\x36\xfe\x15\xa0\x1a\x2f\xed\x19\xcb\x69\xea\x1d\x4c\x87\xd0\xd2\x0a\xc0\x32\x11\x74\xaf\x03\x9a\xee\xab", 267);
-*(uint64_t*)0x20000220 = 0x10b;
-*(uint64_t*)0x20000228 = 0x23;
-*(uint64_t*)0x20000230 = 0x200000c0;
-memcpy((void*)0x200000c0, "\x52\x52\x61\x41\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x2f\x3f\x24\x08\x70\x02\x62\x00\x00\x00\x00\x00\x00\x00\x00", 39);
-*(uint64_t*)0x20000238 = 0x27;
-*(uint64_t*)0x20000240 = 0x7fd;
-*(uint64_t*)0x20000248 = 0x200100a0;
-memcpy((void*)0x200100a0, "\x60\x1c\x6d\x6b\x64\x6f\x73\x66\x89\x62\x06\x00\x08\x40\x20\x00\x02\x00\x00\x00\x02\xf8\x00\x00\x10\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x01\x00\x06\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 96);
-*(uint64_t*)0x20000250 = 0x60;
-*(uint64_t*)0x20000258 = 0x3000;
-*(uint64_t*)0x20000260 = 0x20010100;
-memcpy((void*)0x20010100, "RRaA\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000", 32);
-*(uint64_t*)0x20000268 = 0x20;
-*(uint64_t*)0x20000270 = 0x3800;
-*(uint64_t*)0x20000278 = 0x20010120;
-memcpy((void*)0x20010120, "\x00\x00\x00\x00\x72\x72\x41\x61\x06\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x55\xaa", 32);
-*(uint64_t*)0x20000280 = 0x20;
-*(uint64_t*)0x20000288 = 0x39e0;
-*(uint64_t*)0x20000290 = 0x20010740;
-memcpy((void*)0x20010740, "syzkallers\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000", 32);
-*(uint64_t*)0x20000298 = 0x20;
-*(uint64_t*)0x200002a0 = 0x8001;
-*(uint64_t*)0x200002a8 = 0x20010140;
-memcpy((void*)0x20010140, "\xf8\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f", 32);
-*(uint64_t*)0x200002b0 = 0x20;
-*(uint64_t*)0x200002b8 = 0x10000;
-*(uint64_t*)0x200002c0 = 0x20000880;
-memcpy((void*)0x20000880, "\x53\x59\x5a\x4b\x41\x4c\x4c\x45\x52\x20\x20\x08\x00\x00\x18\x60\x2c\x55\x2c\x55\x00\x00\x18\x60\x2c\x55\x00\x00\x00\x00\x00\x00\x41\x66\x00\x69\x00\x6c\x00\x65\x00\x30\x00\x0f\x00\xfc\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x00\xff\xff\xff\xff\x46\x49\x4c\x45\x30\x20\x20\x20\x20\x20\x20\x10\x00\x38\x18\x60\x2c\x55\x2c\x55\x00\x00\x18\x60\x2c\x55\x03\x00\x00\x00\x00\x00\x41\x66\x00\x69\x00\x6c\x00\x65\x00\x31\x00\x0f\x00\x10\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x00\xff\xff\xff\xff\x46\x49\x4c\x45\x31\x20\x20\x20\x20\x20\x20\x20\x00\x38\x18\x60\x2c\x55\x2c\x55\x00\x00\x18\x60\x2c\x55\x05\x00\x0a\x00\x00\x00\x41\x66\x00\x69\x00\x6c\x00\x65\x00\x32\x00\x0f\x00\x14\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x00\xff\xff\xff\xff\x46\x2e\x2d\x12\x88\x1d\x4d\xec\x62\x72\xa4\x42\xec\x2a\x18\x49\x4c\x45\x32\x20\x20\x20\x20\x20\x20\x20\x00\x38\x18\x60\x2c\x15\x2c\x55\x00\x00\x18\x60\x2c\x55\x06\x00\x28\x23\x00\x00\x41\x66\x00\x69\x00\x6c\x00\x65\x00\x2e\x00\x0f\x00\xd2\x63\x00\x6f\x00\x6c\x00\x64\x00\x00\x00\xff\xff\x00\xf5\xfe\xff\xff\xff\x46\x49\x4c\x45\x7e\x31\x20\x20\x43\x4f\x4c\x20\x00\x38\x18\x60\x2c\x55\x2c\x55\x00\x00\x18\x60\x2c\x55\x07\x00\x64\x00\x00\x00", 302);
-*(uint64_t*)0x200002c8 = 0x12e;
-*(uint64_t*)0x200002d0 = 0x10ffd;
-*(uint64_t*)0x200002d8 = 0x200102a0;
-memcpy((void*)0x200102a0, "\x2e\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x10\x00\x38\x18\x60\x2c\x55\x2c\x55\x00\x00\x18\x60\x2c\x55\x03\x00\x00\x00\x00\x00\x2e\x2e\x20\x20\x20\x20\x20\x20\x20\x20\x20\x10\x00\x38\x18\x60\x2c\x55\x2c\x55\x00\x00\x18\x60\x18\x55\x00\x00\x00\x31\xd7\x00\x41\x66\x00\x69\x00\x6c\x00\x65\x00\x30\x00\x0f\x00\xfc\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x00\xff\xff\xff\xff\x46\x49\x4c\x45\x30\x20\x20\x20\x20\x20\x20\x20\x00\x38\x18\x60\x2c\x55\x2c\x55\x00\x00\x18\x60\x2c\x55\x04\x00\x1a\x04\x00\x00", 128);
-*(uint64_t*)0x200002e0 = 0x80;
-*(uint64_t*)0x200002e8 = 0x31001;
-*(uint64_t*)0x200002f0 = 0x20000340;
-memcpy((void*)0x20000340, "syzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkal\000\000\000\000\000\000", 1056);
-*(uint64_t*)0x200002f8 = 0x420;
-*(uint64_t*)0x20000300 = 0x51000;
-*(uint64_t*)0x20000308 = 0x20010760;
-memcpy((void*)0x20010760, "syzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallers\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000", 128);
-*(uint64_t*)0x20000310 = 0x80;
-*(uint64_t*)0x20000318 = 0xb1000;
-syz_mount_image(0x20000000, 0x20000100, 0x500000, 0xc, 0x20000200, 0, 0x200107e0, 1);
+				intptr_t res = 0;
+	res = syscall(__NR_socket, 0x10ul, 3ul, 0x10);
+	if (res != -1)
+		r[0] = res;
+memcpy((void*)0x20000080, "nl80211\000", 8);
+	res = -1;
+res = syz_genetlink_get_family_id(0x20000080, -1);
+	if (res != -1)
+		r[1] = res;
+*(uint64_t*)0x20000300 = 0;
+*(uint32_t*)0x20000308 = 0;
+*(uint64_t*)0x20000310 = 0x200002c0;
+*(uint64_t*)0x200002c0 = 0x200000c0;
+*(uint32_t*)0x200000c0 = 0x2c;
+*(uint16_t*)0x200000c4 = r[1];
+*(uint16_t*)0x200000c6 = 1;
+*(uint32_t*)0x200000c8 = 0;
+*(uint32_t*)0x200000cc = 0;
+*(uint8_t*)0x200000d0 = 0x7a;
+*(uint8_t*)0x200000d1 = 0;
+*(uint16_t*)0x200000d2 = 0;
+*(uint16_t*)0x200000d4 = 8;
+*(uint16_t*)0x200000d6 = 3;
+*(uint32_t*)0x200000d8 = 0;
+*(uint16_t*)0x200000dc = 0xc;
+*(uint16_t*)0x200000de = 0x99;
+*(uint32_t*)0x200000e0 = 0;
+*(uint32_t*)0x200000e4 = 0;
+*(uint16_t*)0x200000e8 = 4;
+*(uint16_t*)0x200000ea = 0x2a;
+*(uint64_t*)0x200002c8 = 0x2c;
+*(uint64_t*)0x20000318 = 1;
+*(uint64_t*)0x20000320 = 0;
+*(uint64_t*)0x20000328 = 0;
+*(uint32_t*)0x20000330 = 0;
+	syscall(__NR_sendmsg, r[0], 0x20000300ul, 0ul);
 	return 0;
 }

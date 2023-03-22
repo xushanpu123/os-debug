@@ -11,10 +11,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#ifndef __NR_memfd_secret
-#define __NR_memfd_secret 447
-#endif
-
 uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
@@ -23,14 +19,22 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	syscall(__NR_memfd_secret, 0ul);
-	syscall(__NR_getsockopt, -1, 0, 0x11, 0ul, 0ul);
-memcpy((void*)0x20000080, "/dev/ttyS3\000", 11);
-	syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000080ul, 0ul, 0ul);
-memcpy((void*)0x20000000, "/dev/ptmx\000", 10);
-	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000000ul, 0ul, 0ul);
+	res = syscall(__NR_socket, 0xaul, 1ul, 0);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_close, r[0]);
+*(uint32_t*)0x20001380 = 1;
+	syscall(__NR_setsockopt, r[0], 6, 0x13, 0x20001380ul, 4ul);
+*(uint16_t*)0x20001340 = 0xa;
+*(uint16_t*)0x20001342 = htobe16(0);
+*(uint32_t*)0x20001344 = htobe32(0);
+*(uint64_t*)0x20001348 = htobe64(0);
+*(uint64_t*)0x20001350 = htobe64(1);
+*(uint32_t*)0x20001358 = 0;
+	syscall(__NR_connect, r[0], 0x20001340ul, 0x1cul);
+	syscall(__NR_shutdown, r[0], 0ul);
+*(uint32_t*)0x20000180 = r[0];
+*(uint16_t*)0x20000184 = 0;
+*(uint16_t*)0x20000186 = 0;
+	syscall(__NR_poll, 0x20000180ul, 1ul, 0);
 	return 0;
 }

@@ -3,193 +3,27 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/ioctl.h>
-#include <sys/mount.h>
-#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <linux/loop.h>
-
-#ifndef __NR_memfd_create
-#define __NR_memfd_create 319
+#ifndef __NR_pkey_mprotect
+#define __NR_pkey_mprotect 329
 #endif
-
-static unsigned long long procid;
-
-struct fs_image_segment {
-	void* data;
-	uintptr_t size;
-	uintptr_t offset;
-};
-static int setup_loop_device(long unsigned size, long unsigned nsegs, struct fs_image_segment* segs, const char* loopname, int* memfd_p, int* loopfd_p)
-{
-	int err = 0, loopfd = -1;
-	int memfd = syscall(__NR_memfd_create, "syzkaller", 0);
-	if (memfd == -1) {
-		err = errno;
-		goto error;
-	}
-	if (ftruncate(memfd, size)) {
-		err = errno;
-		goto error_close_memfd;
-	}
-	for (size_t i = 0; i < nsegs; i++) {
-		if (pwrite(memfd, segs[i].data, segs[i].size, segs[i].offset) < 0) {
-		}
-	}
-	loopfd = open(loopname, O_RDWR);
-	if (loopfd == -1) {
-		err = errno;
-		goto error_close_memfd;
-	}
-	if (ioctl(loopfd, LOOP_SET_FD, memfd)) {
-		if (errno != EBUSY) {
-			err = errno;
-			goto error_close_loop;
-		}
-		ioctl(loopfd, LOOP_CLR_FD, 0);
-		usleep(1000);
-		if (ioctl(loopfd, LOOP_SET_FD, memfd)) {
-			err = errno;
-			goto error_close_loop;
-		}
-	}
-	*memfd_p = memfd;
-	*loopfd_p = loopfd;
-	return 0;
-
-error_close_loop:
-	close(loopfd);
-error_close_memfd:
-	close(memfd);
-error:
-	errno = err;
-	return -1;
-}
-
-static long syz_mount_image(volatile long fsarg, volatile long dir, volatile unsigned long size, volatile unsigned long nsegs, volatile long segments, volatile long flags, volatile long optsarg, volatile long change_dir)
-{
-	struct fs_image_segment* segs = (struct fs_image_segment*)segments;
-	int res = -1, err = 0, loopfd = -1, memfd = -1, need_loop_device = !!segs;
-	char* mount_opts = (char*)optsarg;
-	char* target = (char*)dir;
-	char* fs = (char*)fsarg;
-	char* source = NULL;
-	char loopname[64];
-	if (need_loop_device) {
-		memset(loopname, 0, sizeof(loopname));
-		snprintf(loopname, sizeof(loopname), "/dev/loop%llu", procid);
-		if (setup_loop_device(size, nsegs, segs, loopname, &memfd, &loopfd) == -1)
-			return -1;
-		source = loopname;
-	}
-	mkdir(target, 0777);
-	char opts[256];
-	memset(opts, 0, sizeof(opts));
-	if (strlen(mount_opts) > (sizeof(opts) - 32)) {
-	}
-	strncpy(opts, mount_opts, sizeof(opts) - 32);
-	if (strcmp(fs, "iso9660") == 0) {
-		flags |= MS_RDONLY;
-	} else if (strncmp(fs, "ext", 3) == 0) {
-		if (strstr(opts, "errors=panic") || strstr(opts, "errors=remount-ro") == 0)
-			strcat(opts, ",errors=continue");
-	} else if (strcmp(fs, "xfs") == 0) {
-		strcat(opts, ",nouuid");
-	}
-	res = mount(source, target, fs, flags, opts);
-	if (res == -1) {
-		err = errno;
-		goto error_clear_loop;
-	}
-	res = open(target, O_RDONLY | O_DIRECTORY);
-	if (res == -1) {
-		err = errno;
-		goto error_clear_loop;
-	}
-	if (change_dir) {
-		res = chdir(target);
-		if (res == -1) {
-			err = errno;
-		}
-	}
-
-error_clear_loop:
-	if (need_loop_device) {
-		ioctl(loopfd, LOOP_CLR_FD, 0);
-		close(loopfd);
-		close(memfd);
-	}
-	errno = err;
-	return res;
-}
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-memcpy((void*)0x20000000, "vfat\000", 5);
-memcpy((void*)0x20000100, "./file0\000", 8);
-*(uint64_t*)0x200007c0 = 0x20000640;
-memcpy((void*)0x20000640, "\x18\x14\x0f\x8d\x4f\xfe\x83\x00\xd4", 9);
-*(uint64_t*)0x200007c8 = 9;
-*(uint64_t*)0x200007d0 = 0;
-*(uint64_t*)0x200007d8 = 0x20000140;
-memcpy((void*)0x20000140, "\x53\x59\x5a\x4b\x41\x4c\x4c\x45\x52\x20\x20\x08\x00\x00\x18\x60\x2c\x55\x2c\x55\x00\x00\x18\x60\x2c\x55\x00\x00\x00\x00\x00\x00\x41\x66\x00\x69\x00\x6c\x00\x65\x00\x30\x00\x0f\x00\xfc\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x00\xff\xff\xff\xff\x46\x49\x4c\x45\x30\x20\x20\x20\x20\x20\x20\x10\x00\x38\x18\x60\x2c\x55\x2c\x55\x00\x00\x18\x60\x2c\x55\x03\x00\x00\x00\x00\x00\x41\x66\x00\x69\x00\x6c\x00\x65\x00\x31\x00\x0f\x00\x10\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xef\x00\x00\xff\xff\xff\xff\x46\x49\x4c\x45\x31\x20\x20\x20\x20\x20\x20\x20\x00\x38\x18\x60\x2c\x55\x2c\x55\x00\x00\x18\x60\x2c\x55\x05\x00\x0a\x00\x00\x00\x41\x66\x00\x69\x00\x6c\x00\x65\x00\x32\x00\x0f\x00\x14\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x00\xff\xff\xff\xf2\xbb\x56\x8b\xa5\xcf\xe5\x71\xff\x46\x49\x4c\x45\x32\x20\x20\x20\x20\x20\x20\x20\x00\x38\x18\x60\x2c\x55\x2c\x55\x00\x00\x18\x60\x2c\x55\x06\x00\x28\x23\x00\x00\x41\x66\x00\x69\x00\x6c\x00\x65\x00\x2e\x00\x0f\x00\xd2\x63\x00\x6f\x00\x6c\x00\x64\x00\x00\x00\xff\xff\x00\x00\xff\xff\xff\xff\x46\x49\x4c\x45\x7e\x31\x20\x20\x43\x4f\x4c\x20\x00\x38\x18\x60\x2c\x55\x2c\x55\x00\x00\x18\x60\x2c\x55\x07\x00\x64\x00\x00\x00", 296);
-*(uint64_t*)0x200007e0 = 0x128;
-*(uint64_t*)0x200007e8 = 9;
-*(uint64_t*)0x200007f0 = 0x20010060;
-memcpy((void*)0x20010060, "RRaA\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000", 32);
-*(uint64_t*)0x200007f8 = 0x20;
-*(uint64_t*)0x20000800 = 0x800;
-*(uint64_t*)0x20000808 = 0x20010080;
-memcpy((void*)0x20010080, "\x00\x00\x00\x00\x72\x72\x41\x61\x01\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x55\xaa", 32);
-*(uint64_t*)0x20000810 = 0x20;
-*(uint64_t*)0x20000818 = 0x9e0;
-*(uint64_t*)0x20000820 = 0x200100a0;
-memcpy((void*)0x200100a0, "\x60\x1c\x6d\x6b\x64\x6f\x73\x66\x89\x62\x06\x00\x08\x40\x20\x00\x02\x00\x00\x00\x02\xf8\x00\x00\x10\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\x01\x00\x06\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 96);
-*(uint64_t*)0x20000828 = 0x60;
-*(uint64_t*)0x20000830 = 0x3000;
-*(uint64_t*)0x20000838 = 0x20010100;
-memcpy((void*)0x20010100, "RRaA\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000", 32);
-*(uint64_t*)0x20000840 = 0x20;
-*(uint64_t*)0x20000848 = 0x3800;
-*(uint64_t*)0x20000850 = 0x20010120;
-memcpy((void*)0x20010120, "\x00\x00\x00\x00\x72\x72\x41\x61\x06\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x55\xaa", 32);
-*(uint64_t*)0x20000858 = 0x20;
-*(uint64_t*)0x20000860 = 0x39e2;
-*(uint64_t*)0x20000868 = 0x20010140;
-memcpy((void*)0x20010140, "\xf8\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f", 32);
-*(uint64_t*)0x20000870 = 0x20;
-*(uint64_t*)0x20000878 = 0x10000;
-*(uint64_t*)0x20000880 = 0x20010160;
-memcpy((void*)0x20010160, "\xf8\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f\xff\xff\xff\x0f", 32);
-*(uint64_t*)0x20000888 = 0x20;
-*(uint64_t*)0x20000890 = 0x10800;
-*(uint64_t*)0x20000898 = 0x200102a0;
-memcpy((void*)0x200102a0, "\x2e\x20\x20\x20\x20\x20\x20\x20\x20\x20\x20\x10\x00\x38\x18\x60\x2c\x55\x2c\x55\x00\x00\x18\x60\x2c\x55\x03\x00\x00\x00\x00\x00\x2e\x2e\x20\x20\x20\x20\x20\x20\x20\x20\x20\x10\x00\x38\x18\x60\x2c\x55\x2c\x55\x00\x00\x18\x60\x2c\x55\x00\x00\x00\x00\x00\x00\x41\x66\x00\x69\x00\x6c\x00\x65\x00\x30\x00\x0f\x00\xfc\x00\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x00\xff\xff\xff\xff\x46\x49\x4c\x45\x30\x20\x20\x20\x20\x20\x20\x20\x00\x38\x18\x60\x2c\x55\x2c\x55\x00\x00\x18\x60\x2c\x55\x04\x00\x1a\x04\x00\x00", 128);
-*(uint64_t*)0x200008a0 = 0x80;
-*(uint64_t*)0x200008a8 = 0x30ffe;
-*(uint64_t*)0x200008b0 = 0x20010320;
-memcpy((void*)0x20010320, "syzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkal\000\000\000\000\000\000", 1056);
-*(uint64_t*)0x200008b8 = 0x420;
-*(uint64_t*)0x200008c0 = 0x51000;
-*(uint64_t*)0x200008c8 = 0x20010760;
-memcpy((void*)0x20010760, "syzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallersyzkallers\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000", 128);
-*(uint64_t*)0x200008d0 = 0x80;
-*(uint64_t*)0x200008d8 = 0xb1200;
-memcpy((void*)0x20000280, "\x00\x7a\x56\x15\xfa\xa0\xaa\xda\x2f\x03\x00\xb6\x35\x32\xa5\x1d\x87\x06\x63\x24\x82\x3f\x0b\xd2\x6e\xcc\x95\xce\x91\xe9\xc3\x6a\xf5\xf1\xfd\x0c\x76\xd4\x52\x91\x7f\x34\xf7\x80\x75\x88\x37\x1a\x2c\x7b\x96\x9c\xe0\x50\xf9\x8a\x99\x64\xe6\xb5\x8c\x5c\x02\x1a\xc0\xa9\x0b\x48\xcc\x42\x84\x94\xc5\x66\x18\x05\xdf\xd4\x25\xa3\x90\x0f\xa6\x5a\xea\x74\x06\x7e\x06\x99\x4d\x4d\x7e\x12\xd7\x67\xa9\x51\xcd\xda\xc6\xd1\x5e\x7e\x36\xb7\xbc\x46\x5a\xc5\xf5\xc5\xd9\x52\x36\x0c\xb7\x4f\xbf\x9f\xce\x57\xc5\x90\xeb\xe7\xb4\xea\x71\x49\xb8\x8b\x4e\x46\x2a\xb1\xb3\xaf\xaa\x93\x25\x90\x9a\x04\x80\x21\x8c\x5c\x31\xa8\xc5\x8c\xd4\x6a\xd8\x69\xfb\x3a\xd2\x93\x76\x4c\x5a\x62\xf8\x99\xb1\xbf\xcb\xe8\x5a\x57\xea\x30\xcb\x4d\x13\x54\x0c\xcc\x63\x96\x61\x73\xc0\x70\x95\x88\x68\x73\xdf\x93\x99\xa4\x97\x48\xfd\x4f\x2a\x9f\x8c\x6c\x4c\x40\x40\x87\xf4\x9b\xc0\xd2\x19\xa3\x55\x97\x1a\x09\x73\x5c\x4f\xfe\xde\xd4\x47\xcd\xbb\x7b\x9f\xe9\xc6\xf0\xae\xb3\xb6\x00\x09\x8c\x86\x00\x00\x00\x00\x00\x00\x00\xa5\x9e\x6e\x1b\x7c\x72\x42\x91\x82\x27\xff\x80\xd7\x8d\x91\x16\xeb\x69\x72\xb9\x43\x5c\x0e\x40\x34\x45\x81\x2b\xef\xda\xeb\xec\x80\x89\x93\x72\xc9\xbe\x9b\xd3\x69\xcc\x4c\x54\x58\x83\x11\xf7\xa7\x2f\x50\xe3\xcb\x05\x29\x26\xe2\x04\xd7\xb2\xb6\xe1\xe8\xb9\x0a\x6f\x13\x1e\x17\x16\x7f\x2e\x77\x57\x06\xed\xcd\x6a\x3d\x19\x3f\xeb\xa6\x89\xa0\xf9\xb8\x0d\xd9\xec\x12\x05\xda\x03\x5c\x88\x95\x5e\x81\x10\xb0\x43\x53\x34\xdf\x37\x20\xaf\x6e\x6a\xa6\x88\xf7\xf1\x75\x37\xf1\xb8\xc3\x0e\x4f\x85\xb6\x27\x86\x98\x2f\x50\x83\xb0\xb7\x9e\xd3\xb9\x9c\x4d\x5e\xf9\x89\x99\xe0\x7e\xc0\xb7\x36\xf3\x02\xd4\x99\xc0\x1c\x0f\x78\x93\xf2\x57\x97\xef\x6c\xd5\x25\xe4\x39\xb3\xc9\x6e\x5e\xe0\x29\x2b\xa1\x19\x06\x8c\x03\xb0\xf4\xd0\xc4\x45\x2a\x5d\xf1\x68\xb5\x90\xf4\x70\x20\x94\xb9\x3e\xfa\xa7\xb5\x0f\xc2\x85\xe3\xeb\xe3\x05\x7d\x8b\xc4\xd0\x6a\xe2\xe5\xb9\xd3\x6f\x9e\x39\x84\xd6\x7c\x31\xfb\xce\xa7\x9d\x67\xd2\x04\xab\x79\xfa\xa9\x0d\x67\xbe\x21\x49\x6c\x10\x65\xcf\x40\x7e\x0d\x4c\xec\xe9\xd2\xef\xfc\xde\x46\xc2\x11\xa7\xec\x2d\x74\xa9\x5c\x79\xe5\x28\x7d\x4f\x71\x3e\xe0\xfd\x10\x29", 512);
-syz_mount_image(0x20000000, 0x20000100, 0x8100000, 0xc, 0x200007c0, 0x2008000, 0x20000280, 1);
+				syscall(__NR_pkey_mprotect, 0x20ffc000ul, 0x3000ul, 0ul, -1);
+memcpy((void*)0x20000000, "freezer.state\000", 14);
+	syscall(__NR_openat, -1, 0x20000000ul, 2ul, 0ul);
+	syscall(__NR_pkey_mprotect, 0x20ffb000ul, 0x2000ul, 0ul, -1);
+	syscall(__NR_pkey_mprotect, 0x20ffa000ul, 0x3000ul, 0ul, -1);
 	return 0;
 }

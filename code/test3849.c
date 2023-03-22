@@ -11,20 +11,24 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#ifndef __NR_mount_setattr
-#define __NR_mount_setattr 442
-#endif
+uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-*(uint64_t*)0x200001c0 = 0;
-*(uint64_t*)0x200001c8 = 0;
-*(uint64_t*)0x200001d0 = 0x40000;
-*(uint32_t*)0x200001d8 = -1;
-	syscall(__NR_mount_setattr, -1, 0ul, 0ul, 0x200001c0ul, 0x20ul);
+				intptr_t res = 0;
+	res = syscall(__NR_socket, 0x11ul, 3ul, 0x300);
+	if (res != -1)
+		r[0] = res;
+*(uint32_t*)0x20000000 = 0x10000;
+*(uint32_t*)0x20000004 = 6;
+*(uint32_t*)0x20000008 = 0x1000;
+*(uint32_t*)0x2000000c = 0;
+*(uint32_t*)0x20000010 = 0;
+*(uint32_t*)0x20000014 = 0;
+*(uint32_t*)0x20000018 = 0;
+	syscall(__NR_setsockopt, r[0], 0x107, 5, 0x20000000ul, 0x1cul);
 	return 0;
 }

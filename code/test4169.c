@@ -11,6 +11,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifndef __NR_fsconfig
+#define __NR_fsconfig 431
+#endif
+
 uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
@@ -19,38 +23,15 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 0x10ul, 3ul, 0x10);
+memcpy((void*)0x200001c0, "./file0\000", 8);
+	syscall(__NR_mknodat, 0xffffff9c, 0x200001c0ul, 0ul, 0);
+memcpy((void*)0x20000180, "/dev/sr0\000", 9);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000180ul, 0x141c00ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-*(uint64_t*)0x200000c0 = 0;
-*(uint32_t*)0x200000c8 = 0;
-*(uint64_t*)0x200000d0 = 0x20000100;
-*(uint64_t*)0x20000100 = 0x20000140;
-*(uint32_t*)0x20000140 = 0x1c;
-*(uint16_t*)0x20000144 = 0;
-*(uint16_t*)0x20000146 = 5;
-*(uint32_t*)0x20000148 = 0;
-*(uint32_t*)0x2000014c = 0;
-*(uint8_t*)0x20000150 = 6;
-*(uint8_t*)0x20000151 = 0;
-*(uint16_t*)0x20000152 = 0;
-*(uint16_t*)0x20000154 = 8;
-*(uint16_t*)0x20000156 = 3;
-*(uint32_t*)0x20000158 = 0;
-*(uint64_t*)0x20000108 = 0x1c;
-*(uint64_t*)0x200000d8 = 1;
-*(uint64_t*)0x200000e0 = 0;
-*(uint64_t*)0x200000e8 = 0;
-*(uint32_t*)0x200000f0 = 0;
-	syscall(__NR_sendmsg, r[0], 0x200000c0ul, 0ul);
-*(uint64_t*)0x200021c0 = 0;
-*(uint32_t*)0x200021c8 = 0;
-*(uint64_t*)0x200021d0 = 0;
-*(uint64_t*)0x200021d8 = 0;
-*(uint64_t*)0x200021e0 = 0;
-*(uint64_t*)0x200021e8 = 0;
-*(uint32_t*)0x200021f0 = 0;
-*(uint32_t*)0x200021f8 = 0;
-	syscall(__NR_recvmmsg, r[0], 0x200021c0ul, 1ul, 0x2102ul, 0ul);
+	syscall(__NR_setsockopt, -1, 0x29, 0xcc, 0ul, 0ul);
+	syscall(__NR_ioctl, -1, 0x810c9365, 0ul);
+memcpy((void*)0x20000040, "./file0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\000", 257);
+	syscall(__NR_fsconfig, -1, 4ul, 0ul, 0x20000040ul, r[0]);
 	return 0;
 }

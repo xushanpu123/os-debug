@@ -11,10 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define BITMASK(bf_off,bf_len) (((1ull << (bf_len)) - 1) << (bf_off))
-#define STORE_BY_BITMASK(type,htobe,addr,val,bf_off,bf_len) *(type*)(addr) = htobe((htobe(*(type*)(addr)) & ~BITMASK((bf_off), (bf_len))) | (((type)(val) << (bf_off)) & BITMASK((bf_off), (bf_len))))
-
-uint64_t r[1] = {0x0};
+uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
 {
@@ -22,72 +19,36 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_getpid);
+	res = syscall(__NR_socket, 2ul, 2ul, 0);
 	if (res != -1)
 		r[0] = res;
-*(uint32_t*)0x20000040 = 0;
-*(uint32_t*)0x20000044 = 0x80;
-*(uint8_t*)0x20000048 = 0;
-*(uint8_t*)0x20000049 = 0;
-*(uint8_t*)0x2000004a = 0;
-*(uint8_t*)0x2000004b = 0;
-*(uint32_t*)0x2000004c = 0;
-*(uint64_t*)0x20000050 = 0;
-*(uint64_t*)0x20000058 = 0;
-*(uint64_t*)0x20000060 = 0;
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 0, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 1, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 2, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 3, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 4, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 5, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 6, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 7, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 8, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 9, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 10, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 11, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 12, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 13, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 14, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 15, 2);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 17, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 18, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 19, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 20, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 21, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 22, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 23, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 24, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 25, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 26, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 27, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 28, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 29, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 30, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 31, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 32, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 33, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 34, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 35, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 36, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 37, 1);
-STORE_BY_BITMASK(uint64_t, , 0x20000068, 0, 38, 26);
-*(uint32_t*)0x20000070 = 0;
-*(uint32_t*)0x20000074 = 0;
-*(uint64_t*)0x20000078 = 0;
-*(uint64_t*)0x20000080 = 0;
-*(uint64_t*)0x20000088 = 0;
-*(uint64_t*)0x20000090 = 0;
-*(uint32_t*)0x20000098 = 0;
-*(uint32_t*)0x2000009c = 0;
-*(uint64_t*)0x200000a0 = 0;
-*(uint32_t*)0x200000a8 = 0;
-*(uint16_t*)0x200000ac = 0;
-*(uint16_t*)0x200000ae = 0;
-*(uint32_t*)0x200000b0 = 0;
-*(uint32_t*)0x200000b4 = 0;
-*(uint64_t*)0x200000b8 = 0;
-	syscall(__NR_perf_event_open, 0x20000040ul, r[0], 0ul, -1, 0ul);
+*(uint64_t*)0x20002ec0 = 0x20000000;
+*(uint16_t*)0x20000000 = 2;
+*(uint16_t*)0x20000002 = htobe16(0x4e24);
+*(uint32_t*)0x20000004 = htobe32(0);
+*(uint32_t*)0x20002ec8 = 0x10;
+*(uint64_t*)0x20002ed0 = 0;
+*(uint64_t*)0x20002ed8 = 0;
+*(uint64_t*)0x20002ee0 = 0;
+*(uint64_t*)0x20002ee8 = 0;
+*(uint32_t*)0x20002ef0 = 0;
+*(uint32_t*)0x20002ef8 = 0;
+*(uint64_t*)0x20002f00 = 0x20000180;
+*(uint16_t*)0x20000180 = 2;
+*(uint16_t*)0x20000182 = htobe16(0x4e23);
+*(uint32_t*)0x20000184 = htobe32(0);
+*(uint32_t*)0x20002f08 = 0x10;
+*(uint64_t*)0x20002f10 = 0;
+*(uint64_t*)0x20002f18 = 0;
+*(uint64_t*)0x20002f20 = 0x20001280;
+*(uint64_t*)0x20001280 = 0x14;
+*(uint32_t*)0x20001288 = 0;
+*(uint32_t*)0x2000128c = 7;
+*(uint8_t*)0x20001290 = 0x83;
+*(uint8_t*)0x20001291 = 2;
+*(uint64_t*)0x20002f28 = 0x18;
+*(uint32_t*)0x20002f30 = 0;
+*(uint32_t*)0x20002f38 = 0;
+	syscall(__NR_sendmmsg, r[0], 0x20002ec0ul, 2ul, 0ul);
 	return 0;
 }

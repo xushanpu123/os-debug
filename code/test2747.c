@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+uint64_t r[1] = {0x0};
 
 int main(void)
 {
@@ -19,12 +19,10 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 2ul, 2ul, 0);
+	syscall(__NR_setreuid, 0, 0xee00);
+	res = syscall(__NR_getresuid, 0x20000000ul, 0x20000040ul, 0x20000080ul);
 	if (res != -1)
-		r[0] = res;
-*(uint16_t*)0x20000000 = 2;
-*(uint16_t*)0x20000002 = htobe16(0);
-*(uint32_t*)0x20000004 = htobe32(-1);
-	syscall(__NR_sendto, r[0], 0ul, 0ul, 0ul, 0x20000000ul, 0xffffffffffffff82ul);
+r[0] = *(uint32_t*)0x20000080;
+	syscall(__NR_setreuid, r[0], 0xee00);
 	return 0;
 }

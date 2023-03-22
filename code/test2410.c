@@ -19,10 +19,13 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000100, "/dev/vga_arbiter\000", 17);
-	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000100ul, 0ul, 0ul);
+	res = syscall(__NR_socket, 0xaul, 2ul, 0);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_close, r[0]);
+*(uint8_t*)0x20000040 = 0;
+*(uint8_t*)0x20000041 = 0;
+memset((void*)0x20000042, 0, 6);
+	syscall(__NR_setsockopt, r[0], 0x29, 0x3b, 0x20000040ul, 8ul);
+	syscall(__NR_setsockopt, r[0], 0x29, 0x37, 0ul, 0ul);
 	return 0;
 }

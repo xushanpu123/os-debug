@@ -11,15 +11,34 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifndef __NR_io_uring_register
+#define __NR_io_uring_register 427
+#endif
+#ifndef __NR_io_uring_setup
+#define __NR_io_uring_setup 425
+#endif
+
+uint64_t r[1] = {0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-memcpy((void*)0x20000040, "./cgroup/cgroup.procs\000", 22);
-	syscall(__NR_openat, 0xffffff9c, 0x20000040ul, 0ul, 0ul);
-memcpy((void*)0x20000040, "/sys/module/lockd", 17);
-	syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000040ul, 0x82441ul, 0ul);
+				intptr_t res = 0;
+*(uint32_t*)0x200011c4 = 0;
+*(uint32_t*)0x200011c8 = 0;
+*(uint32_t*)0x200011cc = 0;
+*(uint32_t*)0x200011d0 = 0;
+*(uint32_t*)0x200011d8 = -1;
+memset((void*)0x200011dc, 0, 12);
+	res = syscall(__NR_io_uring_setup, 0x18b1, 0x200011c0ul);
+	if (res != -1)
+		r[0] = res;
+*(uint32_t*)0x20000000 = -1;
+*(uint32_t*)0x20000004 = -1;
+*(uint32_t*)0x20000008 = -1;
+*(uint32_t*)0x2000000c = -1;
+	syscall(__NR_io_uring_register, r[0], 2ul, 0x20000000ul, 0x4000000000000149ul);
 	return 0;
 }

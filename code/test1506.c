@@ -41,10 +41,21 @@ int main(void)
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
 	res = -1;
-res = syz_open_dev(0xc, 4, 1);
+res = syz_open_dev(0xc, 4, 0x15);
 	if (res != -1)
 		r[0] = res;
-*(uint32_t*)0x200012c0 = 0x402;
-	syscall(__NR_ioctl, r[0], 0x5423, 0x200012c0ul);
+*(uint32_t*)0x20000a80 = 0x19980330;
+*(uint32_t*)0x20000a84 = 0;
+*(uint32_t*)0x20000ac0 = 0;
+*(uint32_t*)0x20000ac4 = 0;
+*(uint32_t*)0x20000ac8 = 0;
+*(uint32_t*)0x20000acc = 0;
+*(uint32_t*)0x20000ad0 = 0;
+*(uint32_t*)0x20000ad4 = 0;
+	syscall(__NR_capset, 0x20000a80ul, 0x20000ac0ul);
+*(uint8_t*)0x20000040 = 0;
+*(uint8_t*)0x20000041 = 0;
+*(uint16_t*)0x20000042 = 0;
+	syscall(__NR_ioctl, r[0], 0x4b47, 0x20000040ul);
 	return 0;
 }

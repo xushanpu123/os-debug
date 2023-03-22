@@ -40,16 +40,11 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
+memcpy((void*)0x20000000, "/dev/sg#\000", 9);
 	res = -1;
-res = syz_open_dev(0xc, 4, 1);
+res = syz_open_dev(0x20000000, 0, 0);
 	if (res != -1)
 		r[0] = res;
-*(uint32_t*)0x20000580 = 1;
-*(uint32_t*)0x20000584 = 0;
-*(uint32_t*)0x20000588 = 0x10;
-*(uint32_t*)0x2000058c = 0xfffffffc;
-*(uint32_t*)0x20000590 = 0x185;
-*(uint64_t*)0x20000598 = 0x20000180;
-	syscall(__NR_ioctl, r[0], 0x4b72, 0x20000580ul);
+	syscall(__NR_ioctl, r[0], 0x2285, 0ul);
 	return 0;
 }

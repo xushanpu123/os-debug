@@ -3,7 +3,6 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
-#include <sched.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,28 +11,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define USLEEP_FORKED_CHILD (3 * 50 *1000)
+#define BITMASK(bf_off,bf_len) (((1ull << (bf_len)) - 1) << (bf_off))
+#define STORE_BY_BITMASK(type,htobe,addr,val,bf_off,bf_len) *(type*)(addr) = htobe((htobe(*(type*)(addr)) & ~BITMASK((bf_off), (bf_len))) | (((type)(val) << (bf_off)) & BITMASK((bf_off), (bf_len))))
 
-static long handle_clone_ret(long ret)
-{
-	if (ret != 0) {
-		return ret;
-	}
-	usleep(USLEEP_FORKED_CHILD);
-	syscall(__NR_exit, 0);
-	while (1) {
-	}
-}
-
-static long syz_clone(volatile long flags, volatile long stack, volatile long stack_len,
-		      volatile long ptid, volatile long ctid, volatile long tls)
-{
-	long sp = (stack + stack_len) & ~15;
-	long ret = (long)syscall(__NR_clone, flags & ~CLONE_VM, sp, ptid, ctid, tls);
-	return handle_clone_ret(ret);
-}
-
-uint64_t r[1] = {0x0};
+uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
 {
@@ -41,10 +22,37 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = -1;
-res = syz_clone(0, 0, 0, 0, 0, 0);
+	res = syscall(__NR_socket, 0x10ul, 3ul, 0xc);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_ioprio_get, 1ul, r[0]);
+*(uint64_t*)0x200024c0 = 0;
+*(uint32_t*)0x200024c8 = 0;
+*(uint64_t*)0x200024d0 = 0x20002480;
+*(uint64_t*)0x20002480 = 0x20000100;
+*(uint32_t*)0x20000100 = 0x24;
+*(uint8_t*)0x20000104 = 0;
+*(uint8_t*)0x20000105 = 4;
+*(uint16_t*)0x20000106 = 5;
+*(uint32_t*)0x20000108 = 0;
+*(uint32_t*)0x2000010c = 0;
+*(uint8_t*)0x20000110 = 0;
+*(uint8_t*)0x20000111 = 0;
+*(uint16_t*)0x20000112 = htobe16(0);
+*(uint16_t*)0x20000114 = 8;
+STORE_BY_BITMASK(uint16_t, , 0x20000116, 0, 0, 14);
+STORE_BY_BITMASK(uint16_t, , 0x20000117, 0, 6, 1);
+STORE_BY_BITMASK(uint16_t, , 0x20000117, 0, 7, 1);
+*(uint32_t*)0x20000118 = htobe32(-1);
+*(uint16_t*)0x2000011c = 8;
+STORE_BY_BITMASK(uint16_t, , 0x2000011e, 0x33, 0, 14);
+STORE_BY_BITMASK(uint16_t, , 0x2000011f, 0, 6, 1);
+STORE_BY_BITMASK(uint16_t, , 0x2000011f, 0, 7, 1);
+memcpy((void*)0x20000120, "},(\000", 4);
+*(uint64_t*)0x20002488 = 0x24;
+*(uint64_t*)0x200024d8 = 1;
+*(uint64_t*)0x200024e0 = 0;
+*(uint64_t*)0x200024e8 = 0;
+*(uint32_t*)0x200024f0 = 0;
+	syscall(__NR_sendmsg, r[0], 0x200024c0ul, 0ul);
 	return 0;
 }

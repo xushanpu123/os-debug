@@ -11,11 +11,26 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[1] = {0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				syscall(__NR_timerfd_create, 7ul, 0ul);
+				intptr_t res = 0;
+	res = syscall(__NR_socket, 0xaul, 2ul, 0);
+	if (res != -1)
+		r[0] = res;
+*(uint16_t*)0x200001c0 = 0xa;
+*(uint16_t*)0x200001c2 = htobe16(0);
+*(uint32_t*)0x200001c4 = htobe32(0);
+memset((void*)0x200001c8, 0, 10);
+memset((void*)0x200001d2, 255, 2);
+*(uint32_t*)0x200001d4 = htobe32(0x7f000001);
+*(uint32_t*)0x200001d8 = 0;
+	syscall(__NR_connect, r[0], 0x200001c0ul, 0x1cul);
+*(uint32_t*)0x20000200 = 0x59;
+	syscall(__NR_getsockopt, r[0], 0x29, 0x3d, 0x20000140ul, 0x20000200ul);
 	return 0;
 }

@@ -3,34 +3,15 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
-#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-static long syz_open_procfs(volatile long a0, volatile long a1)
-{
-	char buf[128];
-	memset(buf, 0, sizeof(buf));
-	if (a0 == 0) {
-		snprintf(buf, sizeof(buf), "/proc/self/%s", (char*)a1);
-	} else if (a0 == -1) {
-		snprintf(buf, sizeof(buf), "/proc/thread-self/%s", (char*)a1);
-	} else {
-		snprintf(buf, sizeof(buf), "/proc/self/task/%d/%s", (int)a0, (char*)a1);
-	}
-	int fd = open(buf, O_RDWR);
-	if (fd == -1)
-		fd = open(buf, O_RDONLY);
-	return fd;
-}
-
-uint64_t r[1] = {0xffffffffffffffff};
+uint64_t r[4] = {0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff};
 
 int main(void)
 {
@@ -38,11 +19,26 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000040, "net/snmp\000", 9);
-	res = -1;
-res = syz_open_procfs(-1, 0x20000040);
+	res = syscall(__NR_epoll_create1, 0ul);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_close, r[0]);
+	res = syscall(__NR_epoll_create1, 0ul);
+	if (res != -1)
+		r[1] = res;
+	res = syscall(__NR_socket, 0xaul, 2ul, 0);
+	if (res != -1)
+		r[2] = res;
+	res = syscall(__NR_socket, 0xaul, 2ul, 0);
+	if (res != -1)
+		r[3] = res;
+*(uint32_t*)0x20000080 = 0;
+*(uint64_t*)0x20000084 = 0;
+	syscall(__NR_epoll_ctl, r[1], 1ul, r[3], 0x20000080ul);
+*(uint32_t*)0x20000000 = 0;
+*(uint64_t*)0x20000004 = 0;
+	syscall(__NR_epoll_ctl, r[1], 1ul, r[2], 0x20000000ul);
+*(uint32_t*)0x20000040 = 0;
+*(uint64_t*)0x20000044 = 0;
+	syscall(__NR_epoll_ctl, r[0], 1ul, r[1], 0x20000040ul);
 	return 0;
 }

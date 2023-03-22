@@ -11,15 +11,34 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[1] = {0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-memcpy((void*)0x200002c0, "./file0\000", 8);
-	syscall(__NR_creat, 0x200002c0ul, 0ul);
-memcpy((void*)0x20000100, "./file0/../file0\000", 17);
-	syscall(__NR_mount, 0ul, 0x20000100ul, 0ul, 0ul, 0ul);
+				intptr_t res = 0;
+	res = syscall(__NR_socket, 0xaul, 2ul, 0);
+	if (res != -1)
+		r[0] = res;
+*(uint64_t*)0x20000700 = 0x20000000;
+*(uint16_t*)0x20000000 = 0xa;
+*(uint16_t*)0x20000002 = htobe16(0x4e24);
+*(uint32_t*)0x20000004 = htobe32(0);
+*(uint64_t*)0x20000008 = htobe64(0);
+*(uint64_t*)0x20000010 = htobe64(1);
+*(uint32_t*)0x20000018 = 0;
+*(uint32_t*)0x20000708 = 0x1c;
+*(uint64_t*)0x20000710 = 0;
+*(uint64_t*)0x20000718 = 0;
+*(uint64_t*)0x20000720 = 0x20000480;
+*(uint64_t*)0x20000480 = 0x14;
+*(uint32_t*)0x20000488 = 0x29;
+*(uint32_t*)0x2000048c = 0x43;
+*(uint32_t*)0x20000490 = 0;
+*(uint64_t*)0x20000728 = 0x18;
+*(uint32_t*)0x20000730 = 0;
+	syscall(__NR_sendmsg, r[0], 0x20000700ul, 0ul);
 	return 0;
 }

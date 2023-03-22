@@ -11,7 +11,20 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+#ifndef __NR_fsconfig
+#define __NR_fsconfig 431
+#endif
+#ifndef __NR_fsmount
+#define __NR_fsmount 432
+#endif
+#ifndef __NR_fsopen
+#define __NR_fsopen 430
+#endif
+#ifndef __NR_move_mount
+#define __NR_move_mount 429
+#endif
+
+uint64_t r[3] = {0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff};
 
 int main(void)
 {
@@ -19,19 +32,23 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 0xaul, 1ul, 0);
+memcpy((void*)0x20000400, ".\000", 2);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000400ul, 0ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-*(uint64_t*)0x20000a40 = 0;
-*(uint32_t*)0x20000a48 = 0;
-*(uint64_t*)0x20000a50 = 0x20000600;
-*(uint64_t*)0x20000600 = 0x200001c0;
-memset((void*)0x200001c0, 166, 1);
-*(uint64_t*)0x20000608 = 1;
-*(uint64_t*)0x20000a58 = 1;
-*(uint64_t*)0x20000a60 = 0;
-*(uint64_t*)0x20000a68 = 0;
-*(uint32_t*)0x20000a70 = 0;
-	syscall(__NR_sendmsg, r[0], 0x20000a40ul, 0x4004000ul);
+memcpy((void*)0x20000100, "./file0\000", 8);
+memcpy((void*)0x20000140, "./file1\000", 8);
+	syscall(__NR_symlinkat, 0x20000100ul, r[0], 0x20000140ul);
+memcpy((void*)0x200001c0, "cgroup2\000", 8);
+	res = syscall(__NR_fsopen, 0x200001c0ul, 0ul);
+	if (res != -1)
+		r[1] = res;
+	syscall(__NR_fsconfig, r[1], 6ul, 0ul, 0ul, 0ul);
+	res = syscall(__NR_fsmount, r[1], 0ul, 0ul);
+	if (res != -1)
+		r[2] = res;
+memcpy((void*)0x20001000, "./file1\000", 8);
+memcpy((void*)0x20001040, "./file0\000", 8);
+	syscall(__NR_move_mount, r[0], 0x20001000ul, r[2], 0x20001040ul, 0ul);
 	return 0;
 }

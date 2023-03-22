@@ -19,17 +19,10 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 1ul, 2ul, 0);
+memcpy((void*)0x20000200, "(\000", 2);
+	res = syscall(__NR_mq_open, 0x20000200ul, 0ul, 0ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-*(uint64_t*)0x20001f00 = 0;
-*(uint32_t*)0x20001f08 = 0;
-*(uint64_t*)0x20001f10 = 0;
-*(uint64_t*)0x20001f18 = 0;
-*(uint64_t*)0x20001f20 = 0;
-*(uint64_t*)0x20001f28 = 0;
-*(uint32_t*)0x20001f30 = 0;
-*(uint32_t*)0x20001f38 = 0;
-	syscall(__NR_sendmmsg, r[0], 0x20001f00ul, 1ul, 0ul);
+	syscall(__NR_mq_timedreceive, r[0], 0ul, 0xfffffffffffffdecul, 0xfffffffffffffffeul, 0ul);
 	return 0;
 }

@@ -11,15 +11,25 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[1] = {0x0};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-memcpy((void*)0x200000c0, "./file0\000", 8);
-	syscall(__NR_mknodat, 0xffffff9c, 0x200000c0ul, 0ul, 0);
-memcpy((void*)0x20000000, "./file0\000", 8);
-	syscall(__NR_unlink, 0x20000000ul);
+				intptr_t res = 0;
+memcpy((void*)0x20000140, "logon\000", 6);
+memcpy((void*)0x20000180, "fscrypt:", 8);
+memcpy((void*)0x20000188, "0000111122223333", 16);
+*(uint8_t*)0x20000198 = 0;
+*(uint32_t*)0x200001c0 = 0;
+memcpy((void*)0x200001c4, "\x2b\x1d\xac\xfe\x6c\x67\xa1\x82\xbb\xfb\x8a\xb3\x70\x83\xd1\x14\xd8\x07\x2f\x29\x72\x96\x2e\x3c\x0a\xef\xe2\x4e\x11\xfc\x90\xef\xa0\x7d\xdf\x9f\x70\x23\x7b\x7e\xe0\x85\x90\xce\xa6\x94\xe5\xda\x27\xf2\x67\x19\x17\xc5\x77\xe9\x42\xf7\xe3\x38\x3f\x42\x31\xec", 64);
+*(uint32_t*)0x20000204 = 0;
+	res = syscall(__NR_add_key, 0x20000140ul, 0x20000180ul, 0x200001c0ul, 0x48ul, 0xfffffffb);
+	if (res != -1)
+		r[0] = res;
+memcpy((void*)0x20000000, "logon\000", 6);
+	syscall(__NR_add_key, 0x20000000ul, 0ul, 0ul, 0ul, r[0]);
 	return 0;
 }

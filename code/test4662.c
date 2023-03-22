@@ -3,6 +3,7 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
+#include <sched.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,7 +12,28 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+#define USLEEP_FORKED_CHILD (3 * 50 *1000)
+
+static long handle_clone_ret(long ret)
+{
+	if (ret != 0) {
+		return ret;
+	}
+	usleep(USLEEP_FORKED_CHILD);
+	syscall(__NR_exit, 0);
+	while (1) {
+	}
+}
+
+static long syz_clone(volatile long flags, volatile long stack, volatile long stack_len,
+		      volatile long ptid, volatile long ctid, volatile long tls)
+{
+	long sp = (stack + stack_len) & ~15;
+	long ret = (long)syscall(__NR_clone, flags & ~CLONE_VM, sp, ptid, ctid, tls);
+	return handle_clone_ret(ret);
+}
+
+uint64_t r[1] = {0x0};
 
 int main(void)
 {
@@ -19,10 +41,23 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x200000c0, "/dev/autofs\000", 12);
-	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x200000c0ul, 0ul, 0ul);
+memset((void*)0x20000940, 36, 1);
+	res = -1;
+res = syz_clone(0, 0, 0, 0, 0, 0x20000940);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_ioctl, r[0], 0x40049366, 0ul);
+*(uint64_t*)0x20001ac0 = 0;
+*(uint64_t*)0x20001ac8 = 0;
+*(uint64_t*)0x20001ad0 = 0x20001980;
+*(uint64_t*)0x20001ad8 = 0xbb;
+*(uint64_t*)0x20001ae0 = 0x20001a40;
+*(uint64_t*)0x20001ae8 = 0x76;
+*(uint64_t*)0x20001d80 = 0x20001b00;
+*(uint64_t*)0x20001d88 = 0xfc;
+*(uint64_t*)0x20001d90 = 0x20001c00;
+*(uint64_t*)0x20001d98 = 0x74;
+*(uint64_t*)0x20001da0 = 0;
+*(uint64_t*)0x20001da8 = 0;
+	syscall(__NR_process_vm_readv, r[0], 0x20001ac0ul, 3ul, 0x20001d80ul, 3ul, 0ul);
 	return 0;
 }

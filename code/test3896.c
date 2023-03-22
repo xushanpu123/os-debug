@@ -3,128 +3,38 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
-#include <errno.h>
-#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/ioctl.h>
-#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <linux/loop.h>
-
-#ifndef __NR_memfd_create
-#define __NR_memfd_create 319
-#endif
-
-static unsigned long long procid;
-
-struct fs_image_segment {
-	void* data;
-	uintptr_t size;
-	uintptr_t offset;
-};
-static int setup_loop_device(long unsigned size, long unsigned nsegs, struct fs_image_segment* segs, const char* loopname, int* memfd_p, int* loopfd_p)
-{
-	int err = 0, loopfd = -1;
-	int memfd = syscall(__NR_memfd_create, "syzkaller", 0);
-	if (memfd == -1) {
-		err = errno;
-		goto error;
-	}
-	if (ftruncate(memfd, size)) {
-		err = errno;
-		goto error_close_memfd;
-	}
-	for (size_t i = 0; i < nsegs; i++) {
-		if (pwrite(memfd, segs[i].data, segs[i].size, segs[i].offset) < 0) {
-		}
-	}
-	loopfd = open(loopname, O_RDWR);
-	if (loopfd == -1) {
-		err = errno;
-		goto error_close_memfd;
-	}
-	if (ioctl(loopfd, LOOP_SET_FD, memfd)) {
-		if (errno != EBUSY) {
-			err = errno;
-			goto error_close_loop;
-		}
-		ioctl(loopfd, LOOP_CLR_FD, 0);
-		usleep(1000);
-		if (ioctl(loopfd, LOOP_SET_FD, memfd)) {
-			err = errno;
-			goto error_close_loop;
-		}
-	}
-	*memfd_p = memfd;
-	*loopfd_p = loopfd;
-	return 0;
-
-error_close_loop:
-	close(loopfd);
-error_close_memfd:
-	close(memfd);
-error:
-	errno = err;
-	return -1;
-}
-
-static long syz_read_part_table(volatile unsigned long size, volatile unsigned long nsegs, volatile long segments)
-{
-	struct fs_image_segment* segs = (struct fs_image_segment*)segments;
-	int err = 0, res = -1, loopfd = -1, memfd = -1;
-	char loopname[64];
-	snprintf(loopname, sizeof(loopname), "/dev/loop%llu", procid);
-	if (setup_loop_device(size, nsegs, segs, loopname, &memfd, &loopfd) == -1)
-		return -1;
-	struct loop_info64 info;
-	if (ioctl(loopfd, LOOP_GET_STATUS64, &info)) {
-		err = errno;
-		goto error_clear_loop;
-	}
-	info.lo_flags |= LO_FLAGS_PARTSCAN;
-	if (ioctl(loopfd, LOOP_SET_STATUS64, &info)) {
-		err = errno;
-		goto error_clear_loop;
-	}
-	res = 0;
-	for (unsigned long i = 1, j = 0; i < 8; i++) {
-		snprintf(loopname, sizeof(loopname), "/dev/loop%llup%d", procid, (int)i);
-		struct stat statbuf;
-		if (stat(loopname, &statbuf) == 0) {
-			char linkname[64];
-			snprintf(linkname, sizeof(linkname), "./file%d", (int)j++);
-			if (symlink(loopname, linkname)) {
-			}
-		}
-	}
-error_clear_loop:
-	ioctl(loopfd, LOOP_CLR_FD, 0);
-	close(loopfd);
-	close(memfd);
-	errno = err;
-	return res;
-}
+uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-*(uint64_t*)0x20001080 = 0x20000000;
-memset((void*)0x20000000, 196, 1);
-*(uint64_t*)0x20001088 = 1;
-*(uint64_t*)0x20001090 = 0x8000000;
-*(uint64_t*)0x20001098 = 0x20001000;
-memset((void*)0x20001000, 24, 1);
-*(uint64_t*)0x200010a0 = 1;
-*(uint64_t*)0x200010a8 = 0;
-syz_read_part_table(0, 2, 0x20001080);
+				intptr_t res = 0;
+	res = syscall(__NR_socket, 2ul, 2ul, 1);
+	if (res != -1)
+		r[0] = res;
+*(uint16_t*)0x20000000 = 2;
+*(uint16_t*)0x20000002 = htobe16(0);
+*(uint8_t*)0x20000004 = 0xac;
+*(uint8_t*)0x20000005 = 0x14;
+*(uint8_t*)0x20000006 = 0x14;
+*(uint8_t*)0x20000007 = 0;
+	syscall(__NR_connect, r[0], 0x20000000ul, 0x10ul);
+*(uint16_t*)0x20000040 = 2;
+*(uint16_t*)0x20000042 = htobe16(0);
+*(uint8_t*)0x20000044 = 0xac;
+*(uint8_t*)0x20000045 = 0x14;
+*(uint8_t*)0x20000046 = 0x14;
+*(uint8_t*)0x20000047 = 0xaa;
+	syscall(__NR_bind, r[0], 0x20000040ul, 0x10ul);
 	return 0;
 }

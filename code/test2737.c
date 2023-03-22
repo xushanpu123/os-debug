@@ -11,7 +11,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+#ifndef __NR_close_range
+#define __NR_close_range 436
+#endif
+
+uint64_t r[3] = {0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff};
 
 int main(void)
 {
@@ -19,27 +23,18 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 0xaul, 2ul, 0);
+memcpy((void*)0x20001a00, "/dev/snd/timer\000", 15);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20001a00ul, 0ul, 0);
 	if (res != -1)
 		r[0] = res;
-*(uint64_t*)0x20002140 = 0x20000000;
-*(uint16_t*)0x20000000 = 0xa;
-*(uint16_t*)0x20000002 = htobe16(0x4e23);
-*(uint32_t*)0x20000004 = htobe32(0);
-*(uint64_t*)0x20000008 = htobe64(0);
-*(uint64_t*)0x20000010 = htobe64(1);
-*(uint32_t*)0x20000018 = 0;
-*(uint32_t*)0x20002148 = 0x1c;
-*(uint64_t*)0x20002150 = 0;
-*(uint64_t*)0x20002158 = 0;
-*(uint64_t*)0x20002160 = 0x20001380;
-*(uint64_t*)0x20001380 = 0x14;
-*(uint32_t*)0x20001388 = 0x29;
-*(uint32_t*)0x2000138c = 0x43;
-*(uint32_t*)0x20001390 = 0xfddd;
-*(uint64_t*)0x20002168 = 0x18;
-*(uint32_t*)0x20002170 = 0;
-*(uint32_t*)0x20002178 = 0;
-	syscall(__NR_sendmmsg, r[0], 0x20002140ul, 1ul, 0ul);
+	res = syscall(__NR_pipe2, 0x20000000ul, 0ul);
+	if (res != -1)
+r[1] = *(uint32_t*)0x20000000;
+	syscall(__NR_close_range, r[0], -1, 0ul);
+memcpy((void*)0x20000040, "/dev/null\000", 10);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000040ul, 0ul, 0ul);
+	if (res != -1)
+		r[2] = res;
+	syscall(__NR_dup2, r[1], r[2]);
 	return 0;
 }

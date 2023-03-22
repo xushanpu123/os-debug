@@ -19,16 +19,17 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000240, "/dev/snd/timer\000", 15);
-	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000240ul, 0ul, 0);
+	res = syscall(__NR_socket, 2ul, 2ul, 1);
 	if (res != -1)
 		r[0] = res;
-*(uint32_t*)0x20000080 = 0;
-*(uint32_t*)0x20000084 = 0;
-*(uint32_t*)0x20000088 = 0;
-*(uint32_t*)0x2000008c = 0;
-*(uint32_t*)0x20000090 = 0;
-memset((void*)0x20000094, 0, 32);
-	syscall(__NR_ioctl, r[0], 0x40345410, 0x20000080ul);
+*(uint64_t*)0x200001c0 = 0;
+*(uint32_t*)0x200001c8 = 0;
+*(uint64_t*)0x200001d0 = 0;
+*(uint64_t*)0x200001d8 = 0;
+*(uint64_t*)0x200001e0 = 0;
+*(uint64_t*)0x200001e8 = 0;
+*(uint32_t*)0x200001f0 = 0;
+	syscall(__NR_recvmsg, r[0], 0x200001c0ul, 2ul, 0);
+	syscall(__NR_shutdown, r[0], 0ul);
 	return 0;
 }

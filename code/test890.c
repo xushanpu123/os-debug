@@ -19,10 +19,29 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 0xaul, 2ul, 0);
+	res = syscall(__NR_socket, 2ul, 2ul, 0);
 	if (res != -1)
 		r[0] = res;
-*(uint32_t*)0x20000000 = 0x180;
-	syscall(__NR_setsockopt, r[0], 0x29, 0x10, 0x20000000ul, 4ul);
+memset((void*)0x20000000, 121, 1);
+*(uint16_t*)0x200000c0 = 2;
+*(uint16_t*)0x200000c2 = htobe16(0x4e20);
+*(uint32_t*)0x200000c4 = htobe32(0);
+	syscall(__NR_sendto, r[0], 0x20000000ul, 1ul, 0ul, 0x200000c0ul, 0x10ul);
+*(uint16_t*)0x200001c0 = 2;
+*(uint16_t*)0x200001c2 = htobe16(0x4e20);
+*(uint32_t*)0x200001c4 = htobe32(0);
+*(uint16_t*)0x200001d0 = 0x306;
+*(uint8_t*)0x200001d2 = 1;
+*(uint8_t*)0x200001d3 = 0x80;
+*(uint8_t*)0x200001d4 = 0xc2;
+*(uint8_t*)0x200001d5 = 0;
+*(uint8_t*)0x200001d6 = 0;
+*(uint8_t*)0x200001d7 = 0xe;
+*(uint32_t*)0x200001e0 = 2;
+*(uint16_t*)0x200001e4 = 2;
+*(uint16_t*)0x200001e6 = htobe16(0x4e21);
+*(uint32_t*)0x200001e8 = htobe32(0xe0000001);
+memset((void*)0x200001f4, 0, 16);
+	syscall(__NR_ioctl, r[0], 0x8953, 0x200001c0ul);
 	return 0;
 }

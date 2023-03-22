@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[2] = {0x0, 0xffffffffffffffff};
+uint64_t r[2] = {0xffffffffffffffff, 0x0};
 
 int main(void)
 {
@@ -19,26 +19,39 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_io_setup, 3, 0x200028c0ul);
+	res = syscall(__NR_socket, 1ul, 5ul, 0);
 	if (res != -1)
-r[0] = *(uint64_t*)0x200028c0;
-memcpy((void*)0x20000040, "/dev/rfkill\000", 12);
-	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000040ul, 0ul, 0ul);
+		r[0] = res;
+	res = syscall(__NR_io_setup, 0x3f, 0x20000040ul);
 	if (res != -1)
-		r[1] = res;
-*(uint64_t*)0x200001c0 = 0x200000c0;
-*(uint64_t*)0x200000c0 = 0;
-*(uint32_t*)0x200000c8 = 0;
-*(uint32_t*)0x200000cc = 0;
-*(uint16_t*)0x200000d0 = 2;
-*(uint16_t*)0x200000d2 = 0;
-*(uint32_t*)0x200000d4 = r[1];
-*(uint64_t*)0x200000d8 = 0;
-*(uint64_t*)0x200000e0 = 0;
-*(uint64_t*)0x200000e8 = 0;
-*(uint64_t*)0x200000f0 = 0;
-*(uint32_t*)0x200000f8 = 0;
-*(uint32_t*)0x200000fc = -1;
-	syscall(__NR_io_submit, r[0], 1ul, 0x200001c0ul);
+r[1] = *(uint64_t*)0x20000040;
+*(uint64_t*)0x20000140 = 0x20001040;
+*(uint64_t*)0x20001040 = 0;
+*(uint32_t*)0x20001048 = 0;
+*(uint32_t*)0x2000104c = 0;
+*(uint16_t*)0x20001050 = 0;
+*(uint16_t*)0x20001052 = 0;
+*(uint32_t*)0x20001054 = r[0];
+*(uint64_t*)0x20001058 = 0;
+*(uint64_t*)0x20001060 = 0;
+*(uint64_t*)0x20001068 = 0;
+*(uint64_t*)0x20001070 = 0;
+*(uint32_t*)0x20001078 = 0;
+*(uint32_t*)0x2000107c = -1;
+*(uint64_t*)0x20000148 = 0x20000000;
+*(uint64_t*)0x20000000 = 0;
+*(uint32_t*)0x20000008 = 0;
+*(uint32_t*)0x2000000c = 0;
+*(uint16_t*)0x20000010 = 7;
+*(uint16_t*)0x20000012 = 0;
+*(uint32_t*)0x20000014 = r[0];
+*(uint64_t*)0x20000018 = 0x200000c0;
+memcpy((void*)0x200000c0, "\x00\x00\x6b\x6e\xf2\xf9\x8a\x9a\x2e\x2f\x96\xbc\xf6\xf9\x46\x4f\x0f\xee\xa5\x85\xf6\x0a\x3a\xf0\xa3\x9c\x70\x87\x1b\xa5\x25\x35\xed\xcd\xbb\x61\xd6\xaf\xa8\x09\xd8\x3e\x2b\x87\xba\x82\x51\x4c\xbe\x57\xc7\xe2\x92\x15\x09\x72\xaa\x26\x85\x1f\x64\x44\x87\x83", 64);
+*(uint64_t*)0x20000020 = 0x40;
+*(uint64_t*)0x20000028 = 0;
+*(uint64_t*)0x20000030 = 0;
+*(uint32_t*)0x20000038 = 0;
+*(uint32_t*)0x2000003c = -1;
+	syscall(__NR_io_submit, r[1], 2ul, 0x20000140ul);
 	return 0;
 }

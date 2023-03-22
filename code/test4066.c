@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[3] = {0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff};
+uint64_t r[1] = {0x0};
 
 int main(void)
 {
@@ -19,41 +19,23 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000040, "./file1\000", 8);
-	res = syscall(__NR_openat, 0xffffff9c, 0x20000040ul, 0x42ul, 0ul);
+	res = syscall(__NR_io_setup, 7, 0x20000840ul);
 	if (res != -1)
-		r[0] = res;
-	syscall(__NR_close, r[0]);
-	res = syscall(__NR_socketpair, 1ul, 1ul, 0, 0x20001280ul);
-	if (res != -1)
-r[1] = *(uint32_t*)0x20001280;
-memcpy((void*)0x20000040, "./cgroup/cgroup.procs\000", 22);
-	res = syscall(__NR_openat, 0xffffff9c, 0x20000040ul, 0ul, 0ul);
-	if (res != -1)
-		r[2] = res;
-memcpy((void*)0x20000040, "./file1\000", 8);
-	syscall(__NR_openat, 0xffffff9c, 0x20000040ul, 0ul, 0ul);
-memcpy((void*)0x20000040, "./file1\000", 8);
-	syscall(__NR_openat, 0xffffff9c, 0x20000040ul, 0ul, 0ul);
-*(uint64_t*)0x20001800 = 0;
-*(uint32_t*)0x20001808 = 0;
-*(uint64_t*)0x20001810 = 0x20001680;
-*(uint64_t*)0x20001680 = 0x20000140;
-memset((void*)0x20000140, 31, 1);
-*(uint64_t*)0x20001688 = 1;
-*(uint64_t*)0x20001818 = 1;
-*(uint64_t*)0x20001820 = 0x200017c0;
-*(uint64_t*)0x200017c0 = 0x14;
-*(uint32_t*)0x200017c8 = 1;
-*(uint32_t*)0x200017cc = 1;
-*(uint32_t*)0x200017d0 = r[2];
-*(uint64_t*)0x200017d8 = 0x14;
-*(uint32_t*)0x200017e0 = 1;
-*(uint32_t*)0x200017e4 = 1;
-*(uint32_t*)0x200017e8 = r[1];
-*(uint64_t*)0x20001828 = 0x30;
-*(uint32_t*)0x20001830 = 0;
-*(uint32_t*)0x20001838 = 0;
-	syscall(__NR_sendmmsg, r[0], 0x20001800ul, 1ul, 0ul);
+r[0] = *(uint64_t*)0x20000840;
+	syscall(__NR_io_destroy, r[0]);
+	syscall(__NR_io_setup, 0x40, 0x20000080ul);
+*(uint64_t*)0x200002c0 = 0;
+*(uint32_t*)0x200002c8 = 0;
+*(uint32_t*)0x200002cc = 0;
+*(uint16_t*)0x200002d0 = 0;
+*(uint16_t*)0x200002d2 = 0;
+*(uint32_t*)0x200002d4 = -1;
+*(uint64_t*)0x200002d8 = 0;
+*(uint64_t*)0x200002e0 = 0;
+*(uint64_t*)0x200002e8 = 0;
+*(uint64_t*)0x200002f0 = 0;
+*(uint32_t*)0x200002f8 = 0;
+*(uint32_t*)0x200002fc = -1;
+	syscall(__NR_io_cancel, r[0], 0x200002c0ul, 0ul);
 	return 0;
 }

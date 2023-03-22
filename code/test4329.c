@@ -11,17 +11,19 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
-
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-	res = syscall(__NR_socket, 2ul, 2ul, 0);
-	if (res != -1)
-		r[0] = res;
-	syscall(__NR_mmap, 0x20ffa000ul, 0x4000ul, 4ul, 0x11ul, r[0], 0ul);
+
+memcpy((void*)0x20000440, "logon\000", 6);
+memcpy((void*)0x20000480, "fscrypt:", 8);
+memcpy((void*)0x20000488, "85baa174f0cb1142", 16);
+*(uint8_t*)0x20000498 = 0;
+*(uint32_t*)0x200004c0 = 0;
+memcpy((void*)0x200004c4, "\x13\xba\x90\xf9\xf6\x44\x2d\x8e\x98\x4f\x28\xaf\x0d\xc7\xb8\xb9\x52\x0c\xbb\x2c\xdb\x6c\x7f\x09\x72\x98\x1d\xd4\xf7\x34\x37\xf8\xf2\xf6\x00\x3c\x82\xb3\x47\x2c\x0f\x97\x45\x65\x21\xb4\x45\xdf\xaf\x29\x54\x27\x7c\xea\x27\xc5\xa7\xa9\xfe\x5e\x71\xd8\xf5\x25", 64);
+*(uint32_t*)0x20000504 = 0;
+	syscall(__NR_add_key, 0x20000440ul, 0x20000480ul, 0x200004c0ul, 0x48ul, 0xfffffffb);
 	return 0;
 }

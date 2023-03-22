@@ -11,16 +11,20 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifndef __NR_mlock2
+#define __NR_mlock2 325
+#endif
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-*(uint32_t*)0x200000c0 = 0xee01;
-*(uint32_t*)0x200000c4 = 0;
-*(uint32_t*)0x200000c8 = 0;
-*(uint32_t*)0x200000cc = 0;
-	syscall(__NR_setgroups, 4ul, 0x200000c0ul);
+				syscall(__NR_mlock2, 0x20ffc000ul, 0x3000ul, 0ul);
+	syscall(__NR_setuid, 0xee01);
+*(uint64_t*)0x20000000 = 1;
+*(uint64_t*)0x20000008 = 0x82;
+	syscall(__NR_setrlimit, 8ul, 0x20000000ul);
+	syscall(__NR_mlock2, 0x20ffc000ul, 0x2000ul, 0ul);
 	return 0;
 }

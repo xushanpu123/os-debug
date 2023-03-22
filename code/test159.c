@@ -11,12 +11,21 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+uint64_t r[1] = {0xffffffffffffffff};
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				syscall(__NR_add_key, 0ul, 0ul, 0ul, 0ul, -1);
-	syscall(__NR_keyctl, 8ul, 0, 0xfffffffe, 0, 0);
+				intptr_t res = 0;
+memcpy((void*)0x20000000, "/dev/snd/seq\000", 13);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000000ul, 0xe0202ul, 0);
+	if (res != -1)
+		r[0] = res;
+*(uint32_t*)0x200000c0 = r[0];
+*(uint16_t*)0x200000c4 = 0;
+*(uint16_t*)0x200000c6 = 0;
+	syscall(__NR_poll, 0x200000c0ul, 1ul, 0);
 	return 0;
 }

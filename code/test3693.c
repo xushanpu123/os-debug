@@ -27,6 +27,9 @@
 #include <linux/rtnetlink.h>
 #include <linux/veth.h>
 
+#define BITMASK(bf_off,bf_len) (((1ull << (bf_len)) - 1) << (bf_off))
+#define STORE_BY_BITMASK(type,htobe,addr,val,bf_off,bf_len) *(type*)(addr) = htobe((htobe(*(type*)(addr)) & ~BITMASK((bf_off), (bf_len))) | (((type)(val) << (bf_off)) & BITMASK((bf_off), (bf_len))))
+
 struct nlmsg {
 	char* pos;
 	int nesting;
@@ -136,13 +139,6 @@ static int netlink_query_family_id(struct nlmsg* nlmsg, int sock, const char* fa
 	return id;
 }
 
-const int kInitNetNsFd = 201;
-
-static long syz_init_net_socket(volatile long domain, volatile long type, volatile long proto)
-{
-	return syscall(__NR_socket, domain, type, proto);
-}
-
 static long syz_genetlink_get_family_id(volatile long name, volatile long sock_arg)
 {
 	int fd = sock_arg;
@@ -162,7 +158,7 @@ static long syz_genetlink_get_family_id(volatile long name, volatile long sock_a
 	return ret;
 }
 
-uint64_t r[3] = {0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff};
+uint64_t r[3] = {0xffffffffffffffff, 0xffffffffffffffff, 0x0};
 
 int main(void)
 {
@@ -170,31 +166,52 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = -1;
-res = syz_init_net_socket(0x10, 3, 0x10);
+	res = syscall(__NR_socket, 0x10ul, 3ul, 0);
 	if (res != -1)
 		r[0] = res;
-	res = -1;
-res = syz_init_net_socket(0x10, 3, 0x10);
+	res = syscall(__NR_dup, r[0]);
 	if (res != -1)
 		r[1] = res;
-memcpy((void*)0x20000200, "NLBL_UNLBL\000", 11);
+memcpy((void*)0x20000140, "ethtool\000", 8);
 	res = -1;
-res = syz_genetlink_get_family_id(0x20000200, r[0]);
+res = syz_genetlink_get_family_id(0x20000140, -1);
 	if (res != -1)
 		r[2] = res;
-*(uint64_t*)0x20000280 = 0;
-*(uint32_t*)0x20000288 = 0;
-*(uint64_t*)0x20000290 = 0x20000240;
-*(uint64_t*)0x20000240 = 0x20000440;
-memcpy((void*)0x20000440, "\xcc\x00\x00\x00", 4);
-*(uint16_t*)0x20000444 = r[2];
-*(uint16_t*)0x20000446 = -1;
-*(uint64_t*)0x20000248 = 0xcc;
-*(uint64_t*)0x20000298 = 1;
-*(uint64_t*)0x200002a0 = 0;
-*(uint64_t*)0x200002a8 = 0;
-*(uint32_t*)0x200002b0 = 0;
-	syscall(__NR_sendmsg, r[1], 0x20000280ul, 0ul);
+*(uint64_t*)0x200009c0 = 0;
+*(uint32_t*)0x200009c8 = 0;
+*(uint64_t*)0x200009d0 = 0x20000980;
+*(uint64_t*)0x20000980 = 0x20000a00;
+*(uint32_t*)0x20000a00 = 0x38;
+*(uint16_t*)0x20000a04 = r[2];
+*(uint16_t*)0x20000a06 = 1;
+*(uint32_t*)0x20000a08 = 0;
+*(uint32_t*)0x20000a0c = 0;
+*(uint8_t*)0x20000a10 = 0xe;
+*(uint8_t*)0x20000a11 = 0;
+*(uint16_t*)0x20000a12 = 0;
+*(uint16_t*)0x20000a14 = 0x24;
+STORE_BY_BITMASK(uint16_t, , 0x20000a16, 2, 0, 14);
+STORE_BY_BITMASK(uint16_t, , 0x20000a17, 0, 6, 1);
+STORE_BY_BITMASK(uint16_t, , 0x20000a17, 1, 7, 1);
+*(uint16_t*)0x20000a18 = 8;
+*(uint16_t*)0x20000a1a = 2;
+*(uint32_t*)0x20000a1c = 0;
+*(uint16_t*)0x20000a20 = 0x10;
+*(uint16_t*)0x20000a22 = 5;
+memcpy((void*)0x20000a24, "\x7f\x2b\x60\x64\x0d\xdf\x5f\x61\x4e\x42\xec\x08", 12);
+*(uint16_t*)0x20000a30 = 8;
+STORE_BY_BITMASK(uint16_t, , 0x20000a32, 3, 0, 14);
+STORE_BY_BITMASK(uint16_t, , 0x20000a33, 0, 6, 1);
+STORE_BY_BITMASK(uint16_t, , 0x20000a33, 1, 7, 1);
+*(uint16_t*)0x20000a34 = 4;
+STORE_BY_BITMASK(uint16_t, , 0x20000a36, 1, 0, 14);
+STORE_BY_BITMASK(uint16_t, , 0x20000a37, 0, 6, 1);
+STORE_BY_BITMASK(uint16_t, , 0x20000a37, 1, 7, 1);
+*(uint64_t*)0x20000988 = 0x38;
+*(uint64_t*)0x200009d8 = 1;
+*(uint64_t*)0x200009e0 = 0;
+*(uint64_t*)0x200009e8 = 0;
+*(uint32_t*)0x200009f0 = 0;
+	syscall(__NR_sendmsg, r[1], 0x200009c0ul, 0ul);
 	return 0;
 }

@@ -11,32 +11,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
-
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-	res = syscall(__NR_socket, 2ul, 2ul, 0);
-	if (res != -1)
-		r[0] = res;
-*(uint64_t*)0x20001740 = 0x20000000;
-*(uint16_t*)0x20000000 = 0x1f;
-memset((void*)0x20000002, 0, 6);
-*(uint8_t*)0x20000008 = 0;
-*(uint32_t*)0x20001748 = 0x80;
-*(uint64_t*)0x20001750 = 0;
-*(uint64_t*)0x20001758 = 0;
-*(uint64_t*)0x20001760 = 0x200000c0;
-*(uint64_t*)0x200000c0 = 0x28;
-*(uint32_t*)0x200000c8 = 0;
-*(uint32_t*)0x200000cc = 0;
-memcpy((void*)0x200000d0, "\x10\x93\x4f\x89\x7b\xec\xf2\xf8\x51\x89\xfb\x2e\x93\x36\xc1\x76\x96", 17);
-*(uint64_t*)0x20001768 = 0x28;
-*(uint32_t*)0x20001770 = 0;
-*(uint32_t*)0x20001778 = 0;
-	syscall(__NR_sendmmsg, r[0], 0x20001740ul, 1ul, 0ul);
+				syscall(__NR_syslog, 3ul, 0x20000080ul, 0x9cul);
 	return 0;
 }

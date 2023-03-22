@@ -11,18 +11,17 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0x0};
-
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-	syscall(__NR_setuid, 0xee01);
-	res = syscall(__NR_geteuid);
-	if (res != -1)
-		r[0] = res;
-	syscall(__NR_ioprio_set, 3ul, r[0], 0ul);
+				syscall(__NR_keyctl, 0xeul, 1ul, 0, 0, 0);
+memcpy((void*)0x200003c0, "logon\000", 6);
+memcpy((void*)0x20000400, "syz", 3);
+*(uint8_t*)0x20000403 = 0x21;
+*(uint8_t*)0x20000404 = 0;
+memcpy((void*)0x20000440, "U\v-\037\265\000", 6);
+	syscall(__NR_request_key, 0x200003c0ul, 0x20000400ul, 0x20000440ul, 0);
 	return 0;
 }

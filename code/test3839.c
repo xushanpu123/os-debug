@@ -3,15 +3,34 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
+#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+static long syz_open_procfs(volatile long a0, volatile long a1)
+{
+	char buf[128];
+	memset(buf, 0, sizeof(buf));
+	if (a0 == 0) {
+		snprintf(buf, sizeof(buf), "/proc/self/%s", (char*)a1);
+	} else if (a0 == -1) {
+		snprintf(buf, sizeof(buf), "/proc/thread-self/%s", (char*)a1);
+	} else {
+		snprintf(buf, sizeof(buf), "/proc/self/task/%d/%s", (int)a0, (char*)a1);
+	}
+	int fd = open(buf, O_RDWR);
+	if (fd == -1)
+		fd = open(buf, O_RDONLY);
+	return fd;
+}
+
+uint64_t r[2] = {0xffffffffffffffff, 0xffffffffffffffff};
 
 int main(void)
 {
@@ -19,12 +38,20 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000180, "./file0\000", 8);
-	res = syscall(__NR_creat, 0x20000180ul, 0ul);
+memcpy((void*)0x20000040, "pagemap\000", 8);
+	res = -1;
+res = syz_open_procfs(-1, 0x20000040);
 	if (res != -1)
 		r[0] = res;
-memcpy((void*)0x200001c0, "\xae\xa0", 2);
-	syscall(__NR_write, r[0], 0x200001c0ul, 2ul);
-	syscall(__NR_ioctl, -1, 0x40046210, 0ul);
+memcpy((void*)0x20000000, "/dev/autofs\000", 12);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000000ul, 0ul, 0ul);
+	if (res != -1)
+		r[1] = res;
+*(uint32_t*)0x20000080 = 1;
+*(uint32_t*)0x20000084 = 1;
+*(uint32_t*)0x20000088 = 0x18;
+*(uint32_t*)0x2000008c = r[0];
+memcpy((void*)0x20000098, "./file0\000", 8);
+	syscall(__NR_ioctl, r[1], 0xc0189375, 0x20000080ul);
 	return 0;
 }

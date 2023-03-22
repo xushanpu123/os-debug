@@ -19,27 +19,12 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000040, "./file1\000", 8);
-	res = syscall(__NR_openat, 0xffffff9c, 0x20000040ul, 0x42ul, 0ul);
+memcpy((void*)0x20004d00, "/proc/bus/input/handlers\000", 25);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20004d00ul, 0ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_close, r[0]);
-	syscall(__NR_socket, 2ul, 3ul, 2);
-*(uint64_t*)0x20004e40 = 0x20000080;
-*(uint16_t*)0x20000080 = 2;
-*(uint16_t*)0x20000082 = htobe16(0);
-*(uint32_t*)0x20000084 = htobe32(0);
-*(uint32_t*)0x20004e48 = 0x10;
-*(uint64_t*)0x20004e50 = 0;
-*(uint64_t*)0x20004e58 = 0;
-*(uint64_t*)0x20004e60 = 0x200003c0;
-*(uint64_t*)0x200003c0 = 0x14;
-*(uint32_t*)0x200003c8 = 0;
-*(uint32_t*)0x200003cc = 1;
-*(uint32_t*)0x200003d0 = 0;
-*(uint64_t*)0x20004e68 = 0x18;
-*(uint32_t*)0x20004e70 = 0;
-*(uint32_t*)0x20004e78 = 0;
-	syscall(__NR_sendmmsg, r[0], 0x20004e40ul, 1ul, 0ul);
+	syscall(__NR_fcntl, r[0], 0x400ul, 0ul);
+	syscall(__NR_fcntl, r[0], 8ul, 0);
+	syscall(__NR_fcntl, r[0], 0x400ul, 2ul);
 	return 0;
 }

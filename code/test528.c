@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+uint64_t r[3] = {0xffffffffffffffff, 0xffffffffffffffff, 0xffffffffffffffff};
 
 int main(void)
 {
@@ -19,12 +19,20 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 0x10ul, 3ul, 0xc);
+memcpy((void*)0x20000040, "./file0\000", 8);
+	res = syscall(__NR_openat, 0xffffff9c, 0x20000040ul, 0x26e1ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-*(uint64_t*)0x20000340 = 0x200001c0;
-memset((void*)0x200001c0, 125, 1);
-*(uint64_t*)0x20000348 = 1;
-	syscall(__NR_writev, r[0], 0x20000340ul, 1ul);
+	res = syscall(__NR_socket, 0x10ul, 3ul, 9);
+	if (res != -1)
+		r[1] = res;
+	res = syscall(__NR_dup3, r[0], r[1], 0ul);
+	if (res != -1)
+		r[2] = res;
+*(uint32_t*)0x20000000 = 0x10;
+*(uint32_t*)0x20000004 = 2;
+*(uint64_t*)0x20000008 = 2;
+*(uint64_t*)0x20000010 = 0;
+	syscall(__NR_open_by_handle_at, r[2], 0x20000000ul, 0x5d1002ul);
 	return 0;
 }

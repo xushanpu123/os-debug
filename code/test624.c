@@ -3,36 +3,15 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
-#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-static long syz_open_dev(volatile long a0, volatile long a1, volatile long a2)
-{
-	if (a0 == 0xc || a0 == 0xb) {
-		char buf[128];
-		sprintf(buf, "/dev/%s/%d:%d", a0 == 0xc ? "char" : "block", (uint8_t)a1, (uint8_t)a2);
-		return open(buf, O_RDWR, 0);
-	} else {
-		char buf[1024];
-		char* hash;
-		strncpy(buf, (char*)a0, sizeof(buf) - 1);
-		buf[sizeof(buf) - 1] = 0;
-		while ((hash = strchr(buf, '#'))) {
-			*hash = '0' + (char)(a1 % 10);
-			a1 /= 10;
-		}
-		return open(buf, a2, 0);
-	}
-}
-
-uint64_t r[1] = {0xffffffffffffffff};
+uint64_t r[2] = {0xffffffffffffffff, 0xffffffffffffffff};
 
 int main(void)
 {
@@ -40,11 +19,47 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x200000c0, "/dev/sg#\000", 9);
-	res = -1;
-res = syz_open_dev(0x200000c0, 0, 0);
+	res = syscall(__NR_socket, 0xaul, 1ul, 0);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_ioctl, r[0], 0x1267, 0x20000000ul);
+*(uint16_t*)0x20000040 = 0xa;
+*(uint16_t*)0x20000042 = htobe16(0xfffe);
+*(uint32_t*)0x20000044 = htobe32(0);
+memset((void*)0x20000048, 0, 10);
+memset((void*)0x20000052, 255, 2);
+*(uint8_t*)0x20000054 = 0xac;
+*(uint8_t*)0x20000055 = 0x14;
+*(uint8_t*)0x20000056 = 0x14;
+*(uint8_t*)0x20000057 = 0;
+*(uint32_t*)0x20000058 = 0;
+	syscall(__NR_bind, r[0], 0x20000040ul, 0x1cul);
+	res = syscall(__NR_socket, 0xaul, 1ul, 0);
+	if (res != -1)
+		r[1] = res;
+*(uint32_t*)0x200000c0 = 1;
+	syscall(__NR_setsockopt, r[1], 6, 0x13, 0x200000c0ul, 4ul);
+*(uint16_t*)0x20000040 = 0xa;
+*(uint16_t*)0x20000042 = htobe16(0xfffe);
+*(uint32_t*)0x20000044 = htobe32(0);
+memset((void*)0x20000048, 0, 10);
+memset((void*)0x20000052, 255, 2);
+*(uint8_t*)0x20000054 = 0xac;
+*(uint8_t*)0x20000055 = 0x14;
+*(uint8_t*)0x20000056 = 0x14;
+*(uint8_t*)0x20000057 = 0;
+*(uint32_t*)0x20000058 = 0;
+	syscall(__NR_bind, r[1], 0x20000040ul, 0x1cul);
+*(uint16_t*)0x20000100 = 0xa;
+*(uint16_t*)0x20000102 = htobe16(0);
+*(uint32_t*)0x20000104 = htobe32(0);
+memset((void*)0x20000108, 0, 16);
+*(uint32_t*)0x20000118 = 0;
+	syscall(__NR_connect, r[1], 0x20000100ul, 0x1cul);
+*(uint16_t*)0x20000100 = 0xa;
+*(uint16_t*)0x20000102 = htobe16(0);
+*(uint32_t*)0x20000104 = htobe32(0);
+memset((void*)0x20000108, 0, 16);
+*(uint32_t*)0x20000118 = 0;
+	syscall(__NR_connect, r[0], 0x20000100ul, 0x1cul);
 	return 0;
 }

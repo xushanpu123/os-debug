@@ -17,7 +17,26 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 
-*(uint32_t*)0x20000000 = 0;
-	syscall(__NR_futex, 0x20000000ul, 7ul, 0, 0ul, 0ul, 0);
+*(uint64_t*)0x20001500 = 0x20000000;
+*(uint64_t*)0x20001508 = 0x1000;
+*(uint64_t*)0x20002b00 = 0;
+*(uint64_t*)0x20002b08 = 0;
+*(uint64_t*)0x20002b10 = 0;
+*(uint64_t*)0x20002b18 = 0;
+*(uint64_t*)0x20002b20 = 0;
+*(uint64_t*)0x20002b28 = 0;
+*(uint64_t*)0x20002b30 = 0;
+*(uint64_t*)0x20002b38 = 0;
+*(uint64_t*)0x20002b40 = 0;
+*(uint64_t*)0x20002b48 = 0;
+*(uint64_t*)0x20002b50 = 0;
+*(uint64_t*)0x20002b58 = 0;
+*(uint64_t*)0x20002b60 = 0;
+*(uint64_t*)0x20002b68 = 0;
+*(uint64_t*)0x20002b70 = 0;
+*(uint64_t*)0x20002b78 = 0;
+*(uint64_t*)0x20002b80 = 0;
+*(uint64_t*)0x20002b88 = 0;
+	syscall(__NR_process_vm_readv, 0, 0x20001500ul, 1ul, 0x20002b00ul, 9ul, 0ul);
 	return 0;
 }

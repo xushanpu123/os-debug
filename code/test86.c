@@ -11,19 +11,15 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#ifndef __NR_io_pgetevents
+#define __NR_io_pgetevents 333
+#endif
+
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-
-memcpy((void*)0x20000000, "./file0\000", 8);
-	syscall(__NR_creat, 0x20000000ul, 0ul);
-memcpy((void*)0x200000c0, "./file0\000", 8);
-memcpy((void*)0x20000100, "cgroup\000", 7);
-memcpy((void*)0x20000140, "noprefix", 8);
-*(uint8_t*)0x20000148 = 0x2c;
-*(uint8_t*)0x20000149 = 0;
-	syscall(__NR_mount, 0ul, 0x200000c0ul, 0x20000100ul, 0ul, 0x20000140ul);
+				syscall(__NR_io_pgetevents, 0ul, 0ul, 0ul, 0ul, 0xffffffff81000000ul, 0ul);
 	return 0;
 }

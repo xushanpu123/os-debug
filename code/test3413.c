@@ -3,13 +3,34 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
+#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+static long syz_open_dev(volatile long a0, volatile long a1, volatile long a2)
+{
+	if (a0 == 0xc || a0 == 0xb) {
+		char buf[128];
+		sprintf(buf, "/dev/%s/%d:%d", a0 == 0xc ? "char" : "block", (uint8_t)a1, (uint8_t)a2);
+		return open(buf, O_RDWR, 0);
+	} else {
+		char buf[1024];
+		char* hash;
+		strncpy(buf, (char*)a0, sizeof(buf) - 1);
+		buf[sizeof(buf) - 1] = 0;
+		while ((hash = strchr(buf, '#'))) {
+			*hash = '0' + (char)(a1 % 10);
+			a1 /= 10;
+		}
+		return open(buf, a2, 0);
+	}
+}
 
 uint64_t r[2] = {0xffffffffffffffff, 0xffffffffffffffff};
 
@@ -19,14 +40,25 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_pipe2, 0x20000000ul, 0ul);
+	res = -1;
+res = syz_open_dev(0xc, 4, 0x15);
 	if (res != -1)
-r[0] = *(uint32_t*)0x20000000;
-	syscall(__NR_openat, 0xffffffffffffff9cul, 0ul, 0ul, 0ul);
-memcpy((void*)0x20000040, "/dev/rfkill\000", 12);
-	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000040ul, 0ul, 0ul);
+		r[0] = res;
+*(uint16_t*)0x20000140 = 1;
+*(uint16_t*)0x20000142 = 0;
+*(uint64_t*)0x20000148 = 0x4f57;
+*(uint64_t*)0x20000150 = 0;
+*(uint32_t*)0x20000158 = 0;
+	syscall(__NR_fcntl, r[0], 6ul, 0x20000140ul);
+	res = -1;
+res = syz_open_dev(0xc, 4, 0x15);
 	if (res != -1)
 		r[1] = res;
-	syscall(__NR_epoll_ctl, r[0], 2ul, r[1], 0);
+*(uint16_t*)0x200004c0 = 0;
+*(uint16_t*)0x200004c2 = 0;
+*(uint64_t*)0x200004c8 = 4;
+*(uint64_t*)0x200004d0 = -1;
+*(uint32_t*)0x200004d8 = -1;
+	syscall(__NR_fcntl, r[1], 7ul, 0x200004c0ul);
 	return 0;
 }

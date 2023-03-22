@@ -11,20 +11,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[2] = {0x0, 0x0};
-
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-	res = syscall(__NR_getpid);
-	if (res != -1)
-		r[0] = res;
-	res = syscall(__NR_getpid);
-	if (res != -1)
-		r[1] = res;
-	syscall(__NR_kcmp, r[0], r[1], 5ul, -1, -1);
+				syscall(__NR_unshare, 0x40000000ul);
 	return 0;
 }

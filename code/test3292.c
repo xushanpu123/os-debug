@@ -11,22 +11,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#ifndef __NR_close_range
-#define __NR_close_range 436
-#endif
-
-uint64_t r[1] = {0xffffffffffffffff};
-
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-	syscall(__NR_close_range, -1, -1, 2ul);
-	res = syscall(__NR_socket, 0xaul, 3ul, 0x3a);
-	if (res != -1)
-		r[0] = res;
-	syscall(__NR_tee, r[0], r[0], 0xfffffffffffffffeul, 0ul);
+				syscall(__NR_semctl, 0, 0ul, 0ul, 0);
 	return 0;
 }

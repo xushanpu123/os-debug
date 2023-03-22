@@ -19,10 +19,19 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000000, "/proc/zoneinfo\000", 15);
-	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000000ul, 0ul, 0ul);
+memcpy((void*)0x20000080, "/dev/rtc0\000", 10);
+	res = syscall(__NR_openat, 0xffffffffffffff9cul, 0x20000080ul, 0ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_pread64, r[0], 0x20000280ul, 0xb2ul, 0x7fful);
+*(uint32_t*)0x200000c0 = 0;
+*(uint32_t*)0x200000c4 = 0;
+*(uint32_t*)0x200000c8 = 0;
+*(uint32_t*)0x200000cc = 0;
+*(uint32_t*)0x200000d0 = 0;
+*(uint32_t*)0x200000d4 = 0;
+*(uint32_t*)0x200000d8 = 0;
+*(uint32_t*)0x200000dc = 0;
+*(uint32_t*)0x200000e0 = 0;
+	syscall(__NR_ioctl, r[0], 0x40247007, 0x200000c0ul);
 	return 0;
 }

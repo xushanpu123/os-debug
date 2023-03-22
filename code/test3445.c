@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0x0};
+uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
 {
@@ -19,23 +19,10 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_getpid);
+memcpy((void*)0x200001c0, "./file0\000", 8);
+	res = syscall(__NR_open, 0x200001c0ul, 0xe8142ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-*(uint64_t*)0x200013c0 = 0x20000100;
-*(uint64_t*)0x200013c8 = 0x6b;
-*(uint64_t*)0x200013d0 = 0x20000180;
-*(uint64_t*)0x200013d8 = 0x1000;
-*(uint64_t*)0x20003840 = 0x20001440;
-*(uint64_t*)0x20003848 = 0xfa;
-*(uint64_t*)0x20003850 = 0x20001540;
-*(uint64_t*)0x20003858 = 0xe4;
-*(uint64_t*)0x20003860 = 0x20001640;
-*(uint64_t*)0x20003868 = 0x74;
-*(uint64_t*)0x20003870 = 0x200016c0;
-*(uint64_t*)0x20003878 = 0x5d;
-*(uint64_t*)0x20003880 = 0;
-*(uint64_t*)0x20003888 = 0;
-	syscall(__NR_process_vm_writev, r[0], 0x200013c0ul, 2ul, 0x20003840ul, 5ul, 0ul);
+	syscall(__NR_fadvise64, r[0], 0xffffffffffffffc1ul, 6ul, 0ul);
 	return 0;
 }

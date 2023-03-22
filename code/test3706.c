@@ -3,7 +3,6 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
-#include <sched.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,28 +11,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define USLEEP_FORKED_CHILD (3 * 50 *1000)
-
-static long handle_clone_ret(long ret)
-{
-	if (ret != 0) {
-		return ret;
-	}
-	usleep(USLEEP_FORKED_CHILD);
-	syscall(__NR_exit, 0);
-	while (1) {
-	}
-}
-
-static long syz_clone(volatile long flags, volatile long stack, volatile long stack_len,
-		      volatile long ptid, volatile long ctid, volatile long tls)
-{
-	long sp = (stack + stack_len) & ~15;
-	long ret = (long)syscall(__NR_clone, flags & ~CLONE_VM, sp, ptid, ctid, tls);
-	return handle_clone_ret(ret);
-}
-
-uint64_t r[2] = {0x0, 0x0};
+uint64_t r[1] = {0xffffffffffffffff};
 
 int main(void)
 {
@@ -41,13 +19,15 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_getpid);
+	res = syscall(__NR_socket, 0xaul, 3ul, 2);
 	if (res != -1)
 		r[0] = res;
-	res = -1;
-res = syz_clone(0, 0, 0, 0, 0, 0);
-	if (res != -1)
-		r[1] = res;
-	syscall(__NR_kcmp, r[0], r[1], 2ul, -1, -1);
+memcpy((void*)0x20000140, "lo\000\000\000\000\000\000\000\000\000\000\000\000\000\000", 16);
+*(uint64_t*)0x20000150 = 0x20000180;
+*(uint32_t*)0x20000180 = 0x43;
+*(uint32_t*)0x20000184 = 0;
+*(uint32_t*)0x20000188 = 0;
+*(uint32_t*)0x2000018c = 0;
+	syscall(__NR_ioctl, r[0], 0x8946, 0x20000140ul);
 	return 0;
 }

@@ -11,7 +11,14 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[2] = {0x0, 0x0};
+#ifndef __NR_copy_file_range
+#define __NR_copy_file_range 326
+#endif
+#ifndef __NR_memfd_create
+#define __NR_memfd_create 319
+#endif
+
+uint64_t r[2] = {0xffffffffffffffff, 0xffffffffffffffff};
 
 int main(void)
 {
@@ -19,23 +26,13 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-memcpy((void*)0x20000080, "logon\000", 6);
-memcpy((void*)0x200000c0, "fscrypt:", 8);
-memcpy((void*)0x200000c8, "0000111122223333", 16);
-*(uint8_t*)0x200000d8 = 0;
-*(uint32_t*)0x20000100 = 0;
-memcpy((void*)0x20000104, "\x8e\x82\x81\xe5\x79\x4b\x42\x40\x94\x38\x78\xf2\x88\x1d\xa1\x20\xfc\x2e\x16\x3e\x5d\xf5\xcc\xf6\x54\x59\x54\x83\x26\x91\x62\x21\x26\x03\xa3\x43\xc9\xb1\x8d\x3b\xf7\x32\x84\x63\xaf\x59\xfa\xc3\xff\xd7\x78\xd9\x0e\x0f\x59\x0c\x0d\xa1\xca\x0d\x26\x38\x57\xea", 64);
-*(uint32_t*)0x20000144 = 0;
-	res = syscall(__NR_add_key, 0x20000080ul, 0x200000c0ul, 0x20000100ul, 0x48ul, 0xfffffffe);
+memcpy((void*)0x20000280, "\220\325ZMlZU\222F\006\222\314\205\214u\333\227\024\030\315\273:\272Y \\\214\271>\322D\303G\221wC\255\366F\244+\025\"\336n@\317\374 \331\f\244\307Vj\232!^\000$\025\330\270& \265T\314\331v\316\243\271M\365\211%\0179\321.\216`\000\000\000", 86);
+	res = syscall(__NR_memfd_create, 0x20000280ul, 0ul);
 	if (res != -1)
 		r[0] = res;
-memcpy((void*)0x20000000, "keyring\000", 8);
-memcpy((void*)0x20000040, "syz", 3);
-*(uint8_t*)0x20000043 = 0x20;
-*(uint8_t*)0x20000044 = 0;
-	res = syscall(__NR_add_key, 0x20000000ul, 0x20000040ul, 0ul, 0ul, -1);
+	res = syscall(__NR_memfd_create, 0x20000000ul, 0ul);
 	if (res != -1)
 		r[1] = res;
-	syscall(__NR_keyctl, 8ul, r[0], r[1], 0, 0);
+	syscall(__NR_copy_file_range, r[1], 0ul, r[0], 0ul, 0ul, 0ul);
 	return 0;
 }

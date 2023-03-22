@@ -11,28 +11,42 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t r[1] = {0xffffffffffffffff};
+#ifndef __NR_seccomp
+#define __NR_seccomp 317
+#endif
 
 int main(void)
 {
 		syscall(__NR_mmap, 0x1ffff000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
-				intptr_t res = 0;
-	res = syscall(__NR_socket, 0xaul, 3ul, 0x3a);
-	if (res != -1)
-		r[0] = res;
-*(uint64_t*)0x20000080 = htobe64(0);
-*(uint64_t*)0x20000088 = htobe64(1);
-memcpy((void*)0x20000090, " \001\000\000\000\000\000\000\000\000\000\000\000\000\000\002", 16);
-memset((void*)0x200000a0, 0, 16);
-*(uint32_t*)0x200000b0 = 0;
-*(uint16_t*)0x200000b4 = 0;
-*(uint16_t*)0x200000b6 = 0x7ff;
-*(uint32_t*)0x200000b8 = 0;
-*(uint64_t*)0x200000c0 = 0;
-*(uint32_t*)0x200000c8 = 0;
-*(uint32_t*)0x200000cc = 0;
-	syscall(__NR_ioctl, r[0], 0x890b, 0x20000080ul);
+
+*(uint16_t*)0x20000000 = 1;
+*(uint64_t*)0x20000008 = 0x200000c0;
+*(uint16_t*)0x200000c0 = 6;
+*(uint8_t*)0x200000c2 = 0;
+*(uint8_t*)0x200000c3 = 0;
+*(uint32_t*)0x200000c4 = 0;
+	syscall(__NR_seccomp, 1ul, 0xaul, 0x20000000ul);
+	syscall(__NR_select, 0ul, 0ul, 0ul, 0ul, 0ul);
+*(uint64_t*)0x200003c0 = 0;
+*(uint64_t*)0x200003c8 = 0;
+*(uint64_t*)0x200003d0 = 0;
+*(uint64_t*)0x200003d8 = 0;
+*(uint64_t*)0x200003e0 = 0;
+*(uint64_t*)0x200003e8 = 0;
+*(uint64_t*)0x200003f0 = 0;
+*(uint64_t*)0x200003f8 = 0;
+*(uint64_t*)0x20000400 = 8;
+*(uint64_t*)0x20000408 = 0;
+*(uint64_t*)0x20000410 = 0;
+*(uint64_t*)0x20000418 = 0;
+*(uint64_t*)0x20000420 = 0;
+*(uint64_t*)0x20000428 = 0;
+*(uint64_t*)0x20000430 = 0;
+*(uint64_t*)0x20000438 = 0;
+*(uint64_t*)0x20000480 = 0;
+*(uint64_t*)0x20000488 = 0;
+	syscall(__NR_select, 0x40ul, 0x200003c0ul, 0x20000400ul, 0ul, 0x20000480ul);
 	return 0;
 }

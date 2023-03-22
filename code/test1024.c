@@ -3,6 +3,7 @@
 #define _GNU_SOURCE 
 
 #include <endian.h>
+#include <sched.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,37 +12,47 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define BITMASK(bf_off,bf_len) (((1ull << (bf_len)) - 1) << (bf_off))
-#define STORE_BY_BITMASK(type,htobe,addr,val,bf_off,bf_len) *(type*)(addr) = htobe((htobe(*(type*)(addr)) & ~BITMASK((bf_off), (bf_len))) | (((type)(val) << (bf_off)) & BITMASK((bf_off), (bf_len))))
+#include <linux/sched.h>
 
-struct csum_inet {
-	uint32_t acc;
-};
+#ifndef __NR_clone3
+#define __NR_clone3 435
+#endif
 
-static void csum_inet_init(struct csum_inet* csum)
+#define USLEEP_FORKED_CHILD (3 * 50 *1000)
+
+static long handle_clone_ret(long ret)
 {
-	csum->acc = 0;
+	if (ret != 0) {
+		return ret;
+	}
+	usleep(USLEEP_FORKED_CHILD);
+	syscall(__NR_exit, 0);
+	while (1) {
+	}
 }
 
-static void csum_inet_update(struct csum_inet* csum, const uint8_t* data, size_t length)
+static long syz_clone(volatile long flags, volatile long stack, volatile long stack_len,
+		      volatile long ptid, volatile long ctid, volatile long tls)
 {
-	if (length == 0)
-		return;
-	size_t i = 0;
-	for (; i < length - 1; i += 2)
-		csum->acc += *(uint16_t*)&data[i];
-	if (length & 1)
-		csum->acc += le16toh((uint16_t)data[length - 1]);
-	while (csum->acc > 0xffff)
-		csum->acc = (csum->acc & 0xffff) + (csum->acc >> 16);
+	long sp = (stack + stack_len) & ~15;
+	long ret = (long)syscall(__NR_clone, flags & ~CLONE_VM, sp, ptid, ctid, tls);
+	return handle_clone_ret(ret);
 }
 
-static uint16_t csum_inet_digest(struct csum_inet* csum)
+#define MAX_CLONE_ARGS_BYTES 256
+static long syz_clone3(volatile long a0, volatile long a1)
 {
-	return ~csum->acc;
+	unsigned long copy_size = a1;
+	if (copy_size < sizeof(uint64_t) || copy_size > MAX_CLONE_ARGS_BYTES)
+		return -1;
+	char clone_args[MAX_CLONE_ARGS_BYTES];
+	memcpy(&clone_args, (void*)a0, copy_size);
+	uint64_t* flags = (uint64_t*)&clone_args;
+	*flags &= ~CLONE_VM;
+	return handle_clone_ret((long)syscall(__NR_clone3, &clone_args, copy_size));
 }
 
-uint64_t r[2] = {0xffffffffffffffff, 0xffffffffffffffff};
+uint64_t r[2] = {0x0, 0x0};
 
 int main(void)
 {
@@ -49,39 +60,38 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_socket, 2ul, 3ul, 2);
+	syscall(__NR_ioctl, -1, 0xc0502100, 0x20000080ul);
+	res = -1;
+res = syz_clone(0, 0, 0, 0, 0, 0);
 	if (res != -1)
 		r[0] = res;
-	res = syscall(__NR_dup2, r[0], r[0]);
+*(uint64_t*)0x20000040 = 0x20000280;
+*(uint64_t*)0x20000048 = 0x1000;
+	syscall(__NR_ptrace, 0x4204ul, r[0], 0ul, 0x20000040ul);
+	res = -1;
+res = syz_clone(0, 0, 0, 0, 0, 0);
 	if (res != -1)
 		r[1] = res;
-memcpy((void*)0x20000380, "sit0\000\000\000\000\000\000\000\000\000\000\000\000", 16);
-*(uint64_t*)0x20000390 = 0x20000300;
-memcpy((void*)0x20000300, "syztnl0\000\000\000\000\000\000\000\000\000", 16);
-*(uint32_t*)0x20000310 = 0;
-*(uint16_t*)0x20000314 = htobe16(0);
-*(uint16_t*)0x20000316 = htobe16(0);
-*(uint32_t*)0x20000318 = htobe32(0);
-*(uint32_t*)0x2000031c = htobe32(0);
-STORE_BY_BITMASK(uint8_t, , 0x20000320, 5, 0, 4);
-STORE_BY_BITMASK(uint8_t, , 0x20000320, 4, 4, 4);
-STORE_BY_BITMASK(uint8_t, , 0x20000321, 0, 0, 2);
-STORE_BY_BITMASK(uint8_t, , 0x20000321, 0, 2, 6);
-*(uint16_t*)0x20000322 = htobe16(0x14);
-*(uint16_t*)0x20000324 = htobe16(0);
-*(uint16_t*)0x20000326 = htobe16(0);
-*(uint8_t*)0x20000328 = 0;
-*(uint8_t*)0x20000329 = 0;
-*(uint16_t*)0x2000032a = htobe16(0);
-*(uint32_t*)0x2000032c = htobe32(0x7f000001);
-*(uint8_t*)0x20000330 = 0xac;
-*(uint8_t*)0x20000331 = 0x14;
-*(uint8_t*)0x20000332 = 0x14;
-*(uint8_t*)0x20000333 = 0xaa;
-	struct csum_inet csum_1;
-	csum_inet_init(&csum_1);
-csum_inet_update(&csum_1, (const uint8_t*)0x20000320, 20);
-*(uint16_t*)0x2000032a = csum_inet_digest(&csum_1);
-	syscall(__NR_ioctl, r[1], 0x89f0, 0x20000380ul);
+	syscall(__NR_ptrace, 0x10ul, r[1], 0, 0);
+	syscall(__NR_ptrace, -1ul, 0, 0, 0);
+*(uint64_t*)0x20000040 = 0x20000280;
+*(uint64_t*)0x20000048 = 0x1000;
+	syscall(__NR_ptrace, 0x4204ul, 0, 0x202ul, 0x20000040ul);
+*(uint64_t*)0x20000580 = 0xc0002000;
+*(uint64_t*)0x20000588 = 0x20000280;
+*(uint64_t*)0x20000590 = 0;
+*(uint64_t*)0x20000598 = 0x20000380;
+*(uint32_t*)0x200005a0 = 0x33;
+*(uint64_t*)0x200005a8 = 0x200003c0;
+*(uint64_t*)0x200005b0 = 0xfd;
+*(uint64_t*)0x200005b8 = 0x200004c0;
+*(uint64_t*)0x200005c0 = 0x20000540;
+*(uint32_t*)0x20000540 = 0;
+*(uint32_t*)0x20000544 = r[1];
+*(uint32_t*)0x20000548 = 0;
+*(uint64_t*)0x200005c8 = 3;
+*(uint32_t*)0x200005d0 = -1;
+syz_clone3(0x20000580, 0x58);
+	syscall(__NR_ioctl, -1, 0xc0502100, 0x20000000ul);
 	return 0;
 }

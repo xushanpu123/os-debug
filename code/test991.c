@@ -19,9 +19,12 @@ int main(void)
 	syscall(__NR_mmap, 0x20000000ul, 0x1000000ul, 7ul, 0x32ul, -1, 0ul);
 	syscall(__NR_mmap, 0x21000000ul, 0x1000ul, 0ul, 0x32ul, -1, 0ul);
 				intptr_t res = 0;
-	res = syscall(__NR_getpid);
+	res = syscall(__NR_gettid);
 	if (res != -1)
 		r[0] = res;
-	syscall(__NR_ptrace, 8ul, r[0], 0, 0);
+*(uint32_t*)0x200001c0 = 0;
+*(uint32_t*)0x200001c4 = 0;
+*(uint32_t*)0x200001c8 = 1;
+	syscall(__NR_rt_sigqueueinfo, r[0], 0x20, 0x200001c0ul);
 	return 0;
 }
