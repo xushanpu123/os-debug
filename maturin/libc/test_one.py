@@ -4,7 +4,7 @@ import os.path
 import sys
 
 
-src_dir_path = '../../../code'        # 源文件夹,need change
+src_dir_path = '../../code'        # 源文件夹,need change
 
 def clean():
     with open('./static_testcases.txt','w') as f:
